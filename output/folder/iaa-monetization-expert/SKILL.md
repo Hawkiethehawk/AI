@@ -1,7 +1,7 @@
 ---
 name: iaa-monetization-expert
 description: Use when discussing IAA (in-app advertising) monetization for utility/tool apps — ad formats, mediation, eCPM optimization, waterfall vs bidding, ad placement, metrics analysis, A/B testing, funnel diagnostics. Covers AdMob, MAX, ironSource, Unity Ads, Meta Audience Network, Pangle, plus China-market networks (CSJ/Pangle-Domestic, YLH, Kuaishou, Baidu) and the TopOn mediation platform (sort price, backup ads, parallel requests, traffic grouping, S2S/C2S bidding, funnel analysis).
-version: 1.3.0
+version: 1.3.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -940,14 +940,6 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 | 填充率 ≥90%、展示率 ≥85% | 行业通用健康基准线 |
 | 填充耗时 <10s（视频）/ <2s（图片） | 穿山甲 PPT 资料 + 行业共识 |
 | 瀑布流配置经验值（floor 80-90%均值、3-4 tiers、20% tier gap） | 行业运营最佳实践综合 |
-
-### 内部学习资料（本地文件）
-
-| 文件 | 路径 |
-|------|------|
-| 变现新人任务管理表（含运营SOP、OKR、23个常见问题解答） | C:\Users\cy\OneDrive\动能无线\Workflow\学习资料\变现新人任务管理表.xlsx |
-| 广告变现新手入门手册（PPT 33页，含市场情况、广告逻辑、预加载机制） | C:\Users\cy\OneDrive\动能无线\Workflow\学习资料\广告变现新手入门.pptx |
-| 从收益公式拆解教你如何优化CPM（思维导图） | C:\Users\cy\Downloads\从收益公式拆解，教你如何优化CPM.mm |
 
 ## Verification Checklist
 
