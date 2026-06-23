@@ -109,6 +109,26 @@ plink.exe -batch -ssh root@<ROUTER_TAILSCALE_IP> -pw "<ROUTER_SSH_PASSWORD>" "et
   ```
 - Get plink without an installer: download the standalone `plink.exe` (PuTTY `w64`) and drop it next to the wrapper script.
 
+### Remote controller — a cloud server / any tailnet device
+The controller doesn't have to be your laptop. **Any device on the tailnet** can wake the PC — it only needs to reach the router's Tailscale IP and run `etherwake`. An always-on **cloud VPS on the tailnet** is the ideal "wake from anywhere" controller. One-time, give it a key the router trusts so the wake is passwordless:
+```sh
+# on the cloud server (once):
+test -f ~/.ssh/id_ed25519 || ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519
+cat ~/.ssh/id_ed25519.pub      # append this line to the router's /etc/dropbear/authorized_keys
+# thereafter, waking is one passwordless command from the cloud server:
+ssh root@<ROUTER_TAILSCALE_IP> "etherwake -i br-lan <TARGET_MAC>"
+```
+
+#### Driving the controller through the router (when a local proxy breaks SSH)
+If the machine you're typing on can't SSH to the cloud controller because a **local fake-ip / TUN proxy (Clash/mihomo) corrupts SSH to public IPs** (HTTP works, SSH dies at the banner — the RouteOnly pitfall in Troubleshooting, and it persists even with a DIRECT rule and even via the proxy's own SOCKS port), bounce through the **router**, which you *can* reach cleanly over the **LAN** (private IPs bypass the TUN):
+```powershell
+# me ─(LAN, key)→ router ─(dbclient over Tailscale)→ cloud controller ─→ wakes back to the router
+ssh -i ~/.ssh/id_ed25519 root@<ROUTER_LAN_IP> "DROPBEAR_PASSWORD='<cloud_pw>' dbclient -y -y <cloud_user>@<CLOUD_TAILSCALE_IP> 'echo <BASE64_SCRIPT> | base64 -d | bash'"
+```
+- The router (dropbear) ships `dbclient`: pass the cloud password via the `DROPBEAR_PASSWORD` env var, `-y -y` to skip host-key prompts.
+- **base64-wrap the cloud-side script** — quotes/backslashes get mangled across PowerShell→ssh→router-sh→dbclient→cloud-sh; an alphanumeric base64 blob survives. Decode on the **cloud** end (the router's busybox has no `base64`/`bash`).
+- PowerShell 5.1 eats embedded `"` in native args, so **single-quote** the `dbclient` argument or the router's shell will grab the pipe.
+
 ### Confirm it woke
 WoL is fire-and-forget; verify the PC came up:
 ```powershell
@@ -166,7 +186,9 @@ Most ImmortalWrt setups bridge LAN as `br-lan`. Verify: `ip -4 addr show` or `if
 | Router Tailscale IP | `<ROUTER_TAILSCALE_IP>` (tailnet `<TAILNET_DOMAIN>`, acct <TAILNET_ACCOUNT>@) |
 | Target PC "configured target" | NIC <TARGET_NIC>, **MAC `<TARGET_MAC>`** (wake target) |
 | configured target LAN / Tailscale | `<PC_LAN_IP>` / `<PC_TAILSCALE_IP>` |
-| Controller | separate machine; reaches tailnet via v2rayN sing-box **TUN** — subject to the `RouteOnly` pitfall above |
+| Local proxy (on configured target) | **Clash Verge** (mihomo) fake-ip **TUN**, adapter `<TUN_ADAPTER_IP>`, mixed/SOCKS port `<PROXY_PORT>` — corrupts SSH to public IPs (RouteOnly pitfall above); reach the router over the **LAN** (`<ROUTER_LAN_IP>`) to stay clean |
+| Cloud controller | `<CLOUD_CONTROLLER>`, Tailscale **`<CLOUD_TAILSCALE_IP>`** (`<CLOUD_USER>@`, same tailnet) — **passwordless key to the router installed**; wakes configured target via `ssh root@<ROUTER_TAILSCALE_IP> "etherwake -i br-lan <TARGET_MAC>"` |
+| Passwordless SSH | configured target *and* the cloud server each have an ed25519 key in the router's `/etc/dropbear/authorized_keys` (`ssh -o BatchMode=yes` works) |
 | Router SSH password | **NOT stored in repo** — supply at runtime |
 
 ### Wake configured target (concrete)
