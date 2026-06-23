@@ -99,8 +99,14 @@ plink.exe -batch -ssh root@<ROUTER_TAILSCALE_IP> "etherwake -i br-lan <TARGET_MA
 # password-based:
 plink.exe -batch -ssh root@<ROUTER_TAILSCALE_IP> -pw "<ROUTER_SSH_PASSWORD>" "etherwake -i br-lan <TARGET_MAC>"
 ```
-- First connection to a new host: plink needs the host key cached. Run once interactively, or pipe `y`:
-  `"y`n" | plink.exe -ssh root@<host> -pw "<pw>" "true"`  (then subsequent calls can use `-batch`).
+- **First connection — do NOT pipe `y` to accept the host key.** In a non-interactive / no-console context plink reads the host-key prompt *straight from the console*, so a piped `y` is ignored and **plink hangs forever** (same trap as `ssh-keygen` prompting for a passphrase). Pin the fingerprint with `-hostkey` instead, derived non-interactively via OpenSSH:
+  ```powershell
+  # collect the router's host-key fingerprint(s), then pass them to plink:
+  $hk=@(); ssh-keyscan -T 8 -t ed25519,rsa,ecdsa <host> 2>$null |
+    ? { $_ -and $_ -notmatch '^#' } |
+    % { $f = ($_ | ssh-keygen -lf - 2>$null); if ($f) { $hk+='-hostkey'; $hk+=($f -split '\s+')[1] } }
+  plink.exe @hk -batch -ssh root@<host> -pw "<pw>" "etherwake -i br-lan <TARGET_MAC>"
+  ```
 - Get plink without an installer: download the standalone `plink.exe` (PuTTY `w64`) and drop it next to the wrapper script.
 
 ### Confirm it woke
@@ -129,6 +135,18 @@ A proxy TUN often **fake-accepts** the TCP handshake, so a port test (`Test-NetC
 
 ### `ping` fails but SSH works (over Tailscale)
 ICMP may be unrouted while TCP is fine. **Test with TCP (port 22), not ping.**
+
+### Windows non-interactive gotchas (plink / ssh-keygen / remote one-liners)
+Hard-won while automating from a no-console (agent/harness) context:
+- **plink and `ssh-keygen` read prompts from the console, not stdin** → piping `y` (host key) or blank lines (passphrase) does **not** answer them; the process **hangs**. Fixes: `plink -hostkey SHA256:...` (see the wake section); `ssh-keygen --% -t ed25519 -f <path> -N "" -C ...` (the `--%` stop-parser makes PowerShell pass a real empty passphrase).
+- **Backslashes get eaten** crossing PowerShell → plink → remote `sh`. A remote `tr -d "\r"` arrived as `tr -d "r"` and silently deleted every `r` from the payload. Avoid backslash escapes in remote one-liners.
+- **busybox often lacks `base64`** (`ash: base64: not found`), so don't rely on base64-decoding on the router.
+- **Installing the controller's pubkey non-interactively**, robust against all of the above — single-quote the key on the remote side, plain `echo`, no backslashes/base64:
+  ```powershell
+  $key = (Get-Content "$HOME\.ssh\id_ed25519.pub" -Raw).Trim()
+  plink.exe @hk -batch -ssh root@<host> -pw "<pw>" "echo '$key' >> /etc/dropbear/authorized_keys; chmod 600 /etc/dropbear/authorized_keys"
+  ```
+  Then verify: `ssh -o BatchMode=yes -i $HOME\.ssh\id_ed25519 root@<host> "echo KEYAUTH_OK"`.
 
 ### `etherwake: command not found`
 `opkg install etherwake`. The binary is `/usr/bin/etherwake`. (Alternatives on some builds: `wol`, or LuCI's `luci-app-wol`.)
