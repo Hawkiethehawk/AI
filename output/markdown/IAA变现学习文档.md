@@ -507,27 +507,31 @@ LTV             = ARPDAU × 平均留存天数
 
 ## 数据来源
 
-文中保留的方法论、机制与数字均可追溯到以下精确来源（全文用 `[1]/[2]/[3]` 标记）：
+文中保留的方法论、机制与数字均可追溯到以下精确来源（全文用 `[1]/[2]/[3]` 标记）。
 
-| 标记 | 来源 | 覆盖内容 |
-|------|------|----------|
-| `[1]` | [穿山甲官方 · 成长中心](https://www.csjplatform.com/growthcenter/6101274400195d0046c2731d) | 收益公式拆解、展示/点击/转化三节点方法论、广告有效期（开屏 3h/其他 1h）、安装提示提升 3 倍转化、创意区域、国内联盟地位 |
-| `[2]` | [36氪 / Alpha Engineer · 一页纸讲透 AppLovin](https://www.36kr.com/p/3480808267798659) | AppLovin / MAX 竞价架构、AXON 2.0 引擎、市场地位、Take rate、财务数据 |
-| `[3]` | TopOn 官方帮助中心（**按主题分文档，见下表**） | 聚合机制、瀑布流分层、头部竞价、漏斗分析、口径与排查、A/B、数据预警等 |
+> 💡 链接以**列表**而非表格给出，因为飞书等编辑器导入 markdown 时，表格单元格内的超链接会失效，列表/段落内的链接才能正常转换。
 
-### `[3]` TopOn 帮助中心 — 按主题的具体文档
+**`[1]` 穿山甲官方**
 
-| 主题 | 文档链接 |
-|------|----------|
-| 聚合平台概况、40+ 广告平台清单、Bidding S2S/C2S 对接、报表时区 | [概况](https://help.toponad.net/cn/docs/2KR6QU) |
-| 排序价格 vs 底价、自动价格、兜底广告、同价展示概率、流量分组、自动创建广告源 | [价格与分组①](https://help.toponad.net/cn/docs/cXus5n)、[②](https://help.toponad.net/cn/docs/KjVUSq) |
-| 头部竞价原理、支持竞价的平台及竞价底价 | [头部竞价](https://help.toponad.net/cn/docs/dfnwQG) |
-| 瀑布流结构参考、精细化分层、每层填充率纪律、并行请求、展示频次控制 | [瀑布流①](https://help.toponad.net/cn/docs/bUh0Id)、[②](https://help.toponad.net/cn/docs/QXxkrR)、[③](https://help.toponad.net/cn/docs/eUCSzO) |
-| 漏斗分析（应用启动→展示→点击各节点转化率与排查） | [漏斗分析](https://help.toponad.net/cn/docs/qlHqYM) |
-| 数据来源（三方 API vs SDK 统计）、展示 Gap 排查、有效展示标准 | [口径与Gap①](https://help.toponad.net/cn/docs/Z4zsF6)、[②](https://help.toponad.net/cn/docs/5e6DnV) |
-| 收益变动五因子分解排查（DAU/人均请求/填充率/展示率/eCPM） | [收益分解①](https://help.toponad.net/cn/docs/cdsQvH)、[②](https://help.toponad.net/cn/docs/SxzgbM) |
-| A/B 测试（预估口径、AABB、辛普森悖论、设备粘性分配） | [A/B 测试](https://help.toponad.net/cn/docs/PqmmHP) |
-| 交叉推广 & 直投广告、数据预警、留存价值/用户行为/分小时报表 | [运营工具①](https://help.toponad.net/cn/docs/Popzgt)、[②](https://help.toponad.net/cn/docs/LQgwMA)、[③](https://help.toponad.net/cn/docs/p8JTEN) |
+- 链接：[穿山甲成长中心 · 收益方法论](https://www.csjplatform.com/growthcenter/6101274400195d0046c2731d)
+- 覆盖：收益公式拆解、展示/点击/转化三节点方法论、广告有效期（开屏 3h / 其他 1h）、安装提示提升 3 倍转化、创意区域、国内联盟地位
+
+**`[2]` 36氪 / Alpha Engineer · AppLovin 分析**
+
+- 链接：[「一页纸」讲透 AppLovin（费斌杰, 2025-09-25）](https://www.36kr.com/p/3480808267798659)
+- 覆盖：AppLovin / MAX 竞价架构、AXON 2.0 引擎、市场地位、Take rate、财务数据
+
+**`[3]` TopOn 官方帮助中心**（按主题分文档，非首页）
+
+- [聚合平台概况、40+ 广告平台清单、Bidding S2S/C2S 对接、报表时区](https://help.toponad.net/cn/docs/2KR6QU)
+- 排序价格 vs 底价、自动价格、兜底广告、同价展示概率、流量分组、自动创建广告源：[文档一](https://help.toponad.net/cn/docs/cXus5n)、[文档二](https://help.toponad.net/cn/docs/KjVUSq)
+- [头部竞价原理、支持竞价的平台及竞价底价](https://help.toponad.net/cn/docs/dfnwQG)
+- 瀑布流结构参考、精细化分层、每层填充率纪律、并行请求、展示频次控制：[文档一](https://help.toponad.net/cn/docs/bUh0Id)、[文档二](https://help.toponad.net/cn/docs/QXxkrR)、[文档三](https://help.toponad.net/cn/docs/eUCSzO)
+- [漏斗分析（应用启动→展示→点击各节点转化率与排查）](https://help.toponad.net/cn/docs/qlHqYM)
+- 数据来源（三方 API vs SDK 统计）、展示 Gap 排查、有效展示标准：[文档一](https://help.toponad.net/cn/docs/Z4zsF6)、[文档二](https://help.toponad.net/cn/docs/5e6DnV)
+- 收益变动五因子分解排查（DAU/人均请求/填充率/展示率/eCPM）：[文档一](https://help.toponad.net/cn/docs/cdsQvH)、[文档二](https://help.toponad.net/cn/docs/SxzgbM)
+- [A/B 测试（预估口径、AABB、辛普森悖论、设备粘性分配）](https://help.toponad.net/cn/docs/PqmmHP)
+- 交叉推广 & 直投广告、数据预警、留存价值/用户行为/分小时报表：[文档一](https://help.toponad.net/cn/docs/Popzgt)、[文档二](https://help.toponad.net/cn/docs/LQgwMA)、[文档三](https://help.toponad.net/cn/docs/p8JTEN)
 
 **未标记**的内容为通用公式 / 概念 / 结构性事实（收益公式、漏斗结构、相对量级排序、产品类型选形式、广告位设计原则等）。
 
