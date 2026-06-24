@@ -1,7 +1,7 @@
 ---
 name: iaa-monetization-expert
 description: Use when discussing IAA (in-app advertising) monetization for utility/tool apps — ad formats, mediation, eCPM optimization, waterfall vs bidding, ad placement, metrics analysis, A/B testing, funnel diagnostics. Covers AdMob, MAX, ironSource, Unity Ads, Meta Audience Network, Pangle, plus China-market networks (CSJ/Pangle-Domestic, YLH, Kuaishou, Baidu) and the TopOn mediation platform (sort price, backup ads, parallel requests, traffic grouping, S2S/C2S bidding, funnel analysis).
-version: 1.3.4
+version: 1.3.5
 author: Hermes Agent
 license: MIT
 metadata:
@@ -18,7 +18,7 @@ In-app advertising (IAA) is the primary revenue model for free utility and tool 
 
 Core premise: ad revenue = impressions × eCPM / 1000. Optimization targets either increasing qualified impressions or raising eCPM, constrained by retention and user experience trade-offs.
 
-> **Source markers (used throughout):** `[1]` = 穿山甲官方 · `[2]` = 36氪 AppLovin 分析 · `[³]` = TopOn 官方帮助中心 (full links in the Data Sources section at the end). Unmarked content is general formula/concept/structural fact (revenue formula, funnel structure, relative orderings). Absolute benchmark values with no single authoritative source have been removed in favour of relative orderings or method descriptions — see "行业经验数据（已移除）".
+> **Source markers (used throughout):** `[1]` = 穿山甲官方 · `[2]` = 36氪 AppLovin 分析 · `[3]` = TopOn 官方帮助中心 (full links in the Data Sources section at the end). Unmarked content is general formula/concept/structural fact (revenue formula, funnel structure, relative orderings). Absolute benchmark values with no single authoritative source have been removed in favour of relative orderings or method descriptions — see "行业经验数据（已移除）".
 
 ## When to Use
 
@@ -43,7 +43,7 @@ Core premise: ad revenue = impressions × eCPM / 1000. Optimization targets eith
 | **ARPDAU** | daily revenue / DAU | Daily per-user revenue; most actionable timeframe. |
 | **LTV** (lifetime value) | ARPDAU × avg retention days; also: current-day ARPU × X-day LT | Projected total revenue per user. |
 
-### Data Source: Settlement (API) vs SDK-Tracked [³]
+### Data Source: Settlement (API) vs SDK-Tracked [3]
 
 Every mediation dashboard exposes two parallel data lineages. Conflating them is the most common analysis error:
 
@@ -121,7 +121,7 @@ eCPM = 广告主出价 × CTR × CVR × 1000
 
 → 高价值广告位应前置（靠近用户进入点），低价值频次型广告位后置。
 
-## Funnel Analysis (漏斗分析) [³]
+## Funnel Analysis (漏斗分析) [3]
 
 The single most actionable diagnostic for a mediation SDK. Every impression passes through an ordered chain; the conversion rate between adjacent nodes localizes exactly where users (or revenue) leak. Always analyze **per ad unit** and on a **per-DAU (人均次数)** basis — aggregated all-unit averages hide the problem.
 
@@ -229,7 +229,7 @@ The single most actionable diagnostic for a mediation SDK. Every impression pass
 3. Drop networks that contribute negligible revenue after a fair trial window
 4. Keep the network count lean — too many rarely adds incremental value and inflates SDK bloat; a single integration wants enough networks across floor + bidding layers to stabilize fill and eCPM, no more.
 
-**Geo network shortlist [³] (via a mediation platform; order not significant):**
+**Geo network shortlist [3] (via a mediation platform; order not significant):**
 
 | Region | Networks |
 |--------|----------|
@@ -253,7 +253,7 @@ Ordered list of networks by expected eCPM. Request cascades down until filled.
 - Review floors weekly; automated floor optimization is table stakes in 2025+
 - CPM 底价设置后，广告平台交付的 eCPM 往往接近底价；底价越高，填充率越低
 
-**Waterfall structure reference (瀑布流结构参考) [³]:**
+**Waterfall structure reference (瀑布流结构参考) [3]:**
 
 | Zone | Config | Layers | Notes |
 |------|--------|--------|-------|
@@ -262,7 +262,7 @@ Ordered list of networks by expected eCPM. Request cascades down until filled.
 | Mid / mid-floor | networks cross-ordered descending ($70→$20) | 2–8 | Fill the gaps; insert a mid-layer wherever a big eCPM jump leaves traffic underused |
 | Tail / low- or no-floor | low-floor + no-floor backup | 2–6 | No-floor bottom layer with auto-price guarantees fill |
 
-**Layer-count and fill discipline [³]:**
+**Layer-count and fill discipline [3]:**
 - Total layers scale with DAU/request volume: T1 geos 30–40, T2 20–30, T3 (SEA/LATAM/Africa) 10–20. Typical overall range 10–20.
 - Target overall ad-unit fill ≥ 90%. Each layer's fill should stay ≥ 1% (control to ≥ 5%); a near-zero top layer can be dropped.
 - If a non-splash top layer fills ≥ 10%, try raising its floor (or add a higher layer above it) to capture more high-value offers.
@@ -271,7 +271,7 @@ Ordered list of networks by expected eCPM. Request cascades down until filled.
 - Many layers (15+, esp. 20–40): turn on parallel requests (3–8) to cut total fill latency.
 - **Splash (开屏) is the exception: keep the waterfall ≤ 5 layers** so a slow load doesn't miss the impression window.
 
-### Sort Price vs Floor (排序价格) [³]
+### Sort Price vs Floor (排序价格) [3]
 
 In SDK-side mediation (TopOn-style), the **sort price (排序价格)** entered in the mediation console only controls request/display *priority ordering* — it does **not** gate fill. The actual price floor lives in the network's own backend.
 
@@ -293,9 +293,9 @@ All networks bid simultaneously; highest bid wins.
 - Smaller regional networks: often waterfall-only
 - 国内: 实时竞价 (RTB/Header Bidding) 推广缓慢，受限于各平台之间的竞价协议和数据互通
 
-**Server-side (S2S) vs client-side (C2S) bidding [³]:** each bidding network integrates one way or the other (some support both). The distinction is transparent to placement strategy — you just integrate the right SDK version — but matters for debugging: S2S bids resolve server-side (Meta, AdMob, Mintegral, Pangle, Unity, ironSource, Vungle, Bigo, Yandex, TopOn ADX); C2S resolves on-device (Helium/Chartboost, Huawei, Verve, TapTap, APS, Kwai); 优量汇/快手/百度/Sigmob/InMobi support both.
+**Server-side (S2S) vs client-side (C2S) bidding [3]:** each bidding network integrates one way or the other (some support both). The distinction is transparent to placement strategy — you just integrate the right SDK version — but matters for debugging: S2S bids resolve server-side (Meta, AdMob, Mintegral, Pangle, Unity, ironSource, Vungle, Bigo, Yandex, TopOn ADX); C2S resolves on-device (Helium/Chartboost, Huawei, Verve, TapTap, APS, Kwai); 优量汇/快手/百度/Sigmob/InMobi support both.
 
-**Bidding-floor caution [³]:** setting a竞价底价 (bidding floor) filters out wins below it — which directly **lowers bidding fill and revenue**. Leave bidding uncapped during ramp; only introduce a bidding floor once monetization is stable. How it resolves each auction: a winning bid above the floor joins the waterfall ordering; a winning bid below the floor is dropped and the slot waits for the next load. A bidding source's *request* count is normally lower than its *bid* count — once it wins the auction it only fires an actual request if no higher waterfall layer already filled.
+**Bidding-floor caution [3]:** setting a竞价底价 (bidding floor) filters out wins below it — which directly **lowers bidding fill and revenue**. Leave bidding uncapped during ramp; only introduce a bidding floor once monetization is stable. How it resolves each auction: a winning bid above the floor joins the waterfall ordering; a winning bid below the floor is dropped and the slot waits for the next load. A bidding source's *request* count is normally lower than its *bid* count — once it wins the auction it only fires an actual request if no higher waterfall layer already filled.
 
 ### Hybrid (Recommended Default)
 
@@ -334,7 +334,7 @@ App start → SDK init → Check for ad config strategy
 
 **Optional 智能混排:** 结合平台特点和实际填充情况，灵活设置优化策略，对 waterfall 和 bidding 结果进行二次排序，最大化每次展示收入。
 
-### Parallel Requests (并行请求) [³]
+### Parallel Requests (并行请求) [3]
 
 Instead of strictly serial top-down requests, fire N sources at once to cut fill latency and pre-cache for back-to-back placements.
 
@@ -343,13 +343,13 @@ Instead of strictly serial top-down requests, fire N sources at once to cut fill
 - **Recommended 2–3, never more than 5.** Over-requesting wastes bandwidth and, more importantly, requesting-but-not-showing makes networks judge your inventory as low-utilization and **downrank the placement** (lowering future fill and eCPM). Mediation caches the unshown ad to partly offset this.
 - **When to use:** many layers (15+), frequent/short-interval placements, or poor-network users.
 
-### Backup Ads (兜底广告) [³]
+### Backup Ads (兜底广告) [3]
 
 A backup source runs **in parallel with (not after) the waterfall** (错峰并行策略): if the waterfall fills, the higher-priced waterfall ad shows; if it doesn't, the backup shows. Configure it on a no-floor network placement. This raises overall fill (more parallel chances) and shortens fill latency, but does **not** guarantee 100% fill — a network can still decline a low-value user. Distinct from a plain no-floor *bottom waterfall layer*, which only fills after higher layers fail.
 
 For splash specifically: combine an SDK-preset策略 (hardcoded fallback placement ID) with a backup source so the first cold-launch impression — which otherwise waits on a config fetch and often times out — still has an ad to show, while normal sessions run the full parallel waterfall.
 
-### Traffic Grouping (流量分组) [³]
+### Traffic Grouping (流量分组) [3]
 
 Segment users into groups, each with its own waterfall — the core mechanism of精细化 (fine-grained) monetization. Group by: geo, city, date/hour/timezone, network type, app/SDK/OS version, device id/type/brand, install time, channel/sub-channel, IDFA status, install source, cold-start, user-value bucket, or custom key-value rules (e.g. `age≥18 & network=bytedance,tencent`). Rules within one group are AND-ed.
 
@@ -358,7 +358,7 @@ Segment users into groups, each with its own waterfall — the core mechanism of
 - **Canonical use — geo-tiered layering:** T1 30–40 layers, T2 20–30, T3 10–20. Split by your actual install distribution (e.g. dedicated Indonesia and Brazil groups if each is ~40% of users).
 - channel / sub-channel / custom-rule grouping require the client to pass the field and ship a release; all other dimensions are console-only.
 
-### Display Frequency Control (展示频次控制) [³]
+### Display Frequency Control (展示频次控制) [3]
 
 Two independent levels: **ad-unit (placement) level** and **ad-source level**, each with hourly cap / daily cap / interval-seconds. All caps are local to the device (reset on reinstall). Uses:
 - **Quality lever where floors aren't available:** capping a source's impressions raises per-impression quality and indirectly lifts its eCPM, and serves as a poor-man's layering test.
@@ -488,7 +488,7 @@ Variant B (test):     freq cap 1/3min,  ARPDAU $0.018,  D7 retention 35%
    Decision: ship if LTV_B > LTV_A, else roll back.
 ```
 
-### A/B Test Mechanics & Pitfalls (Mediation Platforms) [³]
+### A/B Test Mechanics & Pitfalls (Mediation Platforms) [3]
 
 - **Two test scopes:** *placement A/B* (test waterfall configs on one or more ad units) vs *traffic-group A/B* (test on a single traffic group). Up to ~10 arms.
 - **Read estimated metrics, not API metrics.** A/B arms split *traffic*, but the network's API revenue is reported at the whole-placement level and is **not** split per arm — inside both a 60/40 arm the same placement's 收益API shows the full undivided number. Compare 预估收益 / 预估eCPM / 预估ARPU across arms instead.
@@ -629,7 +629,7 @@ Full two-sided diagnostic framework:
 
 排查：检查广告埋点深度（被动广告的触发链路 vs 主动广告的用户选择率）、缓存过期时间、UI 遮挡等。展示率不应长期过低。注意：加了预加载后展示率会下降，这是合理的（提前加载的广告未必都展示），对收益是正向的。
 
-### Problem: Revenue Moved — Decomposition Walk [³]
+### Problem: Revenue Moved — Decomposition Walk [3]
 
 总收益 = 人均收益 × DAU；人均收益 = 人均展示次数 × eCPM / 1000；人均展示次数 = 人均请求次数 × 填充率 × 展示率. Walk the tree top-down, isolating which leaf moved:
 
@@ -643,7 +643,7 @@ Full two-sided diagnostic framework:
 
 Rule: front-end issues need buy-side fixes; back-end issues need mediation/product fixes. Always split by app version to rule out a release regression (if all channels drop on the same version, it's the version).
 
-### Problem: Display Gap (展示Gap) > 15% [³]
+### Problem: Display Gap (展示Gap) > 15% [3]
 
 展示Gap = (SDK展示 − 展示API) / 展示API. First confirm both sides use the **same timezone** and that the API pull window has passed (API data is next-day).
 
@@ -653,11 +653,11 @@ Rule: front-end issues need buy-side fixes; back-end issues need mediation/produ
   - Splash must cover ≥ 75% of screen and play the full 5s (or be skipped); a bottom logo bar can't eat into that 75%.
   - Don't obscure, distort, or blur creative.
 
-### Insight: Low-Price Source Out-Shows High-Price Source [³]
+### Insight: Low-Price Source Out-Shows High-Price Source [3]
 
 Impression count depends on **fill rate × eCPM, not eCPM alone**. A source at eCPM $1000 / 1% fill wins ~1 impression per 100 requests; a $1 / 100% fill source takes the other ~99. Low-price-but-high-fill sources naturally accumulate more impressions — this is correct waterfall behavior, not a bug. Judge each layer by revenue contribution, not impression share.
 
-### Insight: Bidding Win-Rate High but Show-Rate Low [³]
+### Insight: Bidding Win-Rate High but Show-Rate Low [3]
 
 Bidding win and bidding show are different stages. A bidding source can win the auction (its bid joins the waterfall) yet still not show if a higher-priced waterfall layer fills first by the time the request fires. Benchmark a bidding source's show-rate against a **regular waterfall layer at a similar price** in the same app — not against another network or a far-off price.
 
@@ -724,7 +724,7 @@ Bidding win and bidding show are different stages. A bidding source can win the 
 - **预加载:** 每条广告源自动缓存 2 条，缓存 30 分钟过期；单条广告源连续 6 次请求失败自动跳过
 - **国内市场份额:** 移动广告联盟领域领先，主要竞对为优量汇、快手
 
-### TopOn (聚合平台) [³]
+### TopOn (聚合平台) [3]
 
 A mediation/aggregation platform (not a demand network) — one SDK fronts 40+ global and China networks; positioned for developers who want China + global coverage without integrating each SDK directly. Claims 10,000+ clients, 30,000+ apps, 30B daily ad requests. Owns **TopOn ADX** (a demand source, network_firm_id 66) that needs **no separate SDK or app release** — toggle it on in the console.
 
@@ -736,7 +736,7 @@ A mediation/aggregation platform (not a demand network) — one SDK fronts 40+ g
 - **Console-built tooling** the skill maps to standard ops: 漏斗分析 (funnel), 留存价值/LTV, 用户行为 (frequency & per-eCPM-bucket distribution), 分小时 (hourly), 数据预警 (alerts), A/B 测试, 交叉推广 + 直投广告.
 - Reporting timezone defaults to UTC+8 (RMB accounts) or UTC (USD accounts); each network's API returns its own timezone — a frequent source of cross-platform GAP.
 
-### Cross-Promotion & Direct Ads (交叉推广 & 直投广告) [³]
+### Cross-Promotion & Direct Ads (交叉推广 & 直投广告) [3]
 
 Two levers that break the third-party-network revenue ceiling by selling/serving your own inventory:
 
@@ -744,7 +744,7 @@ Two levers that break the third-party-network revenue ceiling by selling/serving
 - **Direct ads (直投广告):** serve *direct-advertiser* deals with proper budget/impression-budget control, structured as 广告组 > 广告计划 > 创意. The advertiser's spend becomes your revenue directly — a path toward independent commercialization beyond network arbitrage. Use when you need impression-budget pacing.
 - For both, TopOn's own server-side reward callback applies (network_firm_id: ADX 66, direct 67, cross-promo 35); for third-party networks prefer the network's own S2S reward callback.
 
-### Data Alerts (数据预警) [³]
+### Data Alerts (数据预警) [3]
 
 Set monitoring rules on any dimension (account/app/placement/source/network/format) × metric (收益, 展示, eCPM, DAU, DEU, 渗透率, 展示/DAU, 填充, Gap…), comparing the latest day vs *last-week-same-day*, *prior day*, or a *fixed threshold* (by value or %). Delivered by in-app message + email on the schedule you set. Since API data lands at different times per network, set API-metric alert times after that network's pull window. A practical baseline: alert on any app-level estimated-revenue move >20% vs prior day. Pairs with the "单日波动 > 20% 需排查" ops checklist rule below.
 
@@ -899,42 +899,42 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 ## Data Sources
 
 **引用标记说明:**
-- `[1]` = 穿山甲官方 — https://www.csjplatform.com/growthcenter/6101274400195d0046c2731d
-- `[2]` = 36氪/Alpha Engineer AppLovin分析 — https://www.36kr.com/p/3480808267798659
-- `[³]` = TopOn 官方帮助中心 — https://help.toponad.net/cn （聚合平台机制、流量分组、头部竞价、漏斗分析、数据排查、A/B测试、交叉推广/直投）
+- `[1]` = [穿山甲官方 · 成长中心](https://www.csjplatform.com/growthcenter/6101274400195d0046c2731d)
+- `[2]` = [36氪 / Alpha Engineer · AppLovin 分析](https://www.36kr.com/p/3480808267798659)
+- `[3]` = TopOn 官方帮助中心（**按主题分文档，见下方 TopOn 表的具体链接**，不止首页）
 - `[*]` = 行业经验值（已从正文移除，改为相对排序/方法描述，详见下方"行业经验数据（已移除）"）
 
 ### 穿山甲 (CSJ / Pangle-Domestic) 官方资料
 
 | 数据点 | 来源 |
 |--------|------|
-| 收益公式拆解、展示率/点击率/转化率优化方法论 | https://www.csjplatform.com/growthcenter/6101274400195d0046c2731d |
+| 收益公式拆解、展示率/点击率/转化率优化方法论 | [成长中心 · 收益方法论](https://www.csjplatform.com/growthcenter/6101274400195d0046c2731d) |
 | 广告有效期（开屏3h/其他1h）、预加载时机选择、安装提示提升3倍转化率、创意区域缩短转化路径 | 同上 |
-| 穿山甲广告样式介绍（开屏/Banner/插屏/激励视频/原生） | https://www.csjplatform.com/growthcenter/61010a9cefaa39004d1c0e16 |
-| 穿山甲休闲游戏商业化发行指南（GroMore聚合优化策略） | https://www.csjplatform.com/growthcenter/6126410ed00c3f00549ff71b |
-| 穿山甲官网 — 工具行业解决方案 | https://www.csjplatform.com/ |
-| GroMore 智能管家、变现自动化 | https://www.csjplatform.com/growthcenter（2024-01-03 文章） |
+| 穿山甲广告样式介绍（开屏/Banner/插屏/激励视频/原生） | [广告样式](https://www.csjplatform.com/growthcenter/61010a9cefaa39004d1c0e16) |
+| 穿山甲休闲游戏商业化发行指南（GroMore聚合优化策略） | [GroMore 发行指南](https://www.csjplatform.com/growthcenter/6126410ed00c3f00549ff71b) |
+| 穿山甲官网 — 工具行业解决方案 | [官网](https://www.csjplatform.com/) |
+| GroMore 智能管家、变现自动化 | [成长中心](https://www.csjplatform.com/growthcenter)（2024-01-03 文章） |
 
 ### AppLovin / MAX
 
 | 数据点 | 来源 |
 |--------|------|
-| IGA市场份额28%（全球第一）、iOS 43%、AppLovin发展历程、AXON 2.0 引擎（匹配效率+300%/ROAS+58%）、Take rate 50-60%（vs Unity 30-35%）、2025年战略转型（出售游戏业务/Q2收入$12.59亿/EBITDA利润率81%）、生态位（补量渠道 vs Meta/Google核心渠道）、浑水做空与电商客户流失率23% | https://www.36kr.com/p/3480808267798659 — 「一页纸」讲透美股公司之：AppLovin, Alpha Engineer / 费斌杰, 2025-09-25 |
-| AppLovin 官方 | https://www.applovin.com/ |
+| IGA市场份额28%（全球第一）、iOS 43%、AppLovin发展历程、AXON 2.0 引擎（匹配效率+300%/ROAS+58%）、Take rate 50-60%（vs Unity 30-35%）、2025年战略转型（出售游戏业务/Q2收入$12.59亿/EBITDA利润率81%）、生态位（补量渠道 vs Meta/Google核心渠道）、浑水做空与电商客户流失率23% | [36氪 ·「一页纸」讲透 AppLovin](https://www.36kr.com/p/3480808267798659)（Alpha Engineer / 费斌杰, 2025-09-25） |
+| AppLovin 官方 | [applovin.com](https://www.applovin.com/) |
 
-### TopOn (聚合平台) 官方资料 [³]
+### TopOn (聚合平台) 官方资料 [3]
 
 | 数据点 | 来源 |
 |--------|------|
-| 聚合平台概况、40+ 广告平台清单、Bidding S2S/C2S 对接方式、各平台报表时区 | https://help.toponad.net/cn/docs/2KR6QU |
-| 排序价格 vs 底价、自动价格、兜底广告、同价格展示概率、流量分组维度、自动创建广告源 | https://help.toponad.net/cn/docs/cXus5n ; https://help.toponad.net/cn/docs/KjVUSq |
-| 头部竞价原理、支持竞价的平台及竞价底价 | https://help.toponad.net/cn/docs/dfnwQG |
-| 瀑布流结构参考、精细化分层、每层填充率纪律、并行请求、展示频次控制 | https://help.toponad.net/cn/docs/bUh0Id ; https://help.toponad.net/cn/docs/QXxkrR ; https://help.toponad.net/cn/docs/eUCSzO |
-| 漏斗分析（应用启动→展示→点击各节点转化率与排查） | https://help.toponad.net/cn/docs/qlHqYM |
-| 数据来源（三方API vs 统计）、展示Gap排查、有效展示标准 | https://help.toponad.net/cn/docs/Z4zsF6 ; https://help.toponad.net/cn/docs/5e6DnV |
-| 收益变动分解排查（DAU/人均请求/填充率/展示率/eCPM 五因子） | https://help.toponad.net/cn/docs/cdsQvH ; https://help.toponad.net/cn/docs/SxzgbM |
-| A/B 测试（预估口径、AABB、辛普森悖论、设备粘性分配） | https://help.toponad.net/cn/docs/PqmmHP |
-| 交叉推广 & 直投广告、数据预警、留存价值/用户行为/分小时报表 | https://help.toponad.net/cn/docs/Popzgt ; https://help.toponad.net/cn/docs/LQgwMA ; https://help.toponad.net/cn/docs/p8JTEN |
+| 聚合平台概况、40+ 广告平台清单、Bidding S2S/C2S 对接方式、各平台报表时区 | [概况](https://help.toponad.net/cn/docs/2KR6QU) |
+| 排序价格 vs 底价、自动价格、兜底广告、同价格展示概率、流量分组维度、自动创建广告源 | [①](https://help.toponad.net/cn/docs/cXus5n)、[②](https://help.toponad.net/cn/docs/KjVUSq) |
+| 头部竞价原理、支持竞价的平台及竞价底价 | [头部竞价](https://help.toponad.net/cn/docs/dfnwQG) |
+| 瀑布流结构参考、精细化分层、每层填充率纪律、并行请求、展示频次控制 | [①](https://help.toponad.net/cn/docs/bUh0Id)、[②](https://help.toponad.net/cn/docs/QXxkrR)、[③](https://help.toponad.net/cn/docs/eUCSzO) |
+| 漏斗分析（应用启动→展示→点击各节点转化率与排查） | [漏斗分析](https://help.toponad.net/cn/docs/qlHqYM) |
+| 数据来源（三方API vs 统计）、展示Gap排查、有效展示标准 | [①](https://help.toponad.net/cn/docs/Z4zsF6)、[②](https://help.toponad.net/cn/docs/5e6DnV) |
+| 收益变动分解排查（DAU/人均请求/填充率/展示率/eCPM 五因子） | [①](https://help.toponad.net/cn/docs/cdsQvH)、[②](https://help.toponad.net/cn/docs/SxzgbM) |
+| A/B 测试（预估口径、AABB、辛普森悖论、设备粘性分配） | [A/B 测试](https://help.toponad.net/cn/docs/PqmmHP) |
+| 交叉推广 & 直投广告、数据预警、留存价值/用户行为/分小时报表 | [①](https://help.toponad.net/cn/docs/Popzgt)、[②](https://help.toponad.net/cn/docs/LQgwMA)、[③](https://help.toponad.net/cn/docs/p8JTEN) |
 
 ### 行业经验数据（已移除）
 
@@ -948,7 +948,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 - A/B 测试的具体时长（7–14 天）与样本量门槛（5 万 DAU/组）
 - 频次/刷新/广告位数量等零散经验值（1 次/3–5 分钟、30–120s 刷新、≥30s 间隔、按屏数定广告位数等）
 
-**保留的数字**均可追溯到 `[1]` 穿山甲、`[2]` 36氪、`[³]` TopOn（如填充 ≥90%/层 ≥1%、T1/T2/T3 分层数量、并行请求 2–3/≤5、展示 Gap 15%、广告有效期 3h/1h 等）。待找到可引用的权威基准报告（如 Business of Apps 等年度基准）后，再补回带精确出处的绝对值。
+**保留的数字**均可追溯到 `[1]` 穿山甲、`[2]` 36氪、`[3]` TopOn（如填充 ≥90%/层 ≥1%、T1/T2/T3 分层数量、并行请求 2–3/≤5、展示 Gap 15%、广告有效期 3h/1h 等）。待找到可引用的权威基准报告（如 Business of Apps 等年度基准）后，再补回带精确出处的绝对值。
 
 ## Verification Checklist
 
