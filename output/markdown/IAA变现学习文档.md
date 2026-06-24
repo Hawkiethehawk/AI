@@ -503,7 +503,7 @@ LTV             = ARPDAU × 平均留存天数
 
 ---
 
-*本文整理自 `iaa-monetization-expert` skill v1.3.3。*
+*本文整理自 `iaa-monetization-expert` skill v1.3.4。*
 
 ## 数据来源
 

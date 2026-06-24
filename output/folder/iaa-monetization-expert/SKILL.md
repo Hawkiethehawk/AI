@@ -1,7 +1,7 @@
 ---
 name: iaa-monetization-expert
 description: Use when discussing IAA (in-app advertising) monetization for utility/tool apps — ad formats, mediation, eCPM optimization, waterfall vs bidding, ad placement, metrics analysis, A/B testing, funnel diagnostics. Covers AdMob, MAX, ironSource, Unity Ads, Meta Audience Network, Pangle, plus China-market networks (CSJ/Pangle-Domestic, YLH, Kuaishou, Baidu) and the TopOn mediation platform (sort price, backup ads, parallel requests, traffic grouping, S2S/C2S bidding, funnel analysis).
-version: 1.3.3
+version: 1.3.4
 author: Hermes Agent
 license: MIT
 metadata:
@@ -17,6 +17,8 @@ metadata:
 In-app advertising (IAA) is the primary revenue model for free utility and tool applications. This skill provides the conceptual framework and tactical knowledge for optimizing ad revenue in tools (cleaners, calculators, scanners, converters, file managers, VPNs, launchers, etc.) where user sessions are task-driven and typically short.
 
 Core premise: ad revenue = impressions × eCPM / 1000. Optimization targets either increasing qualified impressions or raising eCPM, constrained by retention and user experience trade-offs.
+
+> **Source markers (used throughout):** `[1]` = 穿山甲官方 · `[2]` = 36氪 AppLovin 分析 · `[³]` = TopOn 官方帮助中心 (full links in the Data Sources section at the end). Unmarked content is general formula/concept/structural fact (revenue formula, funnel structure, relative orderings). Absolute benchmark values with no single authoritative source have been removed in favour of relative orderings or method descriptions — see "行业经验数据（已移除）".
 
 ## When to Use
 
@@ -222,10 +224,10 @@ The single most actionable diagnostic for a mediation SDK. Every impression pass
 
 ### Network Selection Heuristic
 
-1. Start with AdMob + 2–3 networks matching top-3 geos (domestic: 穿山甲 + 优量汇 as baseline)
+1. Start with AdMob + a few networks matching top-3 geos (domestic: 穿山甲 + 优量汇 as baseline)
 2. Add networks one at a time; measure incremental lift
-3. Drop networks that contribute < 3% of revenue after 30 days
-4. Network count > 7 rarely adds incremental value; adds SDK bloat. A single integration generally wants 5–8 networks across floor + bidding layers to stabilize fill and eCPM.
+3. Drop networks that contribute negligible revenue after a fair trial window
+4. Keep the network count lean — too many rarely adds incremental value and inflates SDK bloat; a single integration wants enough networks across floor + bidding layers to stabilize fill and eCPM, no more.
 
 **Geo network shortlist [³] (via a mediation platform; order not significant):**
 
@@ -311,7 +313,7 @@ Bidding instances in parallel pool; waterfall as fallback tail.
 - Put all bidding-capable networks in bidding pool
 - Waterfall tail: 1–3 non-bidding networks
 - Floor in waterfall tail: CPM floor of bottom bidding eCPM × 0.7
-- Monitor: if bidding pool fill rate < 85%, waterwall too shallow — add networks
+- Monitor: if bidding pool fill rate runs low, waterfall too shallow — add networks
 
 ### 自建聚合预加载逻辑 (Custom Mediation Preload Logic)
 
@@ -625,7 +627,7 @@ Full two-sided diagnostic framework:
 
 过多广告请求成功但不展示（展示率低）的后果：广告平台判定资源利用率低→降低代码位权重→影响后续填充率和 eCPM。
 
-排查：检查广告埋点深度（被动广告的触发链路 vs 主动广告的用户选择率）、缓存过期时间、UI 遮挡等。展示率不应长期低于 10%。注意：加了预加载后展示率降到 40–60% 是合理的（提前加载的广告未必都展示），对收益是正向的。
+排查：检查广告埋点深度（被动广告的触发链路 vs 主动广告的用户选择率）、缓存过期时间、UI 遮挡等。展示率不应长期过低。注意：加了预加载后展示率会下降，这是合理的（提前加载的广告未必都展示），对收益是正向的。
 
 ### Problem: Revenue Moved — Decomposition Walk [³]
 
@@ -682,10 +684,12 @@ Bidding win and bidding show are different stages. A bidding source can win the 
 - Default mediation for most apps. Largest demand pool.
 - Bidding: enable for all networks that support it
 - eCPM floors: Google-optimized floors auto-adjust; manual override for specific geos when needed
-- Ad units: create per-format, per-geo when geo variance > 3×
+- Ad units: create per-format, per-geo when geo eCPM variance is large
 - Key metric: "optimization score" in AdMob dashboard
 
-### MAX (AppLovin)
+### MAX (AppLovin) [2]
+
+> All quantitative figures in this subsection (market share, AXON metrics, take rate, financials) are sourced to 36氪 / Alpha Engineer `[2]`.
 
 - Third-party mobile ad market leader: IGA market 28% share (vs Google AdMob 27%, Unity 12%); iOS 43% share
 - **核心模块:** AppDiscovery (投放) + ALX (交易) + **MAX (竞价/聚合)** + Adjust (归因收购于2021，全球第二大归因平台)
@@ -772,7 +776,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 - 聚合综合管理面板：每日检查填充率、eCPM、展示率
 - 广告位数据：分广告位分 geo 查看人均展示、eCPM
 - 异常标记：单日波动 > 20% 需排查原因
-- 版本监控：新版本上线后 48h 内重点监控广告数据
+- 版本监控：新版本上线后一段时间内重点监控广告数据
 - 竞品监控：周期性收集竞品广告设计变化
 
 ## Ad Frequency and Repetition
@@ -787,25 +791,29 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 
 ## Privacy and Compliance
 
+> Directional impacts only. The magnitude of each eCPM drop has **no single authoritative source** (varies by vertical/geo/year) — measure your own before/after, don't quote a fixed percentage.
+
 ### iOS ATT (App Tracking Transparency)
 
-- IDFA availability: 30–50% in 2025 depending on app category and region
-- Without IDFA: personalized ads limited; eCPM drops 15–40% for affected users
+- IDFA availability is limited (user must opt in), varying by app category and region
+- Without IDFA: personalized ads limited; affected users' eCPM drops noticeably
 - SKAdNetwork: conversion value management can recover some attribution; does not directly recover eCPM
 
 ### GDPR / CCPA
 
 - Consent management platform (CMP) required for EU/EEA and California users
-- Non-consented users: non-personalized ads only; eCPM roughly 50–70% of personalized ads
+- Non-consented users: non-personalized ads only; eCPM materially lower than personalized
 - IAB TCF 2.2 compliance required for EU demand sources
 
 ### COPPA / Child-Directed Apps
 
 - Ad serving limited to child-safe inventory; networks severely restricted
-- eCPM drops 60–80% vs non-child-directed
+- eCPM drops sharply vs non-child-directed
 - If tool is "general audience but used by children," configure age-gating, not COPPA flag
 
 ## New Ad Operator Learning Path (新人培训路径)
+
+> 本节为团队内部培训 SOP；其中的数字（误差率 ≤10%、ROI ≥10%、1 个聚合 + 5 个产品等）为**示例培训目标，非行业基准**。
 
 三个月渐进式学习路径：
 
@@ -870,7 +878,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 
 19. **并行请求设太多.** 并行只影响请求不影响展示顺序；请求多但展示少 → 平台判定资源利用率低 → 代码位降权。并行 2–3 条，最多 5 条。
 
-20. **预加载后展示率下降就回滚.** 预加载会让展示率降到 40–60%，这是正常的（提前加载的广告未必都展示），但提升了用户展示机会，对收益是正向的。不要据此回滚预加载。
+20. **预加载后展示率下降就回滚.** 预加载会让展示率下降，这是正常的（提前加载的广告未必都展示），但提升了用户展示机会，对收益是正向的。不要据此回滚预加载。
 
 ## Quick Reference: Revenue Optimization Priority
 
@@ -944,7 +952,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 
 ## Verification Checklist
 
-- [ ] All ad units have per-geo configurations where geo eCPM variance > 3×
+- [ ] All ad units have per-geo configurations where geo eCPM variance is large
 - [ ] Floor prices reviewed recently (weekly cadence)
 - [ ] Bidding enabled for all bidding-capable networks
 - [ ] Interstitial frequency cap configured (≤ 1 per 3 minutes)
@@ -954,7 +962,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 - [ ] CMP configured for GDPR/CCPA regions
 - [ ] Analytics dashboard segments revenue by geo, platform, ad unit, and network
 - [ ] 展示率作为日常监控指标纳入 dashboard
-- [ ] 新版本上线后有 48h 广告数据监控流程
+- [ ] 新版本上线后有一段密切监控广告数据的流程
 - [ ] 广告埋点设计包含触发条件、频次限制、兜底逻辑三个要素
 - [ ] 默认流量分组 (catch-all) 未关闭且配有有效广告源
 - [ ] 每个广告位整体填充率 ≥ 90%，各层填充率 ≥ 1%
