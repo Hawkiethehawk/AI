@@ -1,7 +1,7 @@
 ---
 name: iaa-monetization-expert
 description: Use when discussing IAA (in-app advertising) monetization for utility/tool apps — ad formats, mediation, eCPM optimization, waterfall vs bidding, ad placement, metrics analysis, A/B testing, funnel diagnostics. Covers AdMob, MAX, ironSource, Unity Ads, Meta Audience Network, Pangle, plus China-market networks (CSJ/Pangle-Domestic, YLH, Kuaishou, Baidu) and the TopOn mediation platform (sort price, backup ads, parallel requests, traffic grouping, S2S/C2S bidding, funnel analysis).
-version: 1.3.2
+version: 1.3.3
 author: Hermes Agent
 license: MIT
 metadata:
@@ -87,11 +87,11 @@ eCPM = 广告主出价 × CTR × CVR × 1000
 
 | Metric | Definition | Healthy Range (Utility) |
 |--------|------------|------------------------|
-| **Fill Rate** | filled requests / total ad requests | ≥ 90% for Tier 1 geos |
-| **Show Rate / Render Rate** | impressions / filled responses | ≥ 85% |
+| **Fill Rate** | filled requests / total ad requests | ≥ 90% overall ad-unit (per TopOn layer discipline) |
+| **Show Rate / Render Rate** | impressions / filled responses | Higher is better; chronically low — or high-fill-but-low-show — gets the placement downranked |
 | **Impression Rate** | impressions / ad requests | = fill rate × show rate |
-| **CTR** (click-through rate) | clicks / impressions | 0.5–3% (banner), 3–10% (interstitial), 10–30% (rewarded) |
-| **Fill Latency** | avg time from ad request to filled response | < 10s for video; < 2s for display. Track per-tier; high latency on a tier signals waterfall bloat. |
+| **CTR** (click-through rate) | clicks / impressions | Relative order: rewarded > interstitial > banner (absolute benchmarks vary by platform/geo/vertical — use your own dashboard) |
+| **Fill Latency** | avg time from ad request to filled response | Shorter is better; video slower than display due to file size; high latency on a tier signals waterfall bloat. |
 
 **Show Rate Warning:** 过多请求成功但不展示的广告会导致广告平台判定资源利用率过低，降低该代码位的权重，进一步影响填充率和 eCPM。
 
@@ -108,7 +108,7 @@ eCPM = 广告主出价 × CTR × CVR × 1000
 
 - eCPM drop with stable impressions = network-side (seasonality, bidder behavior, ad quality)
 - eCPM drop with impression drop = fill rate issue (waterfall configuration, network outage)
-- Impressions up, eCPM down = possible over-exposure diluting bid density; also: rapid banner refresh (under 30s) inflates low-value impressions
+- Impressions up, eCPM down = possible over-exposure diluting bid density; also: overly rapid banner refresh inflates low-value impressions
 - ARPDAU flat while DAU grows = healthy scaling
 - ARPDAU declining while DAU grows = new user quality issue or market saturation
 - ARPU decline = check 频次 (frequency) and eCPM separately; 频次 issues are often buy-side or product bugs; eCPM issues are often network/fill/competition
@@ -158,24 +158,24 @@ The single most actionable diagnostic for a mediation SDK. Every impression pass
 ### Banner (MREC 300×250, Standard 320×50, Adaptive)
 
 - **Best for:** persistent UI surfaces (bottom bars, between list items)
-- **eCPM:** lowest (typically $0.10–1.50 Tier 1)
+- **eCPM:** lowest of the four formats (relative; absolute varies by platform/geo)
 - **UX cost:** low if placed correctly; high if intrusive
 - **Tool-specific:** bottom banner on calculators, converters, file browsers. Avoid on screens requiring precision touch (photo editors).
-- **Refresh rate:** 30–120s. Faster refresh raises impressions but lowers eCPM.
+- **Refresh rate:** faster refresh raises impressions but lowers eCPM.
 
 ### Interstitial (Full-Screen)
 
 - **Best for:** screen transitions, task completion, natural breaks
-- **eCPM:** medium ($2–8 Tier 1)
+- **eCPM:** medium, above banner (relative; absolute varies by platform/geo)
 - **UX cost:** high if mistimed
 - **Tool-specific:** after scan completes, after file conversion, after cleaning finishes. Never on app launch — causes immediate uninstall.
-- **Frequency cap:** 1 per 3–5 minutes. Max 3–4 per session. Default interval ≥ 20s; actual deployment often longer.
+- **Frequency cap:** limit interstitials per session and enforce a minimum interval between them; tune the exact cadence to your own retention data.
 - **Placement timing:** on "task done" screens, NOT during active task flow.
 
 ### Rewarded Video
 
 - **Best for:** unlocking features, removing time gates, premium actions
-- **eCPM:** highest ($5–20 Tier 1)
+- **eCPM:** highest of the four formats (relative; absolute varies by platform/geo)
 - **UX cost:** opt-in, near-zero
 - **Tool-specific:** unlock extra conversions, remove watermark, extend free trial feature, skip wait timer.
 - **Key insight for tools:** tools rarely have natural virtual currency hooks. Create synthetic value — "watch to unlock 10 more conversions today" works.
@@ -184,7 +184,7 @@ The single most actionable diagnostic for a mediation SDK. Every impression pass
 ### Native / Native Advanced
 
 - **Best for:** content feeds, lists, recommendations
-- **eCPM:** medium ($1–6 Tier 1)
+- **eCPM:** medium (relative; absolute varies by platform/geo)
 - **UX cost:** low when well-integrated
 - **Tool-specific:** useful in tools with content surfaces (news widgets, weather, recommendation screens). Most pure utility tools lack the content inventory for native ads to perform well.
 
@@ -242,12 +242,12 @@ The single most actionable diagnostic for a mediation SDK. Every impression pass
 Ordered list of networks by expected eCPM. Request cascades down until filled.
 
 **Pros:** full control over priority; predictable behavior; works with older networks.
-**Cons:** latency per hop (50–200ms per fallback); manual eCPM floors must be updated; suboptimal — highest bidder may sit below a non-filling network.
+**Cons:** latency per hop (more layers = slower); manual eCPM floors must be updated; suboptimal — highest bidder may sit below a non-filling network.
 
 **Waterfall configuration rules of thumb:**
-- CPM floors: set at 80–90% of actual 7-day average
-- Max 3–4 tiers per ad unit per geo (合理的分层在 10–20 层区间；可根据用户网络、填充率和 eCPM 表现适当增减)
-- Tier gap: ~20% between adjacent tiers
+- CPM floors: set from each source's **own recent measured eCPM**, not a guess (higher floor = lower fill; delivered eCPM tends to hug the floor)
+- 合理的分层在 10–20 层区间（TopOn）；可根据用户网络、填充率和 eCPM 表现适当增减
+- Leave a price gradient between adjacent tiers to avoid a big gap that strands traffic
 - Review floors weekly; automated floor optimization is table stakes in 2025+
 - CPM 底价设置后，广告平台交付的 eCPM 往往接近底价；底价越高，填充率越低
 
@@ -400,8 +400,8 @@ Two independent levels: **ad-unit (placement) level** and **ad-source level**, e
 
 1. **Task completion boundary.** Place interstitials immediately after the user's goal is met, never during goal pursuit.
 2. **Predictability.** User learns where ads appear. Random placement increases irritation and churn.
-3. **Minimum interaction distance.** After an ad, allow ≥ 30 seconds or ≥ 3 interactions before next ad.
-4. **First-session restraint.** Limit first-session interstitials to 1 or 0. First session is retention-critical.
+3. **Minimum interaction distance.** After an ad, leave a meaningful gap (time or interactions) before the next one — never back-to-back.
+4. **First-session restraint.** Minimize or avoid first-session interstitials. First session is retention-critical.
 5. **Exit intent ads.** Showing an ad when user presses back (exit intent) generates revenue from churning users but accelerates churn. Utility apps with strong retention should avoid exit-intent ads.
 6. **Rewarded placement value.** If the feature unlocked by a rewarded ad has no real user value, completion rate will be near-zero. Every rewarded placement must unlock a behavior the user demonstrably wants.
 7. **Main path penetration.** 梳理用户在应用内的主要路径，在主要路径上植入广告，能有效提升展示率。
@@ -409,34 +409,34 @@ Two independent levels: **ad-unit (placement) level** and **ad-source level**, e
 
 ### Ad Unit Count Guidelines
 
-- App with < 5 screens: 1–2 ad units
-- App with 5–10 screens: 2–4 ad units
-- App with > 10 screens: no more than ceiling(screens / 3) ad units
-- Each ad unit added dilutes impressions per unit, reducing per-unit eCPM from frequency capping and refresh mechanics
+- Fewer is better: more screens can carry more ad units, but keep the count lean
+- Each ad unit added dilutes impressions per unit, reducing per-unit eCPM from frequency capping and refresh mechanics — concentrate impressions on the high-value placements
 
 ## Geo Optimization
 
 ### eCPM Tier Classification [*]
 
-| Tier | Geos | Typical eCPM Range (Interstitial) |
-|------|------|----------------------------------|
-| **Tier 1** | US, CA, AU, UK, DE, JP, KR, CH, NO, SE, DK, NL | $3–10 |
-| **Tier 2** | FR, IT, ES, AT, BE, FI, IE, NZ, SG, HK, TW, AE | $1–4 |
-| **Tier 3** | BR, MX, TR, RU, ZA, PL, CZ, MY, TH | $0.30–1.50 |
-| **Tier 4** | IN, ID, PH, NG, PK, BD, VN, EG | $0.05–0.30 |
+| Tier | Geos | eCPM Relative Level |
+|------|------|---------------------|
+| **Tier 1** | US, CA, AU, UK, DE, JP, KR, CH, NO, SE, DK, NL | highest |
+| **Tier 2** | FR, IT, ES, AT, BE, FI, IE, NZ, SG, HK, TW, AE | high |
+| **Tier 3** | BR, MX, TR, RU, ZA, PL, CZ, MY, TH | medium |
+| **Tier 4** | IN, ID, PH, NG, PK, BD, VN, EG | lowest |
+
+> Absolute eCPM ranges per tier have no single authoritative source and drift over time/vertical — split your own dashboard by country and read the real numbers there.
 
 ### Geo-Specific Strategy
 
 - **Tier 1:** maximize eCPM — bidding, premium formats (rewarded), multi-network competition
-- **Tier 2:** maximize fill — hybrid mediation, 3–4 networks, tighter floors
+- **Tier 2:** maximize fill — hybrid mediation, multiple networks, tighter floors
 - **Tier 3:** maximize impressions — higher frequency caps, low floors, reward user actions to boost engagement
 - **Tier 4:** survival — low eCPM means high impression volume is the only lever. Consider rewarded video to boost per-user revenue; interstitials risk churn at these eCPMs
 
 ### Geo Waterfall Configuration
 
 - **Same ad unit, different geo = different waterfall.**
-  - Tier 1 geo: bidding pool only, floor at $3
-  - Tier 3 geo: hybrid, floor at $0.20, higher frequency
+  - Tier 1 geo: bidding pool only, higher floor
+  - Tier 3 geo: hybrid, low floor, higher frequency
 - **No geo data = take the hit.** Serving a Tier 4 waterfall to a Tier 1 user loses 10–30× revenue per impression.
 
 ### 开屏 eCPM as User Value Signal (Splash Ad as User Quality Proxy)
@@ -469,8 +469,8 @@ Two independent levels: **ad-unit (placement) level** and **ad-source level**, e
 
 ### Test Design
 
-- **Duration:** minimum 7 days; 14 days preferred for eCPM stability
-- **Sample:** minimum 50,000 DAU per variant for statistical significance on eCPM comparisons
+- **Duration:** long enough to smooth eCPM volatility (cover at least one full intra-week cycle)
+- **Sample:** large enough per variant to reach statistical significance on eCPM (eCPM is high-variance; size it from your own baseline variance)
 - **Primary metric:** ARPDAU (or revenue per user). NOT eCPM alone — eCPM can rise while impressions crash.
 - **Secondary metrics:** retention (D1, D7, D14), session count, session length, uninstall rate
 - **Guardrail:** uninstall rate increase > 5% relative = auto-fail
@@ -590,7 +590,7 @@ Variant B (test):     freq cap 1/3min,  ARPDAU $0.018,  D7 retention 35%
 
 | Check | Diagnostic |
 |-------|-----------|
-| Floors too high | Lower CPM floors 20% and observe 48h |
+| Floors too high | Lower CPM floors a tier and observe for a day or two |
 | Network outage | Check each network's dashboard for delivery drops |
 | SDK version | Outdated adapter or SDK version rejected by network |
 | Geo misconfiguration | Tier 4 geo with Tier 1 floors = zero fill |
@@ -836,7 +836,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 
 2. **Waterfall configuration drift.** Floors set 6 months ago are stale. Networks change; demand shifts. Weekly floor review is minimum viable frequency.
 
-3. **Too many ad networks.** SDK bloat inflates app size, increases crash rate, and adds maintenance overhead. Each network should justify its inclusion with ≥ 5% of revenue.
+3. **Too many ad networks.** SDK bloat inflates app size, increases crash rate, and adds maintenance overhead. Each network should justify its inclusion by its revenue contribution — prune the ones that don't.
 
 4. **Ignoring geo distribution.** Global average eCPM is meaningless. A spike in Tier 4 installs can look like an eCPM crash. Always segment by geo.
 
@@ -848,7 +848,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 
 8. **Refresh rate too aggressive.** Banner refresh under 30 seconds generates more impressions but each impression is lower-value (advertisers detect and bid down on rapid-refresh inventory). Net eCPM often drops enough to offset impression volume gain.
 
-9. **Testing with insufficient sample.** eCPM is high-variance. Tests with < 50,000 DAU per variant frequently produce false positives.
+9. **Testing with insufficient sample.** eCPM is high-variance. Under-powered tests (too few DAU per variant) frequently produce false positives.
 
 10. **Not segmenting by platform.** iOS and Android have different eCPM profiles, ATT impact, and network performance. Always split-platform in analysis.
 
@@ -894,7 +894,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 - `[1]` = 穿山甲官方 — https://www.csjplatform.com/growthcenter/6101274400195d0046c2731d
 - `[2]` = 36氪/Alpha Engineer AppLovin分析 — https://www.36kr.com/p/3480808267798659
 - `[³]` = TopOn 官方帮助中心 — https://help.toponad.net/cn （聚合平台机制、流量分组、头部竞价、漏斗分析、数据排查、A/B测试、交叉推广/直投）
-- `[*]` = 行业经验值，无单一确定来源，综合多家平台公开范围和社区共识
+- `[*]` = 行业经验值（已从正文移除，改为相对排序/方法描述，详见下方"行业经验数据（已移除）"）
 
 ### 穿山甲 (CSJ / Pangle-Domestic) 官方资料
 
@@ -928,27 +928,28 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 | A/B 测试（预估口径、AABB、辛普森悖论、设备粘性分配） | https://help.toponad.net/cn/docs/PqmmHP |
 | 交叉推广 & 直投广告、数据预警、留存价值/用户行为/分小时报表 | https://help.toponad.net/cn/docs/Popzgt ; https://help.toponad.net/cn/docs/LQgwMA ; https://help.toponad.net/cn/docs/p8JTEN |
 
-### 行业经验数据（无单一确定来源，综合行业共识）
+### 行业经验数据（已移除）
 
-以下数据基于多家广告网络和聚合平台的公开范围，无单一官方来源链接：
+为保证本 skill 中每个数字都有精确出处，原先一批**无单一权威来源的"行业经验值"已删除**，相关表述改为**相对量级排序或方法描述**（注明"以自己后台实测为准"）。被移除的绝对数值包括：
 
-| 数据类别 | 说明 |
-|----------|------|
-| eCPM Tier 区间（Tier 1 $3-10 / Tier 2 $1-4 / Tier 3 $0.30-1.50 / Tier 4 $0.05-0.30） | 综合 AdMob、MAX、ironSource 等平台 2024-2025 行业报告和开发者社区经验值 |
-| 广告格式 eCPM 区间（Banner $0.10-1.50 / Interstitial $2-8 / Rewarded $5-20 / Native $1-6） | 综合多家聚合平台公开 eCPM 基准 |
-| CTR 健康范围（Banner 0.5-3% / Interstitial 3-10% / Rewarded 10-30%） | 综合行业基准和平台建议阈值 |
-| 填充率 ≥90%、展示率 ≥85% | 行业通用健康基准线 |
-| 填充耗时 <10s（视频）/ <2s（图片） | 穿山甲 PPT 资料 + 行业共识 |
-| 瀑布流配置经验值（floor 80-90%均值、3-4 tiers、20% tier gap） | 行业运营最佳实践综合 |
+- 各地区 Tier 的绝对 eCPM 区间（Tier 1/2/3/4 美元区间）
+- 各广告形式的绝对 eCPM 区间（Banner / Interstitial / Rewarded / Native）
+- CTR 健康区间（各形式的百分比区间）
+- 展示率 ≥85% 阈值、填充耗时 <10s/<2s
+- 瀑布流底价折扣（均值的 80–90%）、相邻层价差（~20%）、3–4 tiers 经验值
+- A/B 测试的具体时长（7–14 天）与样本量门槛（5 万 DAU/组）
+- 频次/刷新/广告位数量等零散经验值（1 次/3–5 分钟、30–120s 刷新、≥30s 间隔、按屏数定广告位数等）
+
+**保留的数字**均可追溯到 `[1]` 穿山甲、`[2]` 36氪、`[³]` TopOn（如填充 ≥90%/层 ≥1%、T1/T2/T3 分层数量、并行请求 2–3/≤5、展示 Gap 15%、广告有效期 3h/1h 等）。待找到可引用的权威基准报告（如 Business of Apps 等年度基准）后，再补回带精确出处的绝对值。
 
 ## Verification Checklist
 
 - [ ] All ad units have per-geo configurations where geo eCPM variance > 3×
-- [ ] Floor prices reviewed within last 14 days
+- [ ] Floor prices reviewed recently (weekly cadence)
 - [ ] Bidding enabled for all bidding-capable networks
 - [ ] Interstitial frequency cap configured (≤ 1 per 3 minutes)
 - [ ] No interstitial on app-first-launch path
-- [ ] Each active network contributes ≥ 5% of total revenue (or has a documented strategic reason)
+- [ ] Each active network earns its place by revenue contribution (or has a documented strategic reason)
 - [ ] Rewarded placements unlock demonstrable user value
 - [ ] CMP configured for GDPR/CCPA regions
 - [ ] Analytics dashboard segments revenue by geo, platform, ad unit, and network
