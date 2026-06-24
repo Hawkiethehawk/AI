@@ -1,552 +1,332 @@
 # IAP 工具应用商业化运营入门到精通 · 学习文档
 
-> 面向工具/实用类 App（扫描、PDF、修图、文件管理、AI 工具、VPN、效率工具等）的**应用内购买变现（In-App Purchase, IAP）**学习资料。  
-> 本文基于 `iap-monetization-expert` skill 重新编排，把分散的知识点整理成一条可以顺着读下来的学习路径。  
-> 读完你应该能：看懂一张 IAP 数据看板、理解订阅生意的核心公式、设计一套工具 App 的付费墙与套餐结构，并在收入波动时定位到问题根因。
+> 面向工具/实用类 App 的**应用内购买变现（In-App Purchase）**。
+> 基于 `iap-monetization-expert` skill，涵盖订阅、买断、付费墙、定价、试用、留存、退款等全链路。
+> 读完你应能：看懂 IAP 数据看板、设计付费墙、诊断收入波动、管理订阅生命周期。
 
-> **数据来源标记（全文通用）：** [[1]](https://developer.apple.com/app-store/subscriptions/) = Apple 官方订阅文档 · [[2]](https://developer.android.com/google/play/billing/subscriptions) = Google Play Billing / Subscriptions 官方文档 · [[3]](https://www.revenuecat.com/state-of-subscription-apps/) = RevenueCat 2026 订阅报告 · [[4]](https://adapty.io/state-of-in-app-subscriptions/) = Adapty 2026 订阅报告。  
-> **未标记**的内容为通用公式 / 概念 / 结构性事实（如 LTV 公式、漏斗结构、相对方法论）。文中涉及会随时间变化的费率、政策、行业基准数字，都尽量附了原始网址。
+**数据来源：** `[1]` Apple 官方 · `[2]` Google Play 官方 · `[3]` RevenueCat · `[4]` Adapty。未标记为通用概念/公式。
 
 ---
 
 ## 0. 一张图理解整个生意
 
-IAA 生意的核心是 `展示次数 x eCPM`，而 IAP 生意的核心是：
+IAP 生意的核心不是"展示次数 × eCPM"（那是 IAA），而是：
 
-$$\text{IAP 收益} \approx \text{新增用户} \times \text{付费转化效率} \times \text{留存价值}$$
+```
+IAP 收益 ≈ 新增用户 × 付费转化效率 × 留存价值
+```
 
-如果写得更精确一点，对于订阅型工具应用，可以近似理解为：
+更精确（订阅制）：
 
-$$\text{LTV/install} = \text{付费墙触达率} \times \text{试用启动率} \times \text{试用转付费率} \times \sum(\text{各期续订留存} \times \text{净单价})$$
+```
+LTV/install = 付费墙触达率 × 试用启动率 × 试用转付费率 × Σ(各期续订留存 × 净单价)
+```
 
-- **LTV/install**：每个新增用户最终带来的净终身价值
-- **净单价**：不是毛收入，而是扣除平台佣金、退款、相关税费后的净 proceeds
-- **真正要优化的不是单点转化率，而是净 LTV**
+- **净单价** = 标价 − 商店佣金 − 退款 − 税
+- **要优化的不是单点转化率，而是净 LTV**
 
-> 贯穿全文的一句话：IAP 运营不是把用户“尽快付费”，而是在**不破坏信任和体验**的前提下，把每个新增用户的**净终身价值**做大。
+> 贯穿全文：IAP 运营不是"把用户尽快付费"，而是在不破坏信任和体验的前提下，把每个新增用户的净终身价值做大。
 
 ---
 
-## 1. 把订阅收入公式拆成一棵“收益树”
+## 1. LTV 分解树
 
-把 IAP 收入拆开，数字一动，就能知道该去哪个叶子找原因。这棵树是后面所有诊断的地基。
-
-```text
+```
                          LTV / install（净）
                                │
         ┌──────────────────────┼──────────────────────┐
-   付费墙触达率               试用/购买转化             留存价值（续订）
- (看到付费墙的用户占比)    ┌────────┴────────┐      ┌────────┴────────┐
-                       试用启动率      试用转付费率   各期续订留存    净单价
+   付费墙触达率              试用/购买转化             留存价值
+ (看到付费墙的用户占比)   ┌────────┴────────┐      ┌────────┴────────┐
+                      试用启动率      试用→付费率   各期续订留存    净单价
+                                                   (price−佣金−退款−税)
 ```
 
-串起来就是：
-
-$$\text{LTV/install} = \text{付费墙触达率} \times \text{试用启动率} \times \text{试用转付费率} \times \text{留存净价值}$$
-
-### 左半树：前端转化链路
-
-| 因子 | 含义 | 掉了通常因为什么 |
-|---|---|---|
-| **付费墙触达率** | 新增用户里有多少人真正看到了付费墙 | 付费墙埋太深、价值时刻触发不准、入口不明显 |
-| **试用启动率** | 看到付费墙的人里有多少人开始试用或发起购买 | 文案弱、价格过高、信任不足、套餐太复杂 |
-| **试用转付费率** | 试用用户里有多少人最终变成真实付费 | 试用期没体验到价值、提醒缺失、产品持续价值不足 |
-
-### 右半树：留存价值链路
-
-| 因子 | 你能控制吗 | 主要杠杆 |
-|---|---|---|
-| **续订留存** | 部分可控 | 产品持续价值、再触达、取消挽留、支付恢复 |
-| **净单价** | 部分可控 | 定价、地区本地化、套餐结构、平台费率档位、退款控制 |
-
-> 为什么要背这棵树：因为所有“收入掉了/涨了”的问题，最终都能落到某片叶子上。诊断 = 自顶向下走树，找到动了的叶子，再分清是前端（获量/转化）还是后端（留存/结算）问题。
+| 叶子 | 你能控吗 | 主要杠杆 |
+|------|---------|---------|
+| 付费墙触达率 | ✅ 高 | 付费墙位置、触发时机、onboarding 是否必经 |
+| 试用启动率 | ✅ 高 | 付费墙文案/价值呈现、是否需要信用卡 |
+| 试用→付费率 | ⚠️ 中 | 试用时长、价值送达、到期提醒 |
+| 续订留存 | ⚠️ 中 | 产品持续价值、被动流失挽回（dunning） |
+| 净单价 | ⚠️ 部分 | 定价/周期组合/佣金档位/退款/税 |
 
 ---
 
-## 2. 看懂数据：最容易混淆的两套口径
+## 2. 变现模型与套餐设计
 
-IAP 分析里，最容易犯的错不是“算错”，而是**口径混了**。
+| 模型 | 类型 | 工具 App 用法 |
+|------|------|--------------|
+| **自动续订订阅** | Auto-renewable | 解锁全部高级功能 + 去广告，主力模型 |
+| **一次性买断** | Non-consumable | "终身高级版"，做高价锚 |
+| **消耗型** | Consumable | 按次付费：N 次扫描/转换的点数包 |
+| **Freemium + 内购** | 混合 | 免费核心 + 付费墙锁高级，最常见 |
 
-| 口径 | 来源 | 用途 | 注意 |
-|---|---|---|---|
-| **商店/平台结算口径** | App Store Connect / Play Console / 财务对账 | 真正的钱，对账只认它 | 有延迟，含佣金、退款、税务处理 |
-| **实时分析口径** | RevenueCat / Adapty / 自建埋点 / BI | 用来做漏斗、试用、留存、版本分析 | 不等于最终财务入账 |
+**工具类典型打包：**
+- 去广告 + 高级功能捆绑订阅（最常见）
+- 使用上限解锁（免费每日 N 次，订阅无限）
+- 高级功能墙（OCR/批量/导出格式/云同步/无水印）
+- 试用→订阅（限免体验全功能 X 天）
 
-### Apple 侧
-
-Apple 自动续订订阅文档明确说明了 proceeds、订阅生命周期、Billing Grace Period 和订阅累计服务时长规则。[[1]](https://developer.apple.com/app-store/subscriptions/)
-
-### Google Play 侧
-
-Google Play 官方文档把订阅生命周期拆成 `active -> grace period -> account hold -> recovered / canceled`，并建议通过 RTDN 做后端事件驱动。[[2]](https://developer.android.com/google/play/billing/lifecycle/subscriptions)
-
-### 运营层结论
-
-1. **对账只认平台结算口径**
-2. **诊断优先看实时分析口径**
-3. **LTV 模型必须尽量贴近净 proceeds**
+**周期组合：** 周 / 月 / 年（+ 可选终身）。年订单价最高、留存最久，是 LTV 主力；周/月降低首次决策门槛但流失快。
 
 ---
 
-## 3. 关键指标速查
+## 3. 核心指标
 
-### 收入类
-
-| 指标 | 定义 | 作用 |
-|---|---|---|
-| **ARPU** | 总收入 / 全部用户 | 看每个用户整体变现效率 |
-| **ARPPU** | 总收入 / 付费用户 | 看每个付费用户贡献 |
-| **MRR** | 月度经常性收入 | 看订阅业务的存量健康度 |
-| **ARR** | 年化经常性收入 | 看中长期规模 |
-| **Proceeds** | 扣除佣金、退款、税后的净收入 | 财务和净 LTV 口径 |
-| **LTV/install** | 每个新增用户的净终身价值 | 运营总目标 |
-
-### 转化类
+### 转化与收入
 
 | 指标 | 定义 | 解读 |
-|---|---|---|
-| **付费墙触达率** | 看到付费墙 / 新增用户 | 产品是否把用户送到成交场景 |
+|------|------|------|
+| **付费转化率** | 付费用户 / 新增 | 整体变现效率 |
 | **试用启动率** | 启动试用 / 看到付费墙 | 付费墙吸引力 |
-| **付费转化率** | 付费用户 / 新增用户 | 总体成交效率 |
-| **试用转付费率** | 真实付费 / 试用启动 | 订阅经济最关键的一环 |
+| **试用→付费率** | 转为付费 / 启动试用 | 试用价值体现，订阅经济最关键一环 |
+| **ARPPU** | 总收入 / 付费用户 | 每付费用户价值 |
+| **LTV/install** | 见上述公式 | 所有取舍的最终裁判 |
+| **MRR** | 月度经常性收入 | 订阅存量健康度 |
 
-### 留存与流失类
+### 留存与流失
 
 | 指标 | 定义 | 解读 |
-|---|---|---|
-| **续订留存** | 第 N 期仍在订阅 / 首期付费 | 订阅业务真正的护城河 |
-| **主动流失** | 用户主动取消 | 通常是价值、价格、使用频率问题 |
-| **被动流失** | 扣款失败导致流失 | 通常靠 grace period / dunning 挽回 |
-| **恢复率** | 进入支付失败流程后成功恢复的占比 | 衡量支付恢复运营效果 |
-| **退款率** | 退款金额或笔数 / 总量 | 看误订、价值不符和信任问题 |
+|------|------|------|
+| **续订留存** | 第 N 期仍在订阅 / 首期付费 | LTV 的核心乘子 |
+| **主动流失** | 用户自行取消 | 价值不足、太贵、用完即走 |
+| **被动流失** | 扣款失败（卡过期/余额不足） | 常被忽视但占比可观，靠 dunning 挽回 |
+| **退款率** | 退款金额/总交易 | 过高 → 付费墙误导或价值不符 |
 
-### 一眼看穿指标关系
+### 结算口径 vs 实时估算
 
-- 付费墙触达率掉 = 触达/路径问题
-- 试用启动率掉 = 付费墙问题
-- 试用启动高但付费低 = 价值交付问题
-- 首期续订掉得厉害 = 产品持续价值或价格感知问题
-- Android 收入掉但新订没掉 = 先查 involuntary churn
-
-RevenueCat 2026 报告把 `Revenue per install`、`Trial conversion`、`Retention`、`Refund rate` 列为订阅业务核心指标，适合作为团队统一语言。[[3]](https://www.revenuecat.com/state-of-subscription-apps/)
+- **商店结算（App Store Connect / Play Console Proceeds）= 唯一的钱**：已扣佣金、退款、税，有延迟。
+- **订阅平台实时数据（RevenueCat/Adapty）= 漏斗分析用**：基于交易事件即时计算，是预估。永远用结算额对账。
 
 ---
 
-## 4. 工具 App 常见的 IAP 商品结构
-
-| 模式 | 典型做法 | 适合场景 |
-|---|---|---|
-| **自动续订订阅** | 解锁全部高级功能、去广告、去限制 | 扫描、PDF、修图、AI 工具、VPN |
-| **一次性买断** | 终身会员、单功能永久解锁 | 低频工具、价值边界清晰 |
-| **消耗型内购** | 次数包、额度包、点数包 | 使用量可计量的工具 |
-| **混合模式** | 订阅 + 去广告 + 次数包 | 同时存在长期和即时价值的产品 |
-
-工具类最常见的主流结构是：
-
-- 免费提供核心体验
-- 高级能力进订阅
-- 去广告并入高级版
-- 年订做主推套餐
-- 周订或月订做低门槛入口
-
----
-
-## 5. 付费墙设计：IAP 的“广告位”
-
-IAA 有广告位，IAP 有付费墙。它们的角色其实很像：都是“把价值转换成收入的界面”。
-
-### 5.1 常见付费墙类型
-
-| 类型 | 说明 | 适合 |
-|---|---|---|
-| **Onboarding 付费墙** | 引导流程中前置曝光 | 大流量、需快速筛选高意图用户 |
-| **情境付费墙** | 在价值时刻弹出 | 工具类最常见、转化质量通常更高 |
-| **限制触发付费墙** | 免费次数/导出/批量等上限触发 | 功能和次数边界清晰的工具 |
-| **设置页常驻入口** | “升级高级版”入口 | 低打扰补充触点 |
-| **取消挽留页** | 用户取消时给降档或优惠 | 降主动流失 |
-
-### 5.2 付费墙设计七原则
-
-1. 在价值时刻出现，而不是默认一开屏就怼脸
-2. 讲结果，不只讲功能
-3. 套餐越少越容易成交
-4. 默认高亮一个主推套餐
-5. 清楚说明价格、周期、自动续订
-6. 放置信任要素，如随时取消、隐私承诺、评价
-7. 提供恢复购买入口
-
-Apple 官方订阅页明确要求展示清晰的订阅条款，并提供恢复购买或登录已有订阅账户的路径。[[1]](https://developer.apple.com/app-store/subscriptions/)
-
-### 5.3 Hard paywall vs Freemium
-
-RevenueCat 2026 报告中的一个典型发现是：
-
-- hard paywall 的前期付费转化率约为 freemium 的 `5x`
-- 对比值为 `10.7% vs. 2.1%`
-- 但一年后两者留存几乎接近
-
-来源：[[3]](https://www.revenuecat.com/state-of-subscription-apps/)
-
-这说明：
-
-- 强付费墙确实能抬高前期转化
-- 但不代表它天然更优
-- 如果产品价值承接不住，短期转化优势未必能转成长期净 LTV
-
----
-
-## 6. 试用、优惠与 offer：降低门槛，不等于白送
-
-### 6.1 为什么工具类适合试用
-
-很多工具产品的 premium 价值不是“看一眼就懂”，而是要实际用几次：
-
-- OCR 的准确率
-- AI 工具的结果质量
-- PDF 批量处理效率
-- 去广告后的流畅体验
-
-这时试用就是让用户先感知价值，再接受扣费。
-
-### 6.2 试用的几个关键结论
-
-RevenueCat 2026 报告显示：
-
-- `55%` 的 3 天试用取消发生在 `Day 0`
-- `17+ days` 的试用转化率高于短试用，报告示例为 `42.5% vs. 25.5%`
-
-来源：[[3]](https://www.revenuecat.com/state-of-subscription-apps/)
-
-Adapty 2026 报告页显示：
-
-- `90% of trial starts happen on Day 0`
-
-来源：[[4]](https://adapty.io/state-of-in-app-subscriptions/)
-
-### 6.3 运营启发
-
-- 第一天必须完成 premium 价值交付
-- 试用和 onboarding 必须一起设计
-- 不要把“试用时长”当万能杠杆，很多时候真正的问题是价值送达太弱
-
-### 6.4 Apple / Google Play 官方能力
-
-- Apple 支持免费试用、pay as you go、pay up front、offer codes 等机制 [[1]](https://developer.apple.com/app-store/subscriptions/)
-- Google Play 通过 base plans 和 offers 管理试用与促销定价 [[2]](https://developer.android.com/google/play/billing/subscriptions)
-
----
-
-## 7. 定价与套餐：不是“贵不贵”，而是“净 LTV 最优”
-
-### 7.1 三种常见周期
-
-| 周期 | 优点 | 风险 |
-|---|---|---|
-| **周订** | 门槛低，启动快 | 流失快、退款风险高 |
-| **月订** | 相对平衡 | 有时两头不占优 |
-| **年订** | 长期 LTV 高 | 首次决策门槛高 |
-
-### 7.2 行业基准信号
-
-Adapty 2026 报告页给出的两个很有用的数据点：
-
-- 数据样本覆盖 `16,000 apps` 和 `$3B in subscription revenue`
-- 报告页写明 weekly subscriptions 贡献了 `56%` 的整体 app revenue
-
-来源：[[4]](https://adapty.io/state-of-in-app-subscriptions/)
-
-其 FAQ 页还给出 2025 全球中位价格：
-
-- `7.48/week`
-- `12.99/month`
-- `38.42/year`
-
-来源：[[4]](https://adapty.io/state-of-in-app-subscriptions/)
-
-### 7.3 定价四原则
-
-1. 不做全球统一价
-2. 先看净 LTV，再看转化率
-3. 提价要考虑老用户保护和舆情
-4. 套餐结构服务成交，不是为了“显得专业”
-
----
-
-## 8. 平台机制与基础设施
-
-### 8.1 Apple 侧
-
-Apple 官方页说明：
-
-- 自动续订订阅首年开发者通常获得 `70%`
-- 用户累计付费服务满一年后提升到 `85%`
-- 如果中断后在 `60 days` 内恢复，累计付费服务时长会继续算
-
-来源：[[1]](https://developer.apple.com/app-store/subscriptions/)
-
-Apple Small Business Program 官方页说明：
-
-- 符合条件的开发者，对付费 App 和 IAP 可适用 `15%` 佣金
-- 核心条件是 proceeds 不超过 `1 million USD`
-
-来源：
-
-- [Apple App Store Small Business Program](https://developer.apple.com/app-store/small-business-program/)
-
-### 8.2 Google Play 侧
-
-Google Play 官方帮助页说明：
-
-- 自动续订订阅的服务费为 `15%`
-
-来源：
-
-- [Google Play service fees](https://support.google.com/googleplay/android-developer/answer/112622?hl=en)
-
-Google Play 订阅生命周期文档说明：
-
-- grace period 期间保留权益
-- account hold 期间应阻断权益
-- 通过 RTDN 获取状态变化
-
-来源：
-
-- [Google Play subscription lifecycle](https://developer.android.com/google/play/billing/lifecycle/subscriptions)
-- [Google Play RTDN reference](https://developer.android.com/google/play/billing/rtdn-reference)
-
-### 8.3 订阅基础设施工具
-
-| 工具 | 定位 | 价值 |
-|---|---|---|
-| RevenueCat | 订阅后端 + 分析 + paywall | 快速接入、统一 entitlement、实验和报表 |
-| Adapty | 订阅后端 + paywall + A/B | 远程配置付费墙、实验与分群能力强 |
-| Superwall | 付费墙实验 | 偏 paywall 实验驱动 |
-| Qonversion | 订阅后端 + 分析 | entitlement 与分析整合 |
-
-这些工具的价值不是“替你赚钱”，而是减少收据校验、跨平台 entitlement、生命周期管理的工程复杂度。
-
----
-
-## 9. 中国市场
-
-### iOS
-
-- 中国区 App Store 的数字功能默认仍走 Apple IAP
-- 平台规则和全球 App Store 体系一致
-
-来源：
-
-- [Apple Auto-renewable subscriptions](https://developer.apple.com/app-store/subscriptions/)
-- [Apple App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
-
-### Android
-
-- 大陆 Android 不能直接等同于 Google Play Android
-- 多渠道分发、多渠道支付、多渠道 entitlement 是常态
-
-### 运营上的核心提醒
-
-1. Google Play Android 和大陆 Android 口径分开看
-2. 渠道政策和分成分开核对
-3. entitlement 设计尽量提前统一
-4. 如果涉及 Web / H5 / 小程序支付，单独写清平台政策风险
-
----
-
-## 10. 诊断手册：收入出问题时怎么查
-
-### 10.1 漏斗分析：最可操作的诊断方法
-
-顺着下面这条链路走：
-
-`install -> paywall reach -> trial start -> paid conversion -> renewal`
-
-### 10.2 自顶向下走“收益树”
-
-如果收入变动，就按这个路径排查：
-
-`收入 ≈ 新增 x 触达 x 启动 x 转付费 x 留存净价值`
-
-| 叶子 | 前端（获量侧）检查 | 后端（产品/变现侧）检查 |
-|---|---|---|
-| **新增** | 渠道质量、投放结构变化 | - |
-| **付费墙触达率** | 新用户意图变化 | 路径、入口、触发时机改了没 |
-| **试用启动率** | 流量构成变化 | 付费墙、价格、文案、套餐变了没 |
-| **试用转付费率** | 用户意图变化 | 试用期价值交付、提醒、产品质量 |
-| **续订留存** | 渠道质量差异 | 产品持续价值、取消率、支付恢复 |
-| **净单价** | geo / 平台结构变化 | 定价、费率档位、退款变化 |
-
-### 10.3 反直觉洞察
-
-- 试用启动率高，不代表生意健康
-- 周订收入高，不代表长期更优
-- 退款率轻微上升，可能比转化率轻微提升更重要
-- Android 订阅收入掉，先查 involuntary churn，不要先怪产品
-
----
-
-## 11. A/B 测试
-
-IAP 最容易犯的错，是只看首日转化就宣布实验胜利。
-
-### 测什么
-
-- 付费墙触发时机
-- 主推套餐位置
-- 周/月/年套餐组合
-- 是否提供试用
-- 试用时长
-- 文案讲功能还是讲结果
-- 本地化价格
-
-### 怎么看
-
-- **主指标：** realized LTV per install
-- **早期信号：** trial start、trial-to-paid、首期续订
-- **护栏：** refund、retention、support complaints、uninstall
-
-RevenueCat 2026 报告里 hard paywall 和 freemium 的对比就是典型例子：前面看像大胜，拉长到一年后留存差异几乎消失。[[3]](https://www.revenuecat.com/state-of-subscription-apps/)
-
-### 基本纪律
-
-1. 不只看 D0
-2. 周订实验尤其要看退款
-3. 强付费墙实验尤其要看长期留存
-4. 定价实验一定要按 geo / platform 拆开
-
----
-
-## 12. 隐私与合规
-
-IAP 没有 IAA 那种 ATT 直接影响 eCPM 的强约束，但它的合规风险更集中在：
-
-- 自动续订披露不清
-- 恢复购买缺失
-- 定价或试用误导
-- 站外支付引导风险
-
-Apple 相关来源：
-
-- [Apple Auto-renewable subscriptions](https://developer.apple.com/app-store/subscriptions/)
-- [Apple App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
-- [Apple Restoring purchased products](https://developer.apple.com/documentation/storekit/restoring-purchased-products)
-
-Google Play 相关来源：
-
-- [Google Play Billing](https://developer.android.com/google/play/billing)
-- [Google Play Subscriptions](https://developer.android.com/google/play/billing/subscriptions)
-
----
-
-## 13. 二十条常见陷阱（速查清单）
-
-1. 只看转化率，不看净 LTV
-2. 只看首单，不看续订
-3. 只看毛收入，不看 proceeds
-4. 把主动流失和被动流失混在一起
-5. 试用启动高就误判为产品强
-6. 周订收入高就误判为长期结构优
-7. 不做本地化定价
-8. paywall 套餐过多
-9. 不提供恢复购买入口
-10. pricing experiment 只看 D0
-11. Android 支付失败不单独运营
-12. 把硬付费墙当万能解
-13. 不拆分 app version 看实验
-14. 退款率高却只压退款不查根因
-15. 忽略老用户价格保护
-16. 试用设计和 onboarding 分离
-17. 看大盘不拆 geo / 渠道
-18. 平台规则变化后不复核文案与流程
-19. 对外引用数据不带来源
-20. 把“当前行业基准”当成“你的目标值”
-
----
-
-## 14. 新人三个月学习路径
-
-> 以下数字和节奏为示例培训目标，不是行业统一标准。
-
-**Month 1 · 学习期：**  
-懂订阅经济的核心公式、主要指标、Apple / Google Play 订阅机制、工具类套餐结构、付费墙和试用的基本逻辑。能独立画出一条产品漏斗。
-
-**Month 2 · 实践期：**  
-独立分析一次转化下降、一次退款率上升或一次续订留存波动；能写出一份 paywall 优化建议和一个试用实验方案。
-
-**Month 3 · 产出期：**  
-独立负责一条产品线的 IAP 运营复盘，输出“漏斗诊断 + paywall 调整 + 实验计划 + 风险提示”的完整方案。
-
----
-
-## 15. 上线验收清单（实操核对）
-
-- [ ] 套餐结构清晰，主推 plan 明确
-- [ ] 付费墙文案包含价格、周期、自动续订说明
-- [ ] 提供恢复购买或恢复 entitlement 路径
-- [ ] 试用、offer、base plan 配置已校验
-- [ ] App Store / Play Console 商品信息与客户端一致
-- [ ] 试用到期、支付失败、恢复扣款的通知链路通了
-- [ ] 关键事件埋点已上线：paywall view、trial start、purchase、renewal、refund、cancel、recover
-- [ ] 看板能按 geo / platform / channel / paywall version 拆分
-- [ ] Android 的 grace period / account hold 逻辑已联调
-- [ ] 定价与本地化策略已按目标市场检查
-- [ ] 退款率、试用转付费率、续订留存有异常告警
-- [ ] 对外可引用数据都能回溯到原始网址
-
----
-
-## 附：核心公式一页纸
-
-```text
-LTV/install      = 付费墙触达率 x 试用启动率 x 试用转付费率 x 留存净价值
-付费转化率         = 付费用户 / 新增用户
-试用启动率         = 试用启动 / 付费墙浏览
-试用转付费率       = 真实付费 / 试用启动
-ARPU             = 总收入 / 全部用户
-ARPPU            = 总收入 / 付费用户
-MRR              = 月度经常性收入
-Proceeds         = 毛收入 - 平台佣金 - 退款 - 相关税费
-续订留存          = 第 N 期仍在订阅 / 首期付费
-恢复率            = 支付失败后成功恢复 / 支付失败用户
+## 4. 转化漏斗
+
+```
+安装 (install)
+   ↓  onboarding 完成率
+引导完成
+   ↓  付费墙曝光率
+付费墙曝光 (paywall impression)
+   ↓  CTA 点击率
+发起购买 (purchase intent)
+   ↓  购买表单完成率
+试用启动 / 直接购买 (trial / purchase)
+   ↓  激活率（首次用到付费价值）
+激活 (activation)
+   ↓  试用转化率
+首期付费 (paid conversion)
+   ↓  各期续订留存
+续订 → ... → 流失
 ```
 
-> 一句话收尾：IAP 运营的目标，不是让更多人“立刻付费”，而是通过更好的触达、试用、定价和续订管理，让每个新增用户贡献更高的**净终身价值**。
+| 漏点 | 可能原因 | 修法 |
+|------|---------|------|
+| onboarding 完成率低 | 引导太长/价值没讲清 | 缩短，前置 aha-moment |
+| 付费墙曝光率低 | 埋太深/时机不对 | 在价值时刻弹；考虑 onboarding 付费墙 |
+| CTA 点击率低 | 价值呈现弱/价格吓人 | 强化收益文案、突出年订 |
+| 购买表单完成率低 | 犹豫/信任不足 | 试用降门槛、展示评价/隐私承诺 |
+| 试用转化率低 | 没用到价值/无到期提醒 | 试用期内引导 + 到期前提醒 |
+| 激活率低 | 付费后没用到功能 | 购买后立即引导到价值功能 |
+| 续订留存低 | 价值不足/被动流失 | 提升持续价值；查 dunning |
+
+---
+
+## 5. 付费墙设计
+
+付费墙不是一页价格表，而是一个**决策引导页面**。
+
+### 五大要素
+
+| 要素 | 设计要点 |
+|------|---------|
+| **价值主张（Hero）** | 一句话用"结果语言"说清 Pro 给什么 |
+| **套餐展示** | 2-3 个套餐，年付 C 位高亮 + "最受欢迎" + 月均锚定 |
+| **功能对比表** | 突出免费版"做不到的 3-5 件事" |
+| **社会证明** | 用户数、评分、评价摘录 |
+| **信任要素** | "随时取消""隐私保护""恢复购买""免费试用" |
+
+### 三种触发类型
+
+| 类型 | 触发时机 | 优劣 |
+|------|---------|------|
+| **情境付费墙** | 触发限制/点击灰显功能时 | 转化质量高；触达取决于使用深度 |
+| **Onboarding 付费墙** | 引导末尾 | 触达率 100%；用户没体验，转化质量低 |
+| **常驻入口** | 设置/首页升级按钮 | 补充触点 |
+
+**推荐：** 以情境付费墙为主力（≥70% 转化），onboarding 为可跳过的辅助入口。
+
+---
+
+## 6. 定价策略
+
+| 杠杆 | 说明 |
+|------|------|
+| **年付为主推** | 月均锚定：¥198/年 = 月均 ¥16.5 vs 月付 ¥30/月，省 45% |
+| **月付为低门槛** | 降低首次决策但流失快 |
+| **终身买断为高价锚** | ¥398 终身 vs ¥198/年，让年付"划算" |
+| **本地化定价** | 按地区购买力分别定价，不要全球一个美元价直转 |
+| **诱饵（Decoy）** | 让目标套餐最划算 |
+
+**价格 A/B 主指标是 LTV/install（净），不是转化率。** 提价降转化但升单价，净效果看 LTV。
+
+---
+
+## 7. 免费试用 & 引导优惠
+
+### Apple [1]
+三种引导优惠：免费试用 / 先付后周期 / 一次性预付。另有促销优惠（老/流失用户）和优惠码。
+
+### Google Play [2]
+在 base plan 上配置 offers，含免费试用与引导价，可设资格条件。
+
+### 设计要点
+
+| 要素 | 说明 |
+|------|------|
+| **试用时长** | 3-7 天。太短没体验，太长延迟收入 |
+| **是否要信用卡** | 要卡 → 启动率低但转化高；不要 → 反之。需 A/B |
+| **试用期内价值引导** | 确保用户用到 2-3 个 Pro 核心功能 |
+| **到期前提醒** | 24h 前推送："你的 Pro 试用还有 1 天" |
+| **到期后降级体验** | 效果差距要一眼可见 → 最好的续费提醒 |
+
+---
+
+## 8. 商店机制与佣金
+
+| 平台 | 佣金 | 关键点 |
+|------|------|--------|
+| **Apple [1]** | 标准 30%；Small Business（≤$1M）15%；订阅满 1 年降为 15% | StoreKit 2、ASSN V2 通知、App Store Connect 后台 |
+| **Google Play [2]** | 前 $1M 15%，超出 30%；订阅统一 15% | Play Billing Library、RTDN 通知、Play Console 后台 |
+
+**启示：** 佣金档位直接进 LTV 的"净单价"叶子。争取 Small Business / 一年降档能抬净 LTV 一截。
+
+**国内 Android：** 无 Google Play，走华为/小米/OPPO/vivo/应用宝等厂商商店，各自支付 SDK 与分成不同，需逐渠道核对。
+
+---
+
+## 9. 订阅生命周期与被动流失挽回
+
+### 续订状态机
+
+**Apple [1]：** 续订失败 → Billing Retry（最长约 60 天）+ Billing Grace Period（宽限期保留访问）。状态推送：`DID_FAIL_TO_RENEW` → `GRACE_PERIOD_EXPIRED` / `DID_RECOVER`。
+
+**Google Play [2]：** 续订失败 → Account Hold / Grace Period / Paused。RTDN 推送：`SUBSCRIPTION_IN_GRACE_PERIOD` / `SUBSCRIPTION_ON_HOLD` / `SUBSCRIPTION_RECOVERED`。
+
+### Dunning（催缴）要点
+
+- ✅ 开启 Grace Period + Billing Retry（挽回被动流失，ROI 最高的优化）
+- ✅ 用服务端通知驱动应用内/推送提醒用户更新支付方式
+- ✅ 区分主动流失 vs 被动流失，不要混为一谈
+- ✅ Win-back：对已流失用户用商店 win-back offer 召回
+
+### 退款
+
+退款率高 → 回到付费墙与定价查根因（误导/误触/价值不符），而非压制退款。
+
+---
+
+## 10. 订阅基础设施
+
+| 平台 | 定位 |
+|------|------|
+| **RevenueCat** [3] | 订阅后端 + 分析 + 付费墙，跨 iOS/Android/Web 统一权益与收据校验 |
+| **Adapty** [4] | 无发版改付费墙、价格/付费墙 A/B、分析 |
+| **Superwall** | 付费墙实验为主，强 A/B |
+| **Qonversion** | 订阅后端 + 分析 |
+
+**为什么用：** 收据校验/续订状态机/跨平台权益/退款处理很易出错，这些平台做成托管能力 + 实时队列/漏斗分析 + 无发版付费墙实验。
+
+---
+
+## 11. 常见收入问题诊断
+
+### 付费转化率下降
+
+| 查什么 | 怎么查 |
+|--------|--------|
+| 渠道/地区构成 | 低转化渠道放量？按队列拆分 |
+| 付费墙改动 | 改了什么？回滚对比 |
+| 漏斗某节点 | 走 install→曝光→CTA→购买→试用→付费，定位掉的那环 |
+| 用户质量 | 买量端用户意图变化 |
+| 技术故障 | 付费墙加载失败、商品拉取失败、Billing 报错 |
+
+### 试用启动高但转化低
+
+| 查什么 | 怎么查 |
+|--------|--------|
+| 试用期价值未送达 | 引导用户用到 Pro 核心功能 |
+| 到期无提醒 | 加推送提醒 |
+| 试用时长 | A/B 测试最优值 |
+| 退订太易 | 强化价值呈现 |
+
+### 续订留存下降
+
+| 查什么 | 怎么查 |
+|--------|--------|
+| 主动 vs 被动 | 先分清——被动靠 grace/retry/dunning 挽回 |
+| 持续价值 | 产品是否"用完即走"？ |
+| 首次续订坎 | 第一期到第二期流失最大 |
+| 队列混淆 | 按渠道/价格/版本拆队列 |
+
+### 收入变动 — 自顶向下走 LTV 树
+
+```
+总收入 ≈ 新增 × 付费墙触达率 × 试用启动率 × 试用转化率 × Σ(续订留存 × 净单价)
+```
+
+每片叶子分**前端（获量/用户质量）**和**后端（产品/变现）**两面排查，永远按**版本 + 队列**拆分。
+
+---
+
+## 12. A/B 测试
+
+| 可测变量 | 付费墙布局/文案、价格点、套餐组合、默认高亮项、试用时长、是否要卡、intro offer 类型、取消挽留 offer |
+|----------|------|
+| **主指标** | **LTV/install（净）**——不是单看转化率 |
+| **次级/护栏** | 试用转化、续订留存、退款率、卸载率 |
+| **方法** | 按 install 队列随机；看净结算结果；留意年订长尾延迟；警惕辛普森悖论（分渠道/地区拆分复核） |
+
+---
+
+## 13. IAP 运营 SOP
+
+### 产品引入流程
+
+商业化设计（定模型/打包/周期/价格）→ 商店配置（建订阅群组/商品ID/引导优惠）→ 权益与校验（接订阅平台或自建收据校验/服务端通知）→ 付费墙与埋点 → 出包验收（沙盒全链路）→ 上线
+
+### 日常 Checklist
+
+- 每日：付费转化、试用转化、MRR、退款率、被动流失/挽回
+- 按**队列 + 渠道 + 地区 + 付费墙版本**拆分，不看混合均值
+- 新版本/付费墙上线后密切监控
+- 配关键指标异常预警（转化/退款/MRR 显著波动）
+
+---
+
+## 14. 常见误区
+
+1. **只看转化率不看 LTV** — 高转化可能伴随高退款低留存而净亏
+2. **用平台估算当结算额** — 钱以商店 Proceeds 为准
+3. **忽视被动流失** — 扣款失败占流失可观比例，dunning 能挽回
+4. **看混合队列均值** — 辛普森悖论，结论可能反向
+5. **硬付费墙 + 周订无确认** — 误触 → 退款/差评/封号
+6. **试用时长拍脑袋** — A/B 确定最优值
+7. **全球一个美元价直转** — 不做本地化定价
+8. **付费墙埋太深** — 不在价值时刻弹
+9. **不提供恢复购买** — Apple 审核红线（3.1.1）
+10. **忽视佣金档位** — Small Business / 一年降档白白少 15% 净收入
+11. **退款率高只压不查** — 根因在付费墙/定价
+12. **不接服务端通知** — ASSN V2 / RTDN 不接 → 权益与流失数据失真
 
 ---
 
 ## 数据来源
 
-文中保留的机制、费率和行业数字都可追溯到以下来源：
+| 标记 | 来源 |
+|------|------|
+| `[1]` | [Apple 订阅文档](https://developer.apple.com/app-store/subscriptions/) · [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) · [Small Business Program](https://developer.apple.com/app-store/small-business-program/) |
+| `[2]` | [Google Play Billing](https://developer.android.com/google/play/billing/subscriptions) · [Play Console 帮助](https://support.google.com/googleplay/android-developer) |
+| `[3]` | [RevenueCat](https://www.revenuecat.com/) · [State of Subscription Apps](https://www.revenuecat.com/state-of-subscription-apps/) |
+| `[4]` | [Adapty](https://adapty.io/) · [订阅基准报告](https://adapty.io/state-of-in-app-subscriptions/) |
 
-**[[1]](https://developer.apple.com/app-store/subscriptions/) Apple 官方**
-
-- [Auto-renewable subscriptions](https://developer.apple.com/app-store/subscriptions/)
-- [App Store Small Business Program](https://developer.apple.com/app-store/small-business-program/)
-- [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
-- [Billing Grace Period](https://developer.apple.com/help/app-store-connect/manage-subscriptions/enable-billing-grace-period-for-auto-renewable-subscriptions/)
-- [Restoring purchased products](https://developer.apple.com/documentation/storekit/restoring-purchased-products)
-
-**[[2]](https://developer.android.com/google/play/billing/subscriptions) Google Play 官方**
-
-- [Google Play Billing overview](https://developer.android.com/google/play/billing)
-- [Subscriptions overview](https://developer.android.com/google/play/billing/subscriptions)
-- [Subscription lifecycle](https://developer.android.com/google/play/billing/lifecycle/subscriptions)
-- [RTDN reference](https://developer.android.com/google/play/billing/rtdn-reference)
-- [Service fees](https://support.google.com/googleplay/android-developer/answer/112622?hl=en)
-- [Billing deprecation FAQ](https://developer.android.com/google/play/billing/deprecation-faq)
-
-**[[3]](https://www.revenuecat.com/state-of-subscription-apps/) RevenueCat 2026**
-
-- [State of Subscription Apps 2026](https://www.revenuecat.com/state-of-subscription-apps/)
-- [2026 summary article](https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026/)
-
-**[[4]](https://adapty.io/state-of-in-app-subscriptions/) Adapty 2026**
-
-- [State of in-app subscriptions 2026](https://adapty.io/state-of-in-app-subscriptions/)
-- [Reports hub](https://adapty.io/reports/)
-
-**未标记**的内容为通用公式 / 概念 / 结构性方法论（如 LTV 分解树、漏斗排查逻辑、套餐设计原则、实验纪律等）。
-
----
-
-*本文整理自 `iap-monetization-expert` skill 及其 references，并参考 `IAA变现学习文档.md` 的结构重写。*
+*基于 `iap-monetization-expert` skill · 2026-06-24*
