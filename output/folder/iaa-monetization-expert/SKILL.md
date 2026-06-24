@@ -38,7 +38,7 @@ Core premise: ad revenue = impressions × eCPM / 1000. Optimization targets eith
 |--------|---------|----------------|
 | **eCPM** (effective cost per mille) | (total revenue / total impressions) × 1000 | Blended rate across all networks. Primary health indicator. |
 | **ARPU** (avg revenue per user) | total revenue / total users (DAU or MAU) | Monetization efficiency per user. |
-| **ARPDAU** (also written ARPUDAU) | daily revenue / DAU | Daily per-user revenue; most actionable timeframe. |
+| **ARPDAU** | daily revenue / DAU | Daily per-user revenue; most actionable timeframe. |
 | **LTV** (lifetime value) | ARPDAU × avg retention days; also: current-day ARPU × X-day LT | Projected total revenue per user. |
 
 ### Data Source: Settlement (API) vs SDK-Tracked [³]
