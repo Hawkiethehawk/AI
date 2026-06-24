@@ -189,6 +189,7 @@ Most ImmortalWrt setups bridge LAN as `br-lan`. Verify: `ip -4 addr show` or `if
 | Local proxy (on configured target) | **Clash Verge** (mihomo) fake-ip **TUN**, adapter `<TUN_ADAPTER_IP>`, mixed/SOCKS port `<PROXY_PORT>` — corrupts SSH to public IPs (RouteOnly pitfall above); reach the router over the **LAN** (`<ROUTER_LAN_IP>`) to stay clean |
 | Cloud controller | `<CLOUD_CONTROLLER>`, Tailscale **`<CLOUD_TAILSCALE_IP>`** (`<CLOUD_USER>@`, same tailnet) — **passwordless key to the router installed**; wakes configured target via `ssh root@<ROUTER_TAILSCALE_IP> "etherwake -i br-lan <TARGET_MAC>"` |
 | Passwordless SSH | configured target *and* the cloud server each have an ed25519 key in the router's `/etc/dropbear/authorized_keys` (`ssh -o BatchMode=yes` works) |
+| configured target SSH server (for shutdown) | OpenSSH Server (`sshd`) running, port 22; the **router's** key is in `%ProgramData%\ssh\administrators_authorized_keys` (<WIN_USER> ∈ Administrators) → router can `ssh <WIN_USER>@<PC_LAN_IP> "shutdown /s /t 0"` passwordlessly |
 | Router SSH password | **NOT stored in repo** — supply at runtime |
 
 ### Wake configured target (concrete)
@@ -198,6 +199,33 @@ plink.exe -batch -ssh root@<ROUTER_TAILSCALE_IP> -pw "<ROUTER_SSH_PASSWORD>" "et
 # then poll:
 1..30 | % { if (Test-Connection <PC_TAILSCALE_IP> -Count 1 -Quiet) { "configured target UP"; break }; Start-Sleep 5 }
 ```
+
+## Remote shutdown (the reverse of wake)
+Wake turns the PC **on**; the symmetric move turns it **off** — SSH *into* the PC and run `shutdown /s /t 0`. Difference: wake works while the PC is off (router emits the packet); shutdown needs the PC reachable *while on*. The PC's own Tailscale is often **offline behind the same TUN proxy**, so route through the router over the **LAN**, mirroring the wake relay: `controller → router (Tailscale) → PC (LAN SSH) → shutdown`.
+
+### One-time setup on the target PC (Windows)
+1. Install OpenSSH Server (elevated PowerShell):
+   ```powershell
+   Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+   Start-Service sshd; Set-Service sshd -StartupType Automatic
+   New-NetFirewallRule -Name OpenSSH-Server -DisplayName 'OpenSSH Server' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
+   ```
+2. Authorize the **router's** SSH public key on the PC. **Gotcha:** if the SSH user is in the **Administrators** group, Windows sshd reads the key from `%ProgramData%\ssh\administrators_authorized_keys` (NOT `~\.ssh\authorized_keys`), and that file must be writable only by `Administrators`+`SYSTEM` — so it needs an **elevated** command:
+   ```powershell
+   $pub = '<ROUTER_PUBKEY>'   # on the router: mkdir -p /root/.ssh && ssh-keygen -t ed25519 -N "" -f /root/.ssh/id_ed25519 ; cat /root/.ssh/id_ed25519.pub
+   $f = "$env:ProgramData\ssh\administrators_authorized_keys"
+   Add-Content $f $pub -Encoding ascii
+   icacls $f /inheritance:r /grant 'Administrators:F' /grant 'SYSTEM:F'
+   ```
+
+### The shutdown command (controller → router → PC, all passwordless)
+```sh
+# from the cloud server / any tailnet controller:
+ssh root@<ROUTER_TAILSCALE_IP> "ssh -i /root/.ssh/id_ed25519 <WIN_USER>@<PC_LAN_IP> 'shutdown /s /t 0'"
+```
+- Passwordless throughout: the controller's key is in the router's `authorized_keys`, the router's key is in the PC's `administrators_authorized_keys`.
+- **Privilege check** (read-only, does NOT shut down): run `'whoami /priv | findstr /i shutdown'` over the same SSH — it should list `SeShutdownPrivilege`. *Disabled* is fine (`shutdown.exe` enables it itself); only *absent* fails.
+- Reboot instead: `shutdown /r /t 0`. Cancel a pending shutdown: `shutdown /a`.
 
 ## Quick Command Reference
 
@@ -211,6 +239,9 @@ plink.exe -batch -ssh root@<ROUTER_TAILSCALE_IP> -pw "<ROUTER_SSH_PASSWORD>" "et
 | Find target MAC | `ipconfig /all` (Win) or `cat /tmp/dhcp.leases` (router) |
 | Verify bridge | `ip -4 addr show` / `ifstatus lan` |
 | Confirm woke | poll `Test-Connection <PC_IP>` |
+| **Shutdown** (cloud→router→PC) | `ssh root@<ROUTER_TAILSCALE_IP> "ssh -i /root/.ssh/id_ed25519 <WIN_USER>@<PC_LAN_IP> 'shutdown /s /t 0'"` |
+| Reboot / cancel pending | `shutdown /r /t 0` / `shutdown /a` |
+| Check shutdown priv (safe) | `ssh ... <WIN_USER>@<PC_LAN_IP> 'whoami /priv \| findstr /i shutdown'` |
 
 ## Security Notes
 - **Never commit the router SSH password** (or private keys) to the repo. Prefer key-based auth; pass passwords at runtime / via env var.
