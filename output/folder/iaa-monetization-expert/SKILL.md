@@ -1,7 +1,7 @@
 ---
 name: iaa-monetization-expert
 description: Use when discussing IAA (in-app advertising) monetization for utility/tool apps — ad formats, mediation, eCPM optimization, waterfall vs bidding, ad placement, metrics analysis, A/B testing, funnel diagnostics. Covers AdMob, MAX, ironSource, Unity Ads, Meta Audience Network, Pangle, plus China-market networks (CSJ/Pangle-Domestic, YLH, Kuaishou, Baidu) and the TopOn mediation platform (sort price, backup ads, parallel requests, traffic grouping, S2S/C2S bidding, funnel analysis).
-version: 1.3.1
+version: 1.3.2
 author: Hermes Agent
 license: MIT
 metadata:
@@ -38,8 +38,8 @@ Core premise: ad revenue = impressions × eCPM / 1000. Optimization targets eith
 |--------|---------|----------------|
 | **eCPM** (effective cost per mille) | (total revenue / total impressions) × 1000 | Blended rate across all networks. Primary health indicator. |
 | **ARPU** (avg revenue per user) | total revenue / total users (DAU or MAU) | Monetization efficiency per user. |
-| **ARPUDAU** | daily revenue / DAU | Daily per-user revenue; most actionable timeframe. |
-| **LTV** (lifetime value) | ARPUDAU × avg retention days; also: current-day ARPU × X-day LT | Projected total revenue per user. |
+| **ARPDAU** (also written ARPUDAU) | daily revenue / DAU | Daily per-user revenue; most actionable timeframe. |
+| **LTV** (lifetime value) | ARPDAU × avg retention days; also: current-day ARPU × X-day LT | Projected total revenue per user. |
 
 ### Data Source: Settlement (API) vs SDK-Tracked [³]
 
@@ -109,8 +109,8 @@ eCPM = 广告主出价 × CTR × CVR × 1000
 - eCPM drop with stable impressions = network-side (seasonality, bidder behavior, ad quality)
 - eCPM drop with impression drop = fill rate issue (waterfall configuration, network outage)
 - Impressions up, eCPM down = possible over-exposure diluting bid density; also: rapid banner refresh (under 30s) inflates low-value impressions
-- ARPUDAU flat while DAU grows = healthy scaling
-- ARPUDAU declining while DAU grows = new user quality issue or market saturation
+- ARPDAU flat while DAU grows = healthy scaling
+- ARPDAU declining while DAU grows = new user quality issue or market saturation
 - ARPU decline = check 频次 (frequency) and eCPM separately; 频次 issues are often buy-side or product bugs; eCPM issues are often network/fill/competition
 
 ### User Ad Value Decay
@@ -471,15 +471,15 @@ Two independent levels: **ad-unit (placement) level** and **ad-source level**, e
 
 - **Duration:** minimum 7 days; 14 days preferred for eCPM stability
 - **Sample:** minimum 50,000 DAU per variant for statistical significance on eCPM comparisons
-- **Primary metric:** ARPUDAU (or revenue per user). NOT eCPM alone — eCPM can rise while impressions crash.
+- **Primary metric:** ARPDAU (or revenue per user). NOT eCPM alone — eCPM can rise while impressions crash.
 - **Secondary metrics:** retention (D1, D7, D14), session count, session length, uninstall rate
 - **Guardrail:** uninstall rate increase > 5% relative = auto-fail
 
 ### Test Evaluation
 
 ```
-Variant A (control):  freq cap 1/5min,  ARPUDAU $0.012,  D7 retention 38%
-Variant B (test):     freq cap 1/3min,  ARPUDAU $0.018,  D7 retention 35%
+Variant A (control):  freq cap 1/5min,  ARPDAU $0.012,  D7 retention 38%
+Variant B (test):     freq cap 1/3min,  ARPDAU $0.018,  D7 retention 35%
 → Revenue up 50%, retention down 3pp. Ship if LTV gain > retention loss cost.
    Calculate: LTV_A = $0.012 × avg_days_retained_A
               LTV_B = $0.018 × avg_days_retained_B
@@ -606,7 +606,7 @@ Variant B (test):     freq cap 1/3min,  ARPUDAU $0.018,  D7 retention 35%
 | Ad fatigue | Long-term users see same ad units → CTR declines → eCPM declines |
 | Impression ceiling | More users but impression per user declining — check frequency caps and session patterns |
 
-### Problem: ARPUDAU Persistent Decline
+### Problem: ARPDAU Persistent Decline
 
 Full two-sided diagnostic framework:
 
@@ -832,7 +832,7 @@ Set monitoring rules on any dimension (account/app/placement/source/network/form
 
 ## Common Pitfalls
 
-1. **Over-measuring eCPM in isolation.** eCPM × impression volume = revenue. Raising eCPM by reducing impressions (fewer ads, higher floors) often nets less total revenue. Always co-monitor ARPUDAU.
+1. **Over-measuring eCPM in isolation.** eCPM × impression volume = revenue. Raising eCPM by reducing impressions (fewer ads, higher floors) often nets less total revenue. Always co-monitor ARPDAU.
 
 2. **Waterfall configuration drift.** Floors set 6 months ago are stale. Networks change; demand shifts. Weekly floor review is minimum viable frequency.
 
