@@ -17,11 +17,11 @@ metadata:
 
 ## 这个仓库（已知背景，直接用）
 
-- 远程：`https://gitee.com/configured targetthehawk/AI.git`，**私有**仓库，默认分支 `master`。
+- 远程：`https://gitee.com/configured targetthehawk/AI.git`，**公开**仓库（public），默认分支 `master`。
 - 结构：`skill/`（多个 skill，**真源**）、`scripts/`（自检/封装脚本）、`output/`（生成物）。
 - **真源约定**：skill 的唯一真源是 `repo/skill/<name>/`，运行时 `~/.claude/skills` 靠自检脚本同步。
   **只改 repo，绝不直接改运行时**（见 [[skill-sync-source-of-truth]]）。
-- 私有仓库 → 任何 REST API 操作都必须带 token；git push/pull 已由系统凭证免密。
+- 公开仓库：读可匿名但有限流；写操作及稳定调用仍统一带 token。git push/pull 已由系统凭证免密。
 
 ## 每次使用的固定动作（顺序不可省）
 
@@ -51,7 +51,7 @@ metadata:
 
 ## 安全（硬约束）
 
-- token 存仓库外 `~/.claude/.gitee_token`，并在 `.gitignore` 兜底（`.gitee_token` / `*.token`），**绝不提交、不上传 gitee、不打印到对话**。
+- token 存仓库外 `~/.claude/.gitee_token`，并在 `.gitignore` 兜底（`.gitee_token` / `*.token`），**绝不提交、不上传 gitee、不打印到对话**。Windows 上 `chmod 600` 近似无效，安全实际由用户私有目录 `~/.claude` 的 NTFS ACL 保证。
 - git push/pull 沿用系统已配置的凭证（已免密），本 skill 不改动它。
 
 ## 强制调用（已配 hook）

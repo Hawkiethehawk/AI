@@ -3,6 +3,7 @@
 # 一次性 setup token -> 保存到 ~/.claude/.gitee_token（供 REST API 使用）。
 # git push/pull 沿用系统已配的凭证（已免密），本脚本不改动它。
 set -u
+export PYTHONUTF8=1 PYTHONIOENCODING=utf-8   # 让 python 的 stdin/stdout 统一走 UTF-8（Windows 默认 GBK 会乱码）
 
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${SKILL_REPO:-$(cd "$SELF/.." && pwd)}"
@@ -47,7 +48,10 @@ case "$cmd" in
   api)
     path="${1:-/user}"; t="$(need_token)" || exit 1
     sep="?"; case "$path" in *\?*) sep="&";; esac
-    curl -s -m 15 "$API${path}${sep}access_token=$t"
+    resp="$(curl -s -m 15 -w '\n%{http_code}' "$API${path}${sep}access_token=$t")"
+    code="$(printf '%s' "$resp" | tail -n1)"
+    [ "$code" = "200" ] || echo "⚠ gitee API HTTP $code（临时故障或路径/权限问题，可重试）" >&2
+    printf '%s\n' "$resp" | head -n -1
     ;;
   info)
     t="$(need_token)" || exit 1
