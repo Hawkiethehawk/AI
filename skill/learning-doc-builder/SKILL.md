@@ -1,7 +1,7 @@
 ---
 name: learning-doc-builder
 description: Use when turning dense reference material — a skill/SKILL.md, a spec, an API doc, a research report, or any lookup-oriented technical document — into a readable, progressively-structured LEARNING document that someone can read top-to-bottom and actually learn from. Covers picking a single spine mental model, ordering by cognitive dependency, adding the "why" and worked examples the source compresses out, strict source-annotation discipline (every datum cited or relativized, no unsourced "industry-experience" numbers), inline clickable citations, and editor-safe formatting (e.g. Feishu/Lark/Notion import quirks). Trigger on requests like "把这个 skill/文档做成学习文档", "写一份可读性强的学习材料", "turn this reference into a tutorial", "讲透/讲明白这份资料".
-version: 1.2.2
+version: 1.2.4
 author: Distilled from real learning-doc production
 license: MIT
 metadata:
@@ -123,7 +123,7 @@ How sources appear matters as much as that they exist.
 
 学习文档的交付物**永远是一个 Markdown (`.md`) 文件**，不是聊天里的一段长回复，也不是 `.txt` / `.docx` / PDF。本 skill 的全部格式约定——脊柱 ASCII 图、`🧭/💡/⚠️` callout、`[[1]](url)` 内联引用、对比表、LaTeX `$$…$$`——都依赖 Markdown 渲染；导出到飞书/Notion 也是从 `.md` 导入。其它格式会让这些约定失效。
 
-- **写到文件**，默认路径 `output/learning-doc/<主题>.md`（仓库的 `output/<type>/` 目录约定）。
+- **写到文件**，默认路径 `output/learning-doc/<主题>.md`（仓库的 `output/<type>/` 目录约定）。文件名**只写主题本身**，不要追加“学习文档”“商业化运营”“入门到精通”等主题之外的说明；例如用 `IAA变现.md`、`广告投放.md`、`IAP商业化.md`、`混变工具产品功能设计拆解.md`。
 - **即使用户只贴了一段源文本、没明说"存成文件"**，也产出 `.md` 文件，而不是在对话里直接铺一篇长文。给出文件路径即可。
 - 用户若指定了别的目标编辑器（Notion/Confluence），仍以 `.md` 为源文件，再说明导入方式——不要改用编辑器原生格式直接产出。
 
@@ -165,8 +165,9 @@ The spine determines the whole doc's shape — choose deliberately.
 ### Document skeleton (adapt, don't fill blindly)
 
 ```
-# <Topic> — 学习文档
-> 1-2 line scope + what you'll be able to do after reading
+> <1–2 句：覆盖范围 + 目标读者（含其已有基础，决定从哪一层起讲）>。
+> 本文不是手册，而是一条可从头读到尾的学习路径：先建立一个贯穿全文的心智模型，再逐段讲透。
+> 读完你应该能：<3–4 个可观察的能力，分号分隔>。
 > 📌 source-marker legend (if sourced)
 
 0. 一句话理解 / one-line + core formula
@@ -186,9 +187,9 @@ Use `---` as a divider between top-level chapters. Number chapters from `0`.
 
 ### Header block (top of every doc)
 
-```text
-# <主题> · <一句话定位> · 学习文档
+Learning docs **must not start with an H1 title line**. Do not output a first heading like `# <主题> · <一句话定位> · 学习文档`. Start directly with the scope/reader blockquote, then the source legend. The file name already carries the topic; dropping the first title avoids a redundant heading in Feishu/Notion imports. The file name itself must be the **bare topic only**: no `学习文档`, no role/audience suffix, no extra positioning phrase.
 
+```text
 > <1–2 句：覆盖范围 + 目标读者（含其已有基础，决定从哪一层起讲）>。
 > 本文不是手册，而是一条可从头读到尾的学习路径：先建立一个贯穿全文的心智模型，再逐段讲透。
 > 读完你应该能：<3–4 个可观察的能力，分号分隔>。
@@ -256,6 +257,8 @@ Do not introduce other emoji callout types.
 - [ ] Source list is a LIST with specific-page links (not a homepage, not a table cell)
 - [ ] If targeting Feishu/Lark: **no links inside table cells** (verify by importing or by grepping for `](http` inside table rows)
 - [ ] 交付物是**一个 `.md` 文件**（非聊天正文、非 `.txt`/`.docx`/PDF），默认位于 `output/learning-doc/`
+- [ ] 文件名**只包含主题本身**，不包含“学习文档”“商业化运营”“入门到精通”等主题之外的说明
+- [ ] 文档开头**不包含 H1 标题行**（不以 `# <主题>...` 开头），直接从目标读者/范围 blockquote 开始
 - [ ] One-page cheat sheet present; verification checklist present
 - [ ] Version/source-doc reference is correct and current
 - [ ] **Formatting came from this skill's "Standard Format" section, not from copying a sibling learning doc**; the new doc has no reference to any other doc and stands alone
@@ -276,6 +279,8 @@ Do not introduce other emoji callout types.
 12. **Adding without subtracting → bloat (the verbosity trap).** The skill biases hard toward addition; with no Phase-0 reader and no Phase-5 subtraction pass, the doc inherits the reference's exhaustiveness and reads long and unfinished. Density (spine + why) raises value; subtraction controls length. Coverage of the long tail is the reference's job, not the learning doc's.
 13. **No reader defined → re-explaining the basics.** Without a Phase-0 audience, you default to teaching everyone everything. Naming the reader (and asking if unsure) is the cheapest large cut available.
 14. **来源太少 / 单一来源。** 只引一个平台、或为回避不确定数值而把一切都相对化，会让文档权威性不足、口径偏单一。每篇 **≥3 个独立一手权威源**并交叉印证；缺来源时是去找权威官方文档，不是编造或拿同一来源充数（见 §6）。
+15. **输出冗余 H1 标题。** 不要让学习文档以 `# <主题> · ... · 学习文档` 开头；文件名已经承载主题，正文直接从目标读者/范围 blockquote 开始。
+16. **文件名夹带非主题说明。** 输出文件名只写主题本身，例如 `IAA变现.md`；不要写 `IAA变现学习文档.md`、`IAP商业化运营学习文档.md`、`广告投放入门.md` 这类带交付物类型、岗位视角或宣传定位的名字。
 
 ## Quick Reference: Priority Order
 
@@ -291,6 +296,11 @@ Do not introduce other emoji callout types.
 9. Verify (reader/budget set; subtraction ran; grep residual numbers; check table-cell links; confirm spine threads through)
 
 ## Changelog
+
+### 1.2.3
+- **移除学习文档正文开头的 H1 标题要求**：标准格式不再以 `# <主题> · <一句话定位> · 学习文档` 开头，而是直接从目标读者/范围 blockquote 开始；文件名已经承载主题，正文无需重复标题。
+- **同步更新 Document skeleton 与 Header block**：示例骨架删除首行 `# <Topic> — 学习文档`；Header block 明确“不要输出第一个标题行”，并说明这是为了避免飞书/Notion 导入后出现冗余标题。
+- **新增验证项与常见陷阱**：Verification 增加“文档开头不包含 H1 标题行”；Common Pitfalls 增加“输出冗余 H1 标题”，防止后续生成文档继续带第一个小标题。
 
 ### 1.2.2
 - **新增「来源广度下限」规则（Phase 6）：每篇学习文档至少引用 3 个权威、独立的一手来源**——领域官方文档/平台帮助中心/官方 benchmark 报告，而非二手博客。给出领域示例：投放类 Meta / Google Ads / TikTok / AppLovin；变现类 AdMob / AppLovin MAX / App Store / Google Play / RevenueCat。强调三点：①一手、相互独立、链到具体页面；②绝不为凑数编造或把同一来源拆分充数（与「绝不编造」同红线）；③多来源用于交叉印证、避免单一平台口径偏差。Variant B（不引具体数值）文末参考资源同样须 ≥3 个。
