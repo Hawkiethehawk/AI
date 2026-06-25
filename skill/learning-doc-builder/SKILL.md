@@ -1,7 +1,7 @@
 ---
 name: learning-doc-builder
 description: Use when turning dense reference material — a skill/SKILL.md, a spec, an API doc, a research report, or any lookup-oriented technical document — into a readable, progressively-structured LEARNING document that someone can read top-to-bottom and actually learn from. Covers picking a single spine mental model, ordering by cognitive dependency, adding the "why" and worked examples the source compresses out, strict source-annotation discipline (every datum cited or relativized, no unsourced "industry-experience" numbers), inline clickable citations, and editor-safe formatting (e.g. Feishu/Lark/Notion import quirks). Trigger on requests like "把这个 skill/文档做成学习文档", "写一份可读性强的学习材料", "turn this reference into a tutorial", "讲透/讲明白这份资料".
-version: 1.2.6
+version: 1.2.7
 author: Distilled from real learning-doc production
 license: MIT
 metadata:
@@ -71,7 +71,7 @@ Reference order is arbitrary (alphabetical, feature-grouped). Learning order fol
 3. **How to read the data** — definitions, and crucially the #1 gotcha (Phase 4).
 4. **Topic-by-topic** — the meat, each section self-contained.
 5. **Diagnostics** — applying the spine to find root causes.
-6. **Pitfalls / cheat sheet / checklist** — fast reference at the end (the one place lookup-style is welcome).
+6. **Pitfalls / cheat sheet / summary** — fast reference plus a closing recap at the end (the one place lookup-style is welcome).
 
 ### Phase 4 — Promote the #1 gotcha to an early standalone chapter
 
@@ -119,7 +119,7 @@ How sources appear matters as much as that they exist.
 - **Use `[1]` not `[¹]/[³]`** — superscript digits render inconsistently across editors and look misaligned next to `[1]`.
 - **Link to the specific doc page, not a homepage.** If a source is a help center, cite the exact article per topic, not the front door.
 - **Know your target editor's import quirks.** Especially **Feishu/Lark**: markdown links inside **table cells are dropped on import** — put links in **lists or paragraphs** instead. (Notion/Confluence have their own quirks; verify.) If a section is reference-table-shaped but needs live links, restructure it as a list.
-- **End with a one-page cheat sheet** (all core formulas/identities in one code block) and a **verification/learning checklist**.
+- **End with a one-page cheat sheet** (all core formulas/identities in one code block) and a **全文总结 (full-text summary)** — a closing recap of the spine, the core judgment, and each chapter's one key takeaway. It's a "把整条链路再走一遍" prose wrap-up, **not** a self-check checklist (the checklist belongs to the skill's own pre-delivery QA, not to the reader-facing doc).
 
 ## Output — always a single `.md` file
 
@@ -182,7 +182,7 @@ N+2. Common pitfalls (numbered quick-scan)
 N+3. Learning path / SOP (if relevant; label KPIs as example targets)
 附. One-page formula cheat sheet (single code block)
 数据来源. Sources as a LIST (not a table) with clickable links, specific pages
-验收清单. Verification checklist
+全文总结. Closing recap — spine + core judgment + one takeaway per chapter (prose, not a checklist)
 ```
 
 Use `---` as a divider between top-level chapters. Number chapters from `0`.
@@ -242,8 +242,12 @@ Do not introduce other emoji callout types.
 - [2] …
 > 说明：<数值/示意声明，例如"本文未从中引用具体数值，文中例子均为示意">
 
-## 验收清单（学完自检）
-- [ ] <能力点；大致对应每章一条，可被客观判断>
+## 全文总结
+<对正文的回顾压缩，3–6 句或分点，按此顺序：
+ ① 一句话重述贯穿全文的脊柱 + 核心判据（呼应 Ch.0/1 的 🧭）；
+ ② 每章/每分支一句关键结论（读者最该记住的那一点）；
+ ③ 一句收束，把整条链路再走一遍。
+ 注意：这是把全文"读完能记住什么"压成一段，不是勾选式自检表，也不重复速查表的公式罗列。>
 ```
 
 ## Verification (run before declaring done)
@@ -264,7 +268,7 @@ Do not introduce other emoji callout types.
 - [ ] 交付物是**一个 `.md` 文件**（非聊天正文、非 `.txt`/`.docx`/PDF），默认位于 `output/markdown/`，不得输出到 `output/learning-doc/`
 - [ ] 文件名**只包含主题本身**，不包含“学习文档”“商业化运营”“入门到精通”等主题之外的说明
 - [ ] 文档开头**不包含 H1 标题行**（不以 `# <主题>...` 开头），直接从目标读者/范围 blockquote 开始
-- [ ] One-page cheat sheet present; verification checklist present
+- [ ] One-page cheat sheet present; **全文总结 present** (a closing prose recap of spine + core judgment + per-chapter takeaway — NOT a reader-facing self-check checklist)
 - [ ] Version/source-doc reference is correct and current
 - [ ] **Formatting came from this skill's "Standard Format" section, not from copying a sibling learning doc**; the new doc has no reference to any other doc and stands alone
 
@@ -299,10 +303,19 @@ Do not introduce other emoji callout types.
 5. Add why + worked examples + callouts + visuals, **then run the subtraction pass** (cut the tail, basics, repetition, hedging)
 6. Source-discipline pass (classify, relativize, never fabricate)
 7. Inline clickable citations + editor-target formatting
-8. Cheat sheet + checklist
+8. Cheat sheet + 全文总结 (closing recap, not a checklist)
 9. Verify (reader/budget set; subtraction ran; grep residual numbers; check table-cell links; confirm spine threads through)
 
 ## Changelog
+
+### 1.2.7
+本次主题：**学习文档的收尾从「验收清单」改为「全文总结」**。此前文末用勾选式「验收清单（学完自检）」收尾——它本质是 QA 性质，和 skill 自身的「Verification (run before declaring done)」内部门重复，对读者价值低；改成对全文的回顾压缩，更贴合"读完能记住什么"的学习目标。
+- **End matter 模板替换**：`## 验收清单（学完自检）` → `## 全文总结`，给出固定结构（①一句话重述脊柱+核心判据 → ②每章/分支一句关键结论 → ③一句收束），并注明它是回顾压缩、不是勾选表、也不重复速查表公式。
+- **Document skeleton 同步**：末项 `验收清单. Verification checklist` → `全文总结. Closing recap`。
+- **Phase 3 认知阶梯**第 6 步 `Pitfalls / cheat sheet / checklist` → `Pitfalls / cheat sheet / summary`（结尾加一段收束回顾）。
+- **Phase 7 收尾约定**：从"cheat sheet + verification/learning checklist"改为"cheat sheet + 全文总结"，并明确 checklist 只属于 skill 的交付前 QA、不出现在读者文档里。
+- **Quick Reference** 第 8 步 `Cheat sheet + checklist` → `Cheat sheet + 全文总结`。
+- **边界澄清**：skill 内部的 `## Verification (run before declaring done)` 仍是 checklist（交付前自检门），保留不变；本次只改**面向读者的产出物**收尾。对应 Verification 项措辞同步改为"全文总结 present（非读者自检表）"。
 
 ### 1.2.6
 从一篇"AI 使用"学习文档的生产 → 自测 → 修正完整循环中提炼的反哺：
