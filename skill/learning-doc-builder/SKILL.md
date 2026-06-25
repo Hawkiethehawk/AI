@@ -1,7 +1,7 @@
 ---
 name: learning-doc-builder
 description: Use when turning dense reference material — a skill/SKILL.md, a spec, an API doc, a research report, or any lookup-oriented technical document — into a readable, progressively-structured LEARNING document that someone can read top-to-bottom and actually learn from. Covers picking a single spine mental model, ordering by cognitive dependency, adding the "why" and worked examples the source compresses out, strict source-annotation discipline (every datum cited or relativized, no unsourced "industry-experience" numbers), inline clickable citations, and editor-safe formatting (e.g. Feishu/Lark/Notion import quirks). Trigger on requests like "把这个 skill/文档做成学习文档", "写一份可读性强的学习材料", "turn this reference into a tutorial", "讲透/讲明白这份资料".
-version: 1.2.0
+version: 1.2.1
 author: Distilled from real learning-doc production
 license: MIT
 metadata:
@@ -117,6 +117,14 @@ How sources appear matters as much as that they exist.
 - **Link to the specific doc page, not a homepage.** If a source is a help center, cite the exact article per topic, not the front door.
 - **Know your target editor's import quirks.** Especially **Feishu/Lark**: markdown links inside **table cells are dropped on import** — put links in **lists or paragraphs** instead. (Notion/Confluence have their own quirks; verify.) If a section is reference-table-shaped but needs live links, restructure it as a list.
 - **End with a one-page cheat sheet** (all core formulas/identities in one code block) and a **verification/learning checklist**.
+
+## Output — always a single `.md` file
+
+学习文档的交付物**永远是一个 Markdown (`.md`) 文件**，不是聊天里的一段长回复，也不是 `.txt` / `.docx` / PDF。本 skill 的全部格式约定——脊柱 ASCII 图、`🧭/💡/⚠️` callout、`[[1]](url)` 内联引用、对比表、LaTeX `$$…$$`——都依赖 Markdown 渲染；导出到飞书/Notion 也是从 `.md` 导入。其它格式会让这些约定失效。
+
+- **写到文件**，默认路径 `output/learning-doc/<主题>.md`（仓库的 `output/<type>/` 目录约定）。
+- **即使用户只贴了一段源文本、没明说"存成文件"**，也产出 `.md` 文件，而不是在对话里直接铺一篇长文。给出文件路径即可。
+- 用户若指定了别的目标编辑器（Notion/Confluence），仍以 `.md` 为源文件，再说明导入方式——不要改用编辑器原生格式直接产出。
 
 ## A Worked Micro-Example (reference → learning)
 
@@ -245,6 +253,7 @@ Do not introduce other emoji callout types.
 - [ ] Citation markers are clickable links at the point of use; markers are `[1]` not `[¹]`
 - [ ] Source list is a LIST with specific-page links (not a homepage, not a table cell)
 - [ ] If targeting Feishu/Lark: **no links inside table cells** (verify by importing or by grepping for `](http` inside table rows)
+- [ ] 交付物是**一个 `.md` 文件**（非聊天正文、非 `.txt`/`.docx`/PDF），默认位于 `output/learning-doc/`
 - [ ] One-page cheat sheet present; verification checklist present
 - [ ] Version/source-doc reference is correct and current
 - [ ] **Formatting came from this skill's "Standard Format" section, not from copying a sibling learning doc**; the new doc has no reference to any other doc and stands alone
@@ -279,6 +288,10 @@ Do not introduce other emoji callout types.
 9. Verify (reader/budget set; subtraction ran; grep residual numbers; check table-cell links; confirm spine threads through)
 
 ## Changelog
+
+### 1.2.1
+- **新增「Output — always a single `.md` file」小节**：固化交付格式——学习文档永远输出为单个 `.md` 文件，不是聊天长回复、不是 `.txt`/`.docx`/PDF；默认路径 `output/learning-doc/<主题>.md`。理由：脊柱图、callout、`[[1]](url)` 引用、表格、LaTeX 全依赖 Markdown 渲染，换格式即失效。明确三条：①即使用户只贴源文本未说"存文件"也产出 `.md` 而非对话铺长文；②指定 Notion/Confluence 时仍以 `.md` 为源再说明导入方式。
+- **Verification 新增一条**：交付物须为一个 `.md` 文件、默认位于 `output/learning-doc/`。
 
 ### 1.2.0
 本次主题：**对抗"文档过长"** —— 此前整套流程只讲"加"（加 why、加例子、加 callout、加诊断），没有任何"减"的机制，导致成品继承参考文档的穷举性、读起来又长又像没写完。本版把"精简"提升为一等原则，并补上长期缺失的"可操作脊柱选择"与"worked 示例"。
