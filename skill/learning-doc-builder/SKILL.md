@@ -1,7 +1,7 @@
 ---
 name: learning-doc-builder
 description: Use when turning dense reference material — a skill/SKILL.md, a spec, an API doc, a research report, or any lookup-oriented technical document — into a readable, progressively-structured LEARNING document that someone can read top-to-bottom and actually learn from. Covers picking a single spine mental model, ordering by cognitive dependency, adding the "why" and worked examples the source compresses out, strict source-annotation discipline (every datum cited or relativized, no unsourced "industry-experience" numbers), inline clickable citations, and editor-safe formatting (e.g. Feishu/Lark/Notion import quirks). Trigger on requests like "把这个 skill/文档做成学习文档", "写一份可读性强的学习材料", "turn this reference into a tutorial", "讲透/讲明白这份资料".
-version: 1.2.1
+version: 1.2.2
 author: Distilled from real learning-doc production
 license: MIT
 metadata:
@@ -107,6 +107,7 @@ If the user cares about correctness, **every data point must either carry a prec
 - **Distinguish settlement-grade vs estimate** wherever the domain has both (e.g. billed/API numbers vs SDK/real-time estimates). Conflating them is a classic error worth calling out.
 - **Worked-example numbers** are fine if explicitly labelled as illustrative.
 - **Internal SOP / training targets** (KPIs that are goals, not facts about the world) should be labelled "example target, not benchmark."
+- **来源广度下限（每篇 ≥3 个一手权威源）：** 每篇学习文档至少引用 **3 个权威、独立的一手来源**——领域官方文档 / 平台帮助中心 / 官方 benchmark 报告，而非二手博客或自媒体。例：**投放**类参考 Meta、Google Ads、TikTok、AppLovin 官方文档；**变现**类参考 AdMob、AppLovin MAX、App Store、Google Play、RevenueCat。三个要点：①一手、相互独立、各链到具体页面；②**绝不为凑数编造，也不把同一来源拆成多个充数**（与上面"绝不编造"同条红线）；③多来源同时用于**交叉印证**，避免单一平台口径偏差。即便是 Variant B（不引用具体数值），文末「参考资源」也须列 ≥3 个权威官方文档。
 
 ### Phase 7 — Citations and editor-target formatting
 
@@ -200,7 +201,7 @@ Keep the header **topic-only** — do not write "本文基于 X skill 重新编�
 **Variant A — converting a sourced reference (real citations exist):**
 
 ```text
-> **📌 数据来源标记（全文通用）：** [[1]](url) = 来源A · [[2]](url) = 来源B …（角标就近链到对应文档；完整清单见文末「数据来源」）。
+> **📌 数据来源标记（全文通用）：** [[1]](url) = 来源A · [[2]](url) = 来源B …（角标就近链到对应文档；完整清单见文末「数据来源」，至少 3 个独立一手权威源）。
 > **未标记**的内容为通用公式 / 概念 / 结构性事实；个别无权威来源的绝对数值已改为相对描述或注明"以自己实测为准"。
 ```
 
@@ -209,7 +210,7 @@ Keep the header **topic-only** — do not write "本文基于 X skill 重新编�
 ```text
 > **📌 关于数据来源：** 本文是对<领域>通用方法论的概念性梳理，主体是公式、模型、结构性事实，不依赖具体数值。
 > 文中所有带数字的例子均为示意（标注「示意」），不是基准值，请以自己实测的数据为准。
-> 文末「参考资源」列出权威公开文档作为延伸阅读，编号 [1] [2] … 在正文出现处就近超链接。
+> 文末「参考资源」列出**至少 3 个**权威公开文档作为延伸阅读，编号 [1] [2] … 在正文出现处就近超链接。
 ```
 
 ### Callout set (use only these three, sparingly)
@@ -250,6 +251,7 @@ Do not introduce other emoji callout types.
 - [ ] Every rule has a "why"; every illustrative number is labelled as such
 - [ ] **grep the draft for residual unsourced absolute numbers** (`%`, `$`, `×`, "倍", thresholds) — each must be sourced, relativized, or labelled illustrative
 - [ ] No fabricated sources or numbers anywhere
+- [ ] **至少 3 个权威、独立的一手来源**（官方文档/平台/报告），均真实存在、链到具体页面、非凑数（Variant B 也须 ≥3 个延伸阅读）
 - [ ] Citation markers are clickable links at the point of use; markers are `[1]` not `[¹]`
 - [ ] Source list is a LIST with specific-page links (not a homepage, not a table cell)
 - [ ] If targeting Feishu/Lark: **no links inside table cells** (verify by importing or by grepping for `](http` inside table rows)
@@ -273,6 +275,7 @@ Do not introduce other emoji callout types.
 11. **Reverse-engineering the format from a past output.** Opening a previously-built learning doc to copy its legend/callouts/citation style couples unrelated docs and propagates drift. Use the "Standard Format" section here; each doc must stand alone.
 12. **Adding without subtracting → bloat (the verbosity trap).** The skill biases hard toward addition; with no Phase-0 reader and no Phase-5 subtraction pass, the doc inherits the reference's exhaustiveness and reads long and unfinished. Density (spine + why) raises value; subtraction controls length. Coverage of the long tail is the reference's job, not the learning doc's.
 13. **No reader defined → re-explaining the basics.** Without a Phase-0 audience, you default to teaching everyone everything. Naming the reader (and asking if unsure) is the cheapest large cut available.
+14. **来源太少 / 单一来源。** 只引一个平台、或为回避不确定数值而把一切都相对化，会让文档权威性不足、口径偏单一。每篇 **≥3 个独立一手权威源**并交叉印证；缺来源时是去找权威官方文档，不是编造或拿同一来源充数（见 §6）。
 
 ## Quick Reference: Priority Order
 
@@ -288,6 +291,10 @@ Do not introduce other emoji callout types.
 9. Verify (reader/budget set; subtraction ran; grep residual numbers; check table-cell links; confirm spine threads through)
 
 ## Changelog
+
+### 1.2.2
+- **新增「来源广度下限」规则（Phase 6）：每篇学习文档至少引用 3 个权威、独立的一手来源**——领域官方文档/平台帮助中心/官方 benchmark 报告，而非二手博客。给出领域示例：投放类 Meta / Google Ads / TikTok / AppLovin；变现类 AdMob / AppLovin MAX / App Store / Google Play / RevenueCat。强调三点：①一手、相互独立、链到具体页面；②绝不为凑数编造或把同一来源拆分充数（与「绝不编造」同红线）；③多来源用于交叉印证、避免单一平台口径偏差。Variant B（不引具体数值）文末参考资源同样须 ≥3 个。
+- **配套同步**：Source legend A/B 两变体均注明「至少 3 个独立一手权威源」；Verification 新增一条（≥3 个、真实存在、具体页面、非凑数）；Common Pitfalls 新增 #14「来源太少 / 单一来源」。
 
 ### 1.2.1
 - **新增「Output — always a single `.md` file」小节**：固化交付格式——学习文档永远输出为单个 `.md` 文件，不是聊天长回复、不是 `.txt`/`.docx`/PDF；默认路径 `output/learning-doc/<主题>.md`。理由：脊柱图、callout、`[[1]](url)` 引用、表格、LaTeX 全依赖 Markdown 渲染，换格式即失效。明确三条：①即使用户只贴源文本未说"存文件"也产出 `.md` 而非对话铺长文；②指定 Notion/Confluence 时仍以 `.md` 为源再说明导入方式。
