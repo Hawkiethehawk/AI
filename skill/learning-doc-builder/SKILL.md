@@ -1,7 +1,7 @@
 ---
 name: learning-doc-builder
 description: Use when turning dense reference material — a skill/SKILL.md, a spec, an API doc, a research report, or any lookup-oriented technical document — into a readable, progressively-structured LEARNING document that someone can read top-to-bottom and actually learn from. Covers picking a single spine mental model, ordering by cognitive dependency, adding the "why" and worked examples the source compresses out, strict source-annotation discipline (every datum cited or relativized, no unsourced "industry-experience" numbers), inline clickable citations, and editor-safe formatting (e.g. Feishu/Lark/Notion import quirks). Trigger on requests like "把这个 skill/文档做成学习文档", "写一份可读性强的学习材料", "turn this reference into a tutorial", "讲透/讲明白这份资料".
-version: 1.2.7
+version: 1.2.8
 author: Distilled from real learning-doc production
 license: MIT
 metadata:
@@ -84,7 +84,7 @@ This is what makes it a *learning* doc:
 - **Intuition for every rule**: "do X *because* Y" — always carry the reason.
 - **Worked numeric examples** (clearly labelled illustrative/示意 if the numbers are made up — never let an example double as a benchmark claim).
 - **Analogies and callouts**: use a small, consistent set — e.g. 💡 insight, ⚠️ warning, 🧭 the through-line. Don't overuse.
-- **Visual aids**: ASCII trees/funnels for the spine, tables for comparisons, LaTeX (`$$…$$`) for formulas.
+- **Visual aids**: pure-ASCII trees/funnels for the spine inside `text` code blocks, tables for comparisons, LaTeX (`$$…$$`) for formulas. **Never use Unicode box-drawing characters** (`┌ ┐ └ ┘ ├ ┤ ┬ ┴ ┼ │ ─ ╔ ╗ ╚ ╝ ║ ═`) — they misalign in proportional-font editors (Notion, Feishu, etc.). Pure-ASCII trees (`├`, `└`, `│`, `─` inside a fenced code block) are compact enough to stay aligned everywhere. For layered/stacked structures, use horizontal rules (`---` or `─────────────────`) and indentation instead of box frames.
 - **Counter-intuitive points** get their own "this looks like a bug but isn't" treatment.
 
 **…then run the subtraction pass — this is the half that keeps it short.** Adding is only one side; now go back through and, for every block, ask *"does the reader's goal (Phase 0) actually need this?"* Cut by default:
@@ -118,7 +118,7 @@ How sources appear matters as much as that they exist.
 - **Inline, clickable citations at the point of use** beat a bibliography-only approach. Make the marker itself a link: render `[1]` as a hyperlink (`[[1]](url)` form) so the reader jumps to the source from where the claim is made. Keep a consolidated source list at the end too.
 - **Use `[1]` not `[¹]/[³]`** — superscript digits render inconsistently across editors and look misaligned next to `[1]`.
 - **Link to the specific doc page, not a homepage.** If a source is a help center, cite the exact article per topic, not the front door.
-- **Know your target editor's import quirks.** Especially **Feishu/Lark**: markdown links inside **table cells are dropped on import** — put links in **lists or paragraphs** instead. (Notion/Confluence have their own quirks; verify.) If a section is reference-table-shaped but needs live links, restructure it as a list.
+- **Know your target editor's import quirks.** Especially **Feishu/Lark**: markdown links inside **table cells are dropped on import** — put links in **lists or paragraphs** instead. **Notion**: Unicode box-drawing characters (`┌ ┐ └ ┘ ├ ┤ ┬ ┴ ┼ │ ─`) misalign in proportional fonts — use pure-ASCII trees (`├`, `└`, `│`, `─`) inside `text` code blocks only. For detailed Notion formatting rules, see the [[notion-doc-builder]] skill. (Confluence has its own quirks; verify.) If a section is reference-table-shaped but needs live links, restructure it as a list.
 - **End with a one-page cheat sheet** (all core formulas/identities in one code block) and a **全文总结 (full-text summary)** — a closing recap of the spine, the core judgment, and each chapter's one key takeaway. It's a "把整条链路再走一遍" prose wrap-up, **not** a self-check checklist (the checklist belongs to the skill's own pre-delivery QA, not to the reader-facing doc).
 
 ## Output — always a single `.md` file
