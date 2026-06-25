@@ -1,7 +1,7 @@
 ---
 name: learning-doc-builder
 description: Use when turning dense reference material — a skill/SKILL.md, a spec, an API doc, a research report, or any lookup-oriented technical document — into a readable, progressively-structured LEARNING document that someone can read top-to-bottom and actually learn from. Covers picking a single spine mental model, ordering by cognitive dependency, adding the "why" and worked examples the source compresses out, strict source-annotation discipline (every datum cited or relativized, no unsourced "industry-experience" numbers), inline clickable citations, and editor-safe formatting (e.g. Feishu/Lark/Notion import quirks). Trigger on requests like "把这个 skill/文档做成学习文档", "写一份可读性强的学习材料", "turn this reference into a tutorial", "讲透/讲明白这份资料".
-version: 1.2.4
+version: 1.2.5
 author: Distilled from real learning-doc production
 license: MIT
 metadata:
@@ -123,7 +123,7 @@ How sources appear matters as much as that they exist.
 
 学习文档的交付物**永远是一个 Markdown (`.md`) 文件**，不是聊天里的一段长回复，也不是 `.txt` / `.docx` / PDF。本 skill 的全部格式约定——脊柱 ASCII 图、`🧭/💡/⚠️` callout、`[[1]](url)` 内联引用、对比表、LaTeX `$$…$$`——都依赖 Markdown 渲染；导出到飞书/Notion 也是从 `.md` 导入。其它格式会让这些约定失效。
 
-- **写到文件**，默认路径 `output/learning-doc/<主题>.md`（仓库的 `output/<type>/` 目录约定）。文件名**只写主题本身**，不要追加“学习文档”“商业化运营”“入门到精通”等主题之外的说明；例如用 `IAA变现.md`、`广告投放.md`、`IAP商业化.md`、`混变工具产品功能设计拆解.md`。
+- **写到文件**，默认路径 `output/markdown/<主题>.md`（仓库的 `.md` 文档输出目录约定；不要写到 `output/learning-doc/`）。文件名**只写主题本身**，不要追加“学习文档”“商业化运营”“入门到精通”等主题之外的说明；例如用 `IAA变现.md`、`广告投放.md`、`IAP商业化.md`、`混变工具产品功能设计拆解.md`。
 - **即使用户只贴了一段源文本、没明说"存成文件"**，也产出 `.md` 文件，而不是在对话里直接铺一篇长文。给出文件路径即可。
 - 用户若指定了别的目标编辑器（Notion/Confluence），仍以 `.md` 为源文件，再说明导入方式——不要改用编辑器原生格式直接产出。
 
@@ -256,7 +256,7 @@ Do not introduce other emoji callout types.
 - [ ] Citation markers are clickable links at the point of use; markers are `[1]` not `[¹]`
 - [ ] Source list is a LIST with specific-page links (not a homepage, not a table cell)
 - [ ] If targeting Feishu/Lark: **no links inside table cells** (verify by importing or by grepping for `](http` inside table rows)
-- [ ] 交付物是**一个 `.md` 文件**（非聊天正文、非 `.txt`/`.docx`/PDF），默认位于 `output/learning-doc/`
+- [ ] 交付物是**一个 `.md` 文件**（非聊天正文、非 `.txt`/`.docx`/PDF），默认位于 `output/markdown/`，不得输出到 `output/learning-doc/`
 - [ ] 文件名**只包含主题本身**，不包含“学习文档”“商业化运营”“入门到精通”等主题之外的说明
 - [ ] 文档开头**不包含 H1 标题行**（不以 `# <主题>...` 开头），直接从目标读者/范围 blockquote 开始
 - [ ] One-page cheat sheet present; verification checklist present
@@ -296,6 +296,15 @@ Do not introduce other emoji callout types.
 9. Verify (reader/budget set; subtraction ran; grep residual numbers; check table-cell links; confirm spine threads through)
 
 ## Changelog
+
+### 1.2.5
+- **修正 `.md` 输出目录：学习文档必须写入 `output/markdown/<主题>.md`**，不要写入 `output/learning-doc/`。这是当前仓库对 Markdown 文档的统一输出目录。
+- **同步更新 Output 与 Verification**：默认路径改为 `output/markdown/`，验证项明确禁止输出到 `output/learning-doc/`。
+
+### 1.2.4
+- **新增文件命名规则：文件名只写主题本身**。默认仍输出到 `output/learning-doc/<主题>.md`，但 `<主题>` 必须是裸主题，不追加“学习文档”“商业化运营”“入门到精通”等交付物类型、岗位视角或宣传定位。
+- **补充示例**：推荐 `IAA变现.md`、`广告投放.md`、`IAP商业化.md`、`混变工具产品功能设计拆解.md`；禁止 `IAA变现学习文档.md`、`IAP商业化运营学习文档.md` 等冗余命名。
+- **同步更新验证项与常见陷阱**：Verification 增加文件名检查；Common Pitfalls 增加“文件名夹带非主题说明”。
 
 ### 1.2.3
 - **移除学习文档正文开头的 H1 标题要求**：标准格式不再以 `# <主题> · <一句话定位> · 学习文档` 开头，而是直接从目标读者/范围 blockquote 开始；文件名已经承载主题，正文无需重复标题。
