@@ -1,8 +1,6 @@
-# IAP 商业化运营 · 工具应用订阅与内购收入 · 学习文档
-
-> 面向已有基础商业化概念的工具类 App 商业化运营同学：默认你已知道 DAU、留存、转化率、ARPU 的含义，本文从“如何经营订阅 / 内购收入”这一层开始讲。
-> 本文不是商店配置手册，而是一条可从头读到尾的学习路径：先建立 LTV 分解树，再学会用付费漏斗和订阅状态机诊断问题。
-> 读完你应该能：拆解 IAP 收入波动；设计付费墙与套餐；区分结算与实时估算；管理订阅续费、退款和被动流失。
+删除第 1 行的 H1。> 面向已有基础商业化概念的工具类 App 商业化运营同学：默认你已知道 DAU、留存、转化率、ARPU 的含义，本文从”如何经营订阅 / 内购收入”这一层开始讲。预计 12 分钟读完（共 11 章，每章一个主题）。
+> 本文是一条可从头读到尾的学习路径：先建立 LTV 分解树，再学会用付费漏斗和订阅状态机诊断问题。
+> 读完你应该能：拆解 IAP 收入波动；设计付费墙与套餐；区分结算与实时估算口径；管理订阅续费、退款和被动流失。
 
 > **📌 数据来源标记（全文通用）：** [[1]](https://developer.apple.com/app-store/subscriptions/) = Apple 订阅 · [[2]](https://developer.apple.com/app-store/review/guidelines/) = App Review Guidelines · [[3]](https://developer.android.com/google/play/billing/subscriptions) = Google Play 订阅 · [[4]](https://developer.android.com/google/play/billing/lifecycle/subscriptions) = Google Play 订阅生命周期 · [[5]](https://www.revenuecat.com/docs/getting-started/entitlements) = RevenueCat Entitlements · [[6]](https://www.revenuecat.com/state-of-subscription-apps/) = RevenueCat 订阅基准报告 · [[7]](https://adapty.io/state-of-in-app-subscriptions/) = Adapty 订阅报告。完整清单见文末「数据来源」。
 > **未标记**的内容为通用公式 / 概念 / 结构性事实；带数字的例子若无来源均标注为“示意”。
@@ -11,7 +9,7 @@
 
 ## 0. 一句话理解
 
-IAP 商业化不是“把更多用户推到付费页”，而是在用户信任不被破坏的前提下，让每个新增用户的净 LTV 最大。
+IAP 商业化的核心目标是：在用户信任不被破坏的前提下，让每个新增用户的净 LTV 最大。
 
 ```text
 IAP 收入 ≈ 新增用户 × 付费转化效率 × 留存价值
@@ -20,7 +18,7 @@ IAP 收入 ≈ 新增用户 × 付费转化效率 × 留存价值
 付费墙触达率 × 试用/购买启动率 × 试用转付费率 × Σ(各期续订留存 × 净单价)
 ```
 
-> 🧭 **贯穿全文的一句话**：IAP 运营的诊断动作是沿 LTV 树找“哪片叶子动了”，而不是孤立地追某一个转化率。
+> 🧭 **贯穿全文的一句话**：IAP 运营的诊断动作是沿 LTV 树找”哪片叶子动了”，孤立地追某一个转化率会错过真正的收入问题。
 
 ---
 
@@ -78,7 +76,7 @@ Apple 对订阅需要提供持续价值，审核规则也要求内购和订阅�
 
 ---
 
-## 4. 付费墙：不是价格页，而是决策页
+## 4. 付费墙：决策页而非价格页
 
 一个合格付费墙要回答五个问题：
 
@@ -101,7 +99,7 @@ Apple 对订阅需要提供持续价值，审核规则也要求内购和订阅�
 
 ---
 
-## 5. 定价与套餐：运营只看净 LTV，不看单点转化
+## 5. 定价与套餐：运营看净 LTV，不只看单点转化
 
 套餐设计常见结构：
 
@@ -114,11 +112,11 @@ Apple 对订阅需要提供持续价值，审核规则也要求内购和订阅�
 
 Apple 支持订阅介绍优惠、促销优惠等机制 [[1]](https://developer.apple.com/app-store/subscriptions/)。Google Play 通过 base plan 和 offer 配置订阅周期与优惠 [[3]](https://developer.android.com/google/play/billing/subscriptions)。
 
-> ⚠️ 不要只看价格实验的购买转化率。降价可能让转化升高，但净单价下降、退款上升、低质量用户变多后，LTV 反而下降。
+> ⚠️ 价格实验不能只盯购买转化率。降价可能让转化升高，但净单价下降、退款上升、低质量用户变多后，LTV 反而可能下降。
 
 ---
 
-## 6. 试用：目标不是“启动试用”，而是“试用期内送达价值”
+## 6. 试用：目标是”试用期内送达价值”
 
 试用漏斗：
 
