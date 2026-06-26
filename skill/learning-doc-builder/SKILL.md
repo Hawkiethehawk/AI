@@ -1,7 +1,7 @@
 ---
 name: learning-doc-builder
 description: Use when turning dense reference material — a skill/SKILL.md, a spec, an API doc, a research report, or any lookup-oriented technical document — into a readable, progressively-structured LEARNING document that someone can read top-to-bottom and actually learn from. Covers picking a single spine mental model, ordering by cognitive dependency, adding the "why" and worked examples the source compresses out, strict source-annotation discipline (every datum cited or relativized, no unsourced "industry-experience" numbers), inline clickable citations, and editor-safe formatting (e.g. Feishu/Lark/Notion import quirks). Trigger on requests like "把这个 skill/文档做成学习文档", "写一份可读性强的学习材料", "turn this reference into a tutorial", "讲透/讲明白这份资料".
-version: 1.3.0
+version: 1.3.1
 author: Distilled from real learning-doc production
 license: MIT
 metadata:
@@ -243,6 +243,7 @@ Do not introduce other emoji callout types.
 
 - The marker **is** the link: `[[1]](https://specific-page)`. Never bibliography-only; never `[¹]/[³]` (use `[1]`).
 - **No links inside table cells** (Feishu drops them on import) — put any cited claim in a list or paragraph instead.
+- **两条规则撞车时（引用恰好落在表格里）的唯一正解：把引用移到表格前后的正文，仍写成可点击 `[[n]](url)`。** 绝不为了"表内不放链接"把全文角标降级成不可点的纯文本 / 代码块 `[n]`——那只是把"表内链接"问题换成了"bibliography-only"问题（见 Pitfall 5/19），两头不讨好。正文里的角标本就不受表格规则约束，必须保持可点击。
 
 ### End matter (in this order)
 
@@ -278,7 +279,7 @@ Do not introduce other emoji callout types.
 - [ ] **grep the draft for residual unsourced absolute numbers** (`%`, `$`, `×`, "倍", thresholds) — each must be sourced, relativized, or labelled illustrative. **Also grep for rhetorical precise numbers** ("70% of capability", "3× improvement") embedded in explanatory prose — these are estimates wearing a data costume; convert to qualitative phrasing or source to real data.
 - [ ] No fabricated sources or numbers anywhere
 - [ ] **至少 3 个权威、独立的一手来源**（官方文档/平台/报告），均真实存在、链到具体页面、非凑数（Variant B 也须 ≥3 个延伸阅读）
-- [ ] Citation markers are clickable links at the point of use; markers are `[1]` not `[¹]`
+- [ ] **正文角标是可点击 `[[n]](url)`，不是纯文本 / 代码块 `[n]`**（可 grep `\[\[[0-9]` 的数量 ≈ 角标数来验）；解决"表内链接"用的是把引用**移到正文**、不是删链接。markers 用 `[1]` 不用 `[¹]`
 - [ ] Source list is a LIST with specific-page links (not a homepage, not a table cell)
 - [ ] If targeting Feishu/Lark: **no links inside table cells** (verify by importing or by grepping for `](http` inside table rows)
 - [ ] 交付物是**一个 `.md` 文件**（非聊天正文、非 `.txt`/`.docx`/PDF），默认位于 `output/markdown/`，不得输出到 `output/learning-doc/`
@@ -308,6 +309,7 @@ Do not introduce other emoji callout types.
 16. **文件名夹带非主题说明。** 输出文件名只写主题本身，例如 `IAA变现.md`；不要写 `IAA变现学习文档.md`、`IAP商业化运营学习文档.md`、`广告投放入门.md` 这类带交付物类型、岗位视角或宣传定位的名字。
 17. **能力点堆砌"而不是/而非"。** 每个能力描述都写成"能做到 X 而不是 Y"——一次做对比参照是有效的，连用三次变成修辞噪音。读者需要的是目标画面，不需要一张排除清单。能力点用肯定句式直述（"写出精准的 prompt"），不用"而不是/而非"堆叠。
 18. **精确比例穿着数字外衣。** "70% 的有效能力"、"效率提升 3 倍"这类解释性叙述中的精确百分数/倍数，本质是修辞性估计，没有来源可查。它们通常藏在解释段落里，grep 也不容易揪出来——因为读过去像"解释"不像"数据"。规则：要么改成定性词（"很大一部分"、"显著提升"），要么找到真正有出处的研究数据替换。
+19. **为消"表内链接"而把全文角标改成不可点（过度纠正）。** 一刀切地把所有 `[[n]](url)` 降级成纯文本 / 代码块 `[n]`，会同时违反"内联可点击"并制造 bibliography-only（Pitfall 5）。正确做法是**只把落在表格单元格里的那几个引用移到表外正文**，其余正文角标保持可点击。表格规则只管单元格内，不管正文。
 
 ## Quick Reference: Priority Order
 
