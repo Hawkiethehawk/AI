@@ -1,7 +1,7 @@
 ---
 name: learning-doc-builder
 description: Use when turning dense reference material — a skill/SKILL.md, a spec, an API doc, a research report, or any lookup-oriented technical document — into a readable, progressively-structured LEARNING document that someone can read top-to-bottom and actually learn from. Covers picking a single spine mental model, ordering by cognitive dependency, adding the "why" and worked examples the source compresses out, strict source-annotation discipline (every datum cited or relativized, no unsourced "industry-experience" numbers), inline clickable citations, and editor-safe formatting (e.g. Feishu/Lark/Notion import quirks). Trigger on requests like "把这个 skill/文档做成学习文档", "写一份可读性强的学习材料", "turn this reference into a tutorial", "讲透/讲明白这份资料".
-version: 1.2.9
+version: 1.3.0
 author: Distilled from real learning-doc production
 license: MIT
 metadata:
@@ -81,11 +81,13 @@ Every domain has one error that beginners always make (a conflated pair of conce
 
 This is what makes it a *learning* doc:
 
-- **Intuition for every rule**: "do X *because* Y" — always carry the reason.
-- **Worked numeric examples** (clearly labelled illustrative/示意 if the numbers are made up — never let an example double as a benchmark claim).
+- **Intuition for every rule — trace the "why" down to mechanism, not correlation.** "Do X *because* Y" is the floor; push one or two levels deeper until you hit a cause that can't just be reworded ("because an L2 broadcast can't cross the router", not "because it's a networking thing"). A why that's the rule paraphrased teaches nothing — that's the line between a memorable explanation and a restatement.
+- **Worked numeric examples — generate, don't gesture.** For each core rule/formula, build one concrete walk-through: pick realistic inputs (label them 示意 if invented — never let an example double as a benchmark claim), show the calculation step by step, land the result, then add one **counterfactual** ("if X doubles, the result moves to …"). The counterfactual is what turns a static example into something the reader can *operate*. One fully-worked example beats three half-worked ones.
 - **Analogies and callouts**: use a small, consistent set — e.g. 💡 insight, ⚠️ warning, 🧭 the through-line. Don't overuse.
 - **Visual aids**: pure-ASCII trees/funnels for the spine inside `text` code blocks, tables for comparisons, LaTeX (`$$…$$`) for formulas. **Never use Unicode box-drawing characters** (`┌ ┐ └ ┘ ├ ┤ ┬ ┴ ┼ │ ─ ╔ ╗ ╚ ╝ ║ ═`) — they misalign in proportional-font editors (Notion, Feishu, etc.). Pure-ASCII trees (`├`, `└`, `│`, `─` inside a fenced code block) are compact enough to stay aligned everywhere. For layered/stacked structures, use horizontal rules (`---` or `─────────────────`) and indentation instead of box frames.
 - **Counter-intuitive points** get their own "this looks like a bug but isn't" treatment.
+- **Generate a per-chapter comprehension check (the doc's real success test).** For each chapter, write the 1–2 questions a reader should be able to answer *after* reading it (e.g. "given this funnel, which stage do you investigate first when D7 drops?"). If the chapter doesn't let them answer, it didn't teach — fix the chapter, not the question. These are an optional reader-facing element (see End matter), and are a **learning device, not the pre-delivery QA checklist** (which stays internal).
+- **Layer the depth: fast path first, detail optional.** Don't flatten everything to one level. Carry the 80%-path inline; push depth (proofs, edge mechanics, parameter tables) into clearly-marked optional callouts/appendices the reader can skip. (Same progressive-disclosure move this skill applies to itself — thin main file, detail on demand.)
 
 **…then run the subtraction pass — this is the half that keeps it short.** Adding is only one side; now go back through and, for every block, ask *"does the reader's goal (Phase 0) actually need this?"* Cut by default:
 
@@ -108,6 +110,7 @@ If the user cares about correctness, **every data point must either carry a prec
 - **Distinguish settlement-grade vs estimate** wherever the domain has both (e.g. billed/API numbers vs SDK/real-time estimates). Conflating them is a classic error worth calling out.
 - **Worked-example numbers** are fine if explicitly labelled as illustrative.
 - **Internal SOP / training targets** (KPIs that are goals, not facts about the world) should be labelled "example target, not benchmark."
+- **Tag volatile claims with an as-of date.** Anything that drifts — platform commission/policy, pricing, API limits, market shares — gets a `（截至 <YYYY-MM>，以官方现行为准）` marker rather than being stated as timeless fact. When the domain moves fast and a current figure matters, verify it against the live source before writing it down instead of trusting the reference's possibly-stale number.
 - **精确比例也是坑：** "70% 的有效能力"、"效率提升 3 倍"这类解释性叙述中的精确百分数、倍数，本质是修辞性估计，不是数据。它们穿着数字的外衣但没有来源可查——要么改成定性词（"很大一部分"、"显著提升"），要么找到真正有出处的研究数据替换。最容易漏的就是这种"看起来只是解释、不是 benchmark"的比例。
 - **来源广度下限（每篇 ≥3 个一手权威源）：** 每篇学习文档至少引用 **3 个权威、独立的一手来源**——领域官方文档 / 平台帮助中心 / 官方 benchmark 报告，而非二手博客或自媒体。例：**投放**类参考 Meta、Google Ads、TikTok、AppLovin 官方文档；**变现**类参考 AdMob、AppLovin MAX、App Store、Google Play、RevenueCat。三个要点：①一手、相互独立、各链到具体页面；②**绝不为凑数编造，也不把同一来源拆成多个充数**（与上面"绝不编造"同条红线）；③多来源同时用于**交叉印证**，避免单一平台口径偏差。即便是 Variant B（不引用具体数值），文末「参考资源」也须列 ≥3 个权威官方文档。
 
@@ -159,6 +162,16 @@ The whole method in miniature. **Source** (lookup-style reference entry):
 | **Layered stack** | layers with contracts between | "which layer's contract broke" | networking, rendering, infra |
 
 The spine determines the whole doc's shape — choose deliberately.
+
+**Source-type priors** (a starting guess to speed up Phase 2 — still confirm with the selection ladder):
+
+| 源类型 | 常见脊柱先验 | 例子重心 |
+|--------|-------------|---------|
+| 变现 / 增长 / 单位经济 reference | 分解树（指标 = 因子相乘） | 数值演算 + 因子敏感度 |
+| API 文档 / SDK | 请求生命周期 (pipeline) 或 对象/资源模型 (layered) | 一次完整调用走查 |
+| 订阅 / 订单 / 权限系统 | 状态机 | 一条状态翻转链路 |
+| 协议 / 架构 / 基础设施 | 分层栈 | "某层契约破了会怎样" |
+| 一组松散工具/技巧 | 无单一脊柱 → 诚实的"何时用哪个"清单 | 每个工具一个触发场景 |
 
 ## Standard Format — House Style (this skill is the only template)
 
@@ -248,6 +261,9 @@ Do not introduce other emoji callout types.
  ② 每章/每分支一句关键结论（读者最该记住的那一点）；
  ③ 一句收束，把整条链路再走一遍。
  注意：这是把全文"读完能记住什么"压成一段，不是勾选式自检表，也不重复速查表的公式罗列。>
+
+## （可选）自测：每章 1–2 题
+<面向读者的学习装置，不是交付前 QA 清单：列出读完每章应能回答的问题，让读者自检是否真学会；答案可藏进折叠/附录，或只给"回到第 X 章"。仅在文档偏教学/培训用途时加。>
 ```
 
 ## Verification (run before declaring done)
@@ -258,7 +274,7 @@ Do not introduce other emoji callout types.
 - [ ] The spine is named in one sentence and referenced by the diagnostics chapter and cheat sheet
 - [ ] Reading order follows cognitive dependency, not source order
 - [ ] The #1 gotcha is its own early chapter
-- [ ] Every rule has a "why"; every illustrative number is labelled as such
+- [ ] Every rule has a "why" that reaches a mechanism (not the rule reworded); every core example has a step-by-step walk-through + one counterfactual; every illustrative number is labelled as such
 - [ ] **grep the draft for residual unsourced absolute numbers** (`%`, `$`, `×`, "倍", thresholds) — each must be sourced, relativized, or labelled illustrative. **Also grep for rhetorical precise numbers** ("70% of capability", "3× improvement") embedded in explanatory prose — these are estimates wearing a data costume; convert to qualitative phrasing or source to real data.
 - [ ] No fabricated sources or numbers anywhere
 - [ ] **至少 3 个权威、独立的一手来源**（官方文档/平台/报告），均真实存在、链到具体页面、非凑数（Variant B 也须 ≥3 个延伸阅读）
@@ -300,7 +316,7 @@ Do not introduce other emoji callout types.
 2. Pick the spine (one model — use the selection ladder; honest checklist if none fit)
 3. Build the cognitive-dependency ladder
 4. Promote the #1 gotcha
-5. Add why + worked examples + callouts + visuals, **then run the subtraction pass** (cut the tail, basics, repetition, hedging)
+5. Add why (down to mechanism) + worked examples (each with a counterfactual) + per-chapter check questions + callouts + visuals, **then run the subtraction pass** (cut the tail, basics, repetition, hedging)
 6. Source-discipline pass (classify, relativize, never fabricate)
 7. Inline clickable citations + editor-target formatting
 8. Cheat sheet + 全文总结 (closing recap, not a checklist)

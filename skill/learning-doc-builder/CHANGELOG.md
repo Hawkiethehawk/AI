@@ -1,5 +1,17 @@
 # Changelog — learning-doc-builder
 
+## 1.3.0
+
+**内容生成能力增强（6 个方向，全部折进现有 Phase，增密度不增章节——尊重本 skill 自身的"长度是成本"原则）。**
+
+- **Phase 5 · "why" 挖到机制**：把"X because Y"从底线升级为"往下挖 1–2 层到不能再换句话说的因果"，点明"换句话说的 why = 没教"。
+- **Phase 5 · Worked example 生成法**：从"加例子"升级为可执行步骤——真实感输入(示意标注)→逐步演算→落地结果→加一个**反事实**("X 翻倍则结果变…")；反事实是让例子"可操作"的关键。
+- **Phase 5 · 每章理解自测题**：生成"读完应能回答的 1–2 题"作为这章是否教会的真正判据；明确是**面向读者的学习装置**，区别于交付前 QA 清单。
+- **Phase 5 · 渐进深度**：产出文档也分快路径(80%)+ 可选深度附录，把本 skill 对自己做的 progressive disclosure 用到产出物上。
+- **Phase 2 / Spine Patterns · 源类型脊柱先验表**：变现/ API / 订阅 / 协议 / 松散工具 → 各自默认脊柱与例子重心，加速选脊柱(仍需 ladder 确认)。
+- **Phase 6 · volatility 标签**：会漂移的 claim(佣金/政策/价格/限额/份额)打 `截至 <YYYY-MM>` 标记，必要时先核查现行来源再写。
+- 同步更新 End matter(可选自测元素)、Verification(why 到机制 + 例子带反事实)、Quick Reference 第 5 步。
+
 ## 1.2.9
 - **Changelog 从 SKILL.md 抽离到独立 `CHANGELOG.md`**：减少 skill 触发时载入上下文的体量；SKILL.md 末尾仅留指针。
 - 补记此前缺失的 **1.2.8** 条目（frontmatter 曾从 1.2.7 跳到 1.2.8 但无变更说明）。

@@ -1,5 +1,20 @@
 # Changelog — prompt-crafter
 
+## 1.2.0
+
+**感知更强 + 功能更强两条线增强。**
+
+感知（perception）：
+- **新增原则 7「先感知再动笔」+ Workflow 步骤 0「感知运行环境」**：动笔前先判断 prompt 跑在官方 Claude 还是经网关的第三方模型（DeepSeek/Qwen/Kimi），据此裁剪工具与写法（第三方缺原生 WebSearch → 走 MCP）；能读 `CLAUDE.md`/项目/既有 prompt 就据实勘察，不写通用空壳。
+- **Mode B 步骤 2 补「优先从真实上下文推断」**：用户原话、对话历史、所在项目、过往写作样本都是线索，能读出来就别问。
+- **Mode B 步骤 3 升级为「歧义分类器」**：缺失维度按"哪个最改变产物"排序（输出格式/受众/成功标准 > 范围 > 语气/细节），只问最前 1–3 个，不平均用力。
+
+功能（capability）：
+- **新增原则 8 +  Workflow 步骤 4「测试与迭代（闭环）」**：非平凡 prompt 写完用测试样例实跑→判失败→改一处再测→交付经验证版；做不到实跑时至少做「预判失败」静态走查。
+- **新增「配套产出」节**：Few-shot/测试样例（典型+边界+易错）、Eval 评分卡（接模板 E，配回归）、Tool/JSON Schema 脚手架（agent & tool-use 连工具定义一起产出）。
+- **Improvement Checklist 升级为「Prompt Lint」**：带 🔴/🟡/🔵 严重度的扫描表 + 修法，可量化、可回归。
+- **Common Fixes 补两条**：第三方模型 web 走 MCP；改完用闭环验证并附 v1→v2 说明。
+
 ## 1.1.1
 - **frontmatter 标准化**：补齐 `license: MIT` 与 `metadata.hermes`（tags + related_skills），与仓库其它 skill 保持一致。
 - **Changelog 抽离到独立 `CHANGELOG.md`**，SKILL.md 末尾仅留指针，减少上下文占用。
