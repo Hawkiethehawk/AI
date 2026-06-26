@@ -1,7 +1,7 @@
 ---
 name: wake-hawkie
 description: Use when remotely powering on (Wake-on-LAN) a PC on a home LAN through an ImmortalWrt/OpenWrt router (Cudy TR3000) — reach the always-on router over Tailscale, then have it broadcast a WoL magic packet via etherwake. Covers non-interactive SSH from Windows (plink), the router-side Tailscale setup, and the proxy/TUN (v2rayN/sing-box) pitfalls that silently break SSH-to-IP. Default target is the PC "configured target".
-version: 1.0.0
+version: 1.1.0
 author: configured targetthehawk
 license: MIT
 metadata:
@@ -177,28 +177,23 @@ Re-verify: BIOS WoL + "Power On by PCI-E" enabled; ErP/Deep-Sleep **off**; NIC d
 ### Wrong bridge interface
 Most ImmortalWrt setups bridge LAN as `br-lan`. Verify: `ip -4 addr show` or `ifstatus lan | grep l3_device`.
 
-## Current Environment (this setup — fill credentials at runtime, never commit them)
+## Current Environment (concrete values are LOCAL-ONLY)
 
-| Component | Value |
-|-----------|-------|
-| Router | Cudy TR3000, ImmortalWrt, bridge `br-lan`, `/overlay` ~176 MB free |
-| Router LAN | `<LAN_SUBNET>`, gateway `<ROUTER_LAN_IP>` |
-| Router Tailscale IP | `<ROUTER_TAILSCALE_IP>` (tailnet `<TAILNET_DOMAIN>`, acct <TAILNET_ACCOUNT>@) |
-| Target PC "configured target" | NIC <TARGET_NIC>, **MAC `<TARGET_MAC>`** (wake target) |
-| configured target LAN / Tailscale | `<PC_LAN_IP>` / `<PC_TAILSCALE_IP>` |
-| Local proxy (on configured target) | **Clash Verge** (mihomo) fake-ip **TUN**, adapter `<TUN_ADAPTER_IP>`, mixed/SOCKS port `<PROXY_PORT>` — corrupts SSH to public IPs (RouteOnly pitfall above); reach the router over the **LAN** (`<ROUTER_LAN_IP>`) to stay clean |
-| Cloud controller | `<CLOUD_CONTROLLER>`, Tailscale **`<CLOUD_TAILSCALE_IP>`** (`<CLOUD_USER>@`, same tailnet) — **passwordless key to the router installed**; wakes configured target via `ssh root@<ROUTER_TAILSCALE_IP> "etherwake -i br-lan <TARGET_MAC>"` |
-| Passwordless SSH | configured target *and* the cloud server each have an ed25519 key in the router's `/etc/dropbear/authorized_keys` (`ssh -o BatchMode=yes` works) |
-| configured target SSH server (for shutdown) | OpenSSH Server (`sshd`) running, port 22; the **router's** key is in `%ProgramData%\ssh\administrators_authorized_keys` (<WIN_USER> ∈ Administrators) → router can `ssh <WIN_USER>@<PC_LAN_IP> "shutdown /s /t 0"` passwordlessly |
-| Router SSH password | **NOT stored in repo** — supply at runtime |
+This repo is **public**, so the concrete network topology of this particular setup — router/PC/cloud **Tailscale IPs**, the **tailnet name**, the target **MAC**, LAN IPs, Windows username — lives in **`env.local.md`** (gitignored, never pushed). It still syncs to the runtime skill dir via `cp -rf`, so it's available when you actually run a wake; it just doesn't land in git.
 
-### Wake configured target (concrete)
-```powershell
-# from the controller (Windows), once the RouteOnly fix or a clean tailnet path is in place:
-plink.exe -batch -ssh root@<ROUTER_TAILSCALE_IP> -pw "<ROUTER_SSH_PASSWORD>" "etherwake -i br-lan <TARGET_MAC>"
-# then poll:
-1..30 | % { if (Test-Connection <PC_TAILSCALE_IP> -Count 1 -Quiet) { "configured target UP"; break }; Start-Sleep 5 }
-```
+To reconstruct or update this setup, record these fields in `env.local.md`:
+
+| Field | What to record |
+|-------|----------------|
+| Router | model, firmware, LAN bridge name, `/overlay` free |
+| Router LAN / Tailscale IP | `192.168.x.x` / `100.x.y.z` |
+| Target PC | NIC model, **Ethernet MAC** (wake target), LAN + Tailscale IP |
+| Local proxy | TUN/fake-ip details that break SSH-to-public-IP (reach router over LAN to bypass) |
+| Cloud controller | host, Tailscale IP, ssh user, "key installed on router?" |
+| Passwordless SSH | which keys are in the router's `authorized_keys` / the PC's `administrators_authorized_keys` |
+| Router SSH password | **never store** — supply at runtime |
+
+> Concrete commands for this setup (real IPs/MAC filled in) are in `env.local.md`. The procedures below stay generic with `<PLACEHOLDERS>`.
 
 ## Remote shutdown (the reverse of wake)
 Wake turns the PC **on**; the symmetric move turns it **off** — SSH *into* the PC and run `shutdown /s /t 0`. Difference: wake works while the PC is off (router emits the packet); shutdown needs the PC reachable *while on*. The PC's own Tailscale is often **offline behind the same TUN proxy**, so route through the router over the **LAN**, mirroring the wake relay: `controller → router (Tailscale) → PC (LAN SSH) → shutdown`.
@@ -231,18 +226,23 @@ ssh root@<ROUTER_TAILSCALE_IP> "ssh -i /root/.ssh/id_ed25519 <WIN_USER>@<PC_LAN_
 
 | Goal | Command |
 |------|---------|
-| Wake (key auth) | `ssh root@<ROUTER_TAILSCALE_IP> "etherwake -i br-lan <TARGET_MAC>"` |
-| Wake (Windows, pw) | `plink -batch -ssh root@<ROUTER_TAILSCALE_IP> -pw "<pw>" "etherwake -i br-lan <TARGET_MAC>"` |
+| Wake (key auth) | `ssh root@<ROUTER_TS_IP> "etherwake -i br-lan <TARGET_MAC>"` |
+| Wake (Windows, pw) | `plink -batch -ssh root@<ROUTER_TS_IP> -pw "<pw>" "etherwake -i br-lan <TARGET_MAC>"` |
 | Install etherwake | `opkg update && opkg install etherwake` |
 | Install Tailscale (router) | `opkg install tailscale && /etc/init.d/tailscale enable && /etc/init.d/tailscale start && tailscale up` |
 | Router Tailscale IP | `tailscale ip -4` |
 | Find target MAC | `ipconfig /all` (Win) or `cat /tmp/dhcp.leases` (router) |
 | Verify bridge | `ip -4 addr show` / `ifstatus lan` |
 | Confirm woke | poll `Test-Connection <PC_IP>` |
-| **Shutdown** (cloud→router→PC) | `ssh root@<ROUTER_TAILSCALE_IP> "ssh -i /root/.ssh/id_ed25519 <WIN_USER>@<PC_LAN_IP> 'shutdown /s /t 0'"` |
+| **Shutdown** (cloud→router→PC) | `ssh root@<ROUTER_TS_IP> "ssh -i /root/.ssh/id_ed25519 <WIN_USER>@<PC_LAN_IP> 'shutdown /s /t 0'"` |
 | Reboot / cancel pending | `shutdown /r /t 0` / `shutdown /a` |
 | Check shutdown priv (safe) | `ssh ... <WIN_USER>@<PC_LAN_IP> 'whoami /priv \| findstr /i shutdown'` |
 
+> 本机这套 setup 的**具体 IP/MAC 命令**见 `env.local.md`（gitignored）。
+
 ## Security Notes
 - **Never commit the router SSH password** (or private keys) to the repo. Prefer key-based auth; pass passwords at runtime / via env var.
-- Tailscale IPs and the target MAC are low-sensitivity (tailnet-private / link-local) and are kept here for convenience.
+- **This repo is public.** Tailscale IPs are tailnet-private and the MAC is link-local, but the **tailnet name + IP map + MAC + account email** together are needless fingerprinting on a public repo — so all concrete values live in **`env.local.md` (gitignored)**, not in SKILL.md. Keep it that way: SKILL.md stays generic with `<PLACEHOLDERS>`; concrete topology never enters git.
+
+## Changelog
+See [CHANGELOG.md](CHANGELOG.md).

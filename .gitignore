@@ -1,3 +1,7 @@
 ai-temp/
 .gitee_token
 *.token
+
+# skill 本机私有环境（含 IP/MAC/tailnet 等具体拓扑），同步到运行时但绝不入库
+env.local.md
+*.local.md

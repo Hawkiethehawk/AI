@@ -1,8 +1,13 @@
 ---
 name: prompt-crafter
 description: Use when the user wants to write, improve, translate, debug, or systematize prompts for LLMs, agents, Claude Code, API calls, image/video models, RAG workflows, evaluators, or automation; OR when a user’s own natural-language request is vague and should be refined into a clear, executable intent before answering (especially writing/conversation tasks). Trigger on phrases like “写个prompt”, “优化提示词”, “prompt engineering”, “system prompt”, “agent prompt”, “帮我让模型…”, “按我的意思做”, “帮我把需求说清楚”, “理解一下我要什么”, or when the user describes a desired AI behavior and needs a reusable prompt.
-version: 1.1.0
+version: 1.1.1
 author: local
+license: MIT
+metadata:
+  hermes:
+    tags: [prompt-engineering, llm, agent, system-prompt, rag, evaluator, claude-code, writing, intent-refinement]
+    related_skills: []
 ---
 
 # Prompt Crafter
@@ -348,13 +353,4 @@ author: local
 
 ## Changelog
 
-### 1.1.0
-- 新增 **Mode B：自然语言 → 可执行意图**：把用户口语化、信息不全的需求在内部重写成清晰可执行意图后直接完成，面向通用对话/写作场景。
-- 新增「两种工作模式」框架：区分 Mode A（产出可复用 prompt 文本）与 Mode B（理解并当场执行），并说明二者如何衔接。
-- 新增 Mode B 执行流程（解析意图→补全隐含要素→消解歧义→一句话回述→执行+自检）、写作/对话场景要素清单、内部重写模板，以及「反例与边界」防止过度提问/过度结构化。
-- 新增 Prompt 模板 **G. 写作 / 文案 Prompt**（受众/目的/语气/篇幅/必含/禁忌/语言）。
-- 扩展 `description` 触发条件，加入「按我的意思做 / 帮我把需求说清楚 / 理解一下我要什么」等自然语言澄清场景。
-- Response Style 增加 Mode B 的应答约定（回述+直接交付，不长篇展示内部过程）。
-
-### 1.0.0
-- 初始版本：Mode A prompt 创作工作流、模板 A–F、改进清单、常见修复、应答风格。
+See [CHANGELOG.md](CHANGELOG.md).
