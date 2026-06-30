@@ -1,0 +1,4 @@
+interface:
+  display_name: "AppMagic Weekly Data"
+  short_description: "Run and verify the weekly AppMagic API workflow."
+  default_prompt: "Use $appmagic-weekly-data to rerun this week's AppMagic data pull and export Excel."
