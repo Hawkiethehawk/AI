@@ -1,0 +1,158 @@
+{
+  "intervalMs": 20000,
+  "okCount": 10,
+  "failCount": 0,
+  "failReasons": [],
+  "results": [
+    {
+      "i": 0,
+      "rank": 1,
+      "name": "Amaze GO!",
+      "url": "https://appmagic.rocks/google-play/amaze-go/com.oakever.arrows",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "Amaze GO! - 箭头解谜",
+        "hasMetric": true,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 8.799
+    },
+    {
+      "i": 1,
+      "rank": 2,
+      "name": "Arrow Puzzle: Tap Puzzle Games",
+      "url": "https://appmagic.rocks/google-play/arrow-puzzle-tap-puzzle-games/com.easybrain.arrow.puzzle.game",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "Arrow Puzzle: Tap Puzzle Games",
+        "hasMetric": true,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.576
+    },
+    {
+      "i": 2,
+      "rank": 3,
+      "name": "Arrows – Puzzle Escape",
+      "url": "https://appmagic.rocks/google-play/arrows-puzzle-escape/com.ecffri.arrows",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "Arrows – Puzzle Escape",
+        "hasMetric": true,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.547
+    },
+    {
+      "i": 3,
+      "rank": 4,
+      "name": "Level Devil - NOT A Troll Game",
+      "url": "https://appmagic.rocks/google-play/level-devil-not-a-troll-game/com.unept.leveldevil",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "Level Devil - NOT A Troll Game",
+        "hasMetric": true,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.483
+    },
+    {
+      "i": 4,
+      "rank": 5,
+      "name": "Pizza Ready!",
+      "url": "https://appmagic.rocks/google-play/pizza-ready/io.supercent.pizzaidle",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "披萨好了!",
+        "hasMetric": true,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.552
+    },
+    {
+      "i": 5,
+      "rank": 6,
+      "name": "Paper.io 2",
+      "url": "https://appmagic.rocks/google-play/paper-io-2/io.voodoo.paper2",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "AppMagic",
+        "hasMetric": false,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.563
+    },
+    {
+      "i": 6,
+      "rank": 7,
+      "name": "Bus Traffic Fever!",
+      "url": "https://appmagic.rocks/google-play/bus-traffic-fever/jp.co.goodroid.hyper.busflow",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "AppMagic",
+        "hasMetric": false,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.56
+    },
+    {
+      "i": 7,
+      "rank": 8,
+      "name": "Mob Control",
+      "url": "https://appmagic.rocks/google-play/mob-control/com.vincentb.MobControl",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "Mob Control",
+        "hasMetric": true,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.642
+    },
+    {
+      "i": 8,
+      "rank": 9,
+      "name": "Magic Tiles 3™ - Piano Game",
+      "url": "https://appmagic.rocks/google-play/magic-tiles-3-piano-game/com.youmusic.magictiles",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "AppMagic",
+        "hasMetric": false,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.499
+    },
+    {
+      "i": 9,
+      "rank": 10,
+      "name": "Perfect Makeover Cleaning ASMR",
+      "url": "https://appmagic.rocks/google-play/perfect-makeover-cleaning-asmr/com.hmbl.perfect.makeover.cleaning.asmr",
+      "httpStatus": 200,
+      "health": {
+        "ok": true,
+        "appName": "Perfect Makeover Cleaning ASMR",
+        "hasMetric": true,
+        "hasAppPage": true
+      },
+      "error": null,
+      "elapsedS": 6.561
+    }
+  ]
+}

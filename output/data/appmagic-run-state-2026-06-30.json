@@ -1,0 +1,34 @@
+{
+  "杀毒软件、清理": {
+    "status": "running",
+    "weekly_done": true,
+    "enrich_done": false,
+    "xlsx_done": false,
+    "output": "E:\\LLM-Sandbox\\Claude\\output\\data\\appmagic-杀毒软件、清理-weekly.json",
+    "updatedAt": "2026-06-30T01:09:19.503Z",
+    "weekly_rows": {
+      "2026-06-22": 475,
+      "2026-06-15": 500,
+      "2026-06-08": 504,
+      "2026-06-01": 501,
+      "2026-05-25": 509,
+      "2026-05-18": 508
+    }
+  },
+  "超休闲": {
+    "status": "running",
+    "weekly_done": true,
+    "enrich_done": false,
+    "xlsx_done": false,
+    "output": "E:\\LLM-Sandbox\\Claude\\output\\data\\appmagic-超休闲-weekly.json",
+    "updatedAt": "2026-06-30T01:21:31.858Z",
+    "weekly_rows": {
+      "2026-06-22": 1000,
+      "2026-06-15": 1000,
+      "2026-06-08": 1000,
+      "2026-06-01": 1000,
+      "2026-05-25": 1000,
+      "2026-05-18": 1000
+    }
+  }
+}

@@ -1,0 +1,1029 @@
+[
+  {
+    "method": "POST",
+    "url": "https://appmagic.rocks/api/v2/sentry",
+    "postData": "{\"sent_at\":\"2026-06-26T10:21:23.538Z\",\"sdk\":{\"name\":\"sentry.javascript.angular\",\"version\":\"10.57.0\"},\"dsn\":\"https://7eecf182752768632317dc3761a5875e@sentry.appmagic.rocks/3\"}\n{\"type\":\"session\"}\n{\"sid\":\"d9006fa8e76442a992d026e744774cda\",\"init\":true,\"started\":\"2026-06-26T10:21:23.537Z\",\"timestamp\":\"2026-06-26T10:21:23.537Z\",\"status\":\"ok\",\"errors\":0,\"attrs\":{\"release\":\"7d25901f14729ff05d074757d443eaa50b5870dd\",\"environment\":\"appmagic.rocks\",\"user_agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36\"}}",
+    "respKeys": [
+      "id"
+    ],
+    "arrLen": null,
+    "sample": null
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/init",
+    "respKeys": [
+      "stores",
+      "countries",
+      "parserCountries",
+      "appCrossUsageCountries",
+      "categories",
+      "centrifugo",
+      "lastDate",
+      "authClientIds",
+      "analytics",
+      "country",
+      "environment",
+      "serverTime"
+    ],
+    "arrLen": null,
+    "sample": null
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/db-translations?lang=cn",
+    "respKeys": [
+      "data",
+      "lang"
+    ],
+    "arrLen": null,
+    "sample": null
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/users/user?lang=cn",
+    "respKeys": [
+      "id",
+      "uid",
+      "username",
+      "email",
+      "role",
+      "auth",
+      "created_at",
+      "updated_at",
+      "deleted_at",
+      "login",
+      "premium_until",
+      "access_id"
+    ],
+    "arrLen": null,
+    "sample": null
+  },
+  {
+    "method": "POST",
+    "url": "https://appmagic.rocks/api/v2/sentry",
+    "postData": "{\"sent_at\":\"2026-06-26T10:21:24.875Z\",\"sdk\":{\"name\":\"sentry.javascript.angular\",\"version\":\"10.57.0\"},\"dsn\":\"https://7eecf182752768632317dc3761a5875e@sentry.appmagic.rocks/3\"}\n{\"type\":\"session\"}\n{\"sid\":\"d9006fa8e76442a992d026e744774cda\",\"init\":false,\"started\":\"2026-06-26T10:21:23.537Z\",\"timestamp\":\"2026-06-26T10:21:24.875Z\",\"status\":\"exited\",\"errors\":0,\"attrs\":{\"release\":\"7d25901f14729ff05d074757d443eaa50b5870dd\",\"environment\":\"appmagic.rocks\",\"user_agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36\"}}"
+  },
+  {
+    "method": "POST",
+    "url": "https://appmagic.rocks/api/v2/sentry",
+    "postData": "{\"sent_at\":\"2026-06-26T10:21:24.875Z\",\"sdk\":{\"name\":\"sentry.javascript.angular\",\"version\":\"10.57.0\"},\"dsn\":\"https://7eecf182752768632317dc3761a5875e@sentry.appmagic.rocks/3\"}\n{\"type\":\"session\"}\n{\"sid\":\"3b2e3ce05ebc49729dbe90c04554a6e6\",\"init\":true,\"started\":\"2026-06-26T10:21:24.875Z\",\"timestamp\":\"2026-06-26T10:21:24.875Z\",\"status\":\"ok\",\"errors\":0,\"attrs\":{\"release\":\"7d25901f14729ff05d074757d443eaa50b5870dd\",\"environment\":\"appmagic.rocks\",\"user_agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36\"}}"
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/blog?type=1&lang=cn",
+    "respKeys": [
+      "data"
+    ],
+    "arrLen": 101,
+    "sample": [
+      {
+        "id": 200,
+        "lang": "en",
+        "alias": "fifa-effect-on-mobile-apps",
+        "article_type": 1,
+        "title": "The FIFA Effect: What Happens to the Mobile Market During Football Season",
+        "author": "Diana Levintova",
+        "description": "With billions of viewers tuning in to the FIFA World Cup, football events can reshape the mobile app economy. Learn which tournaments generate the strongest impact on app and game downloads and revenue, and how the effects differ between gaming and non-gaming apps.",
+        "content": "The FIFA World Cup 2026 is already underway, pulling in football (okay, soccer for some) fans from every corner of the world. FIFA expects up to 6 billion viewers globally, and when an event reaches that big a scale, mobile apps and games rarely go unaffected. But how large is the impact, and does it differ between gaming and non-gaming apps? \n\nIn this article, we analyze how major football events affect mobile app and game downloads and revenue, compare their impact, and identify which tournaments generate the strongest uplift and when. The research focuses on six key Western markets: the US, UK, Germany, France, Italy, and Spain. For the sake of FIFA expanding as *Fédération Internationale de Football Association*, we’ll stick to “football” rather than “soccer” throughout the piece.\n\n**Methodology**: The uplift percentages for downloads and net IAP revenue (less store fees and excluding advertizing and D2C revenue) are calculated as the average uplift across all analyzed seasons of the selected tournaments in six target countries. Since many apps included in this research generate a significant share of their revenue outside mobile app stores, revenue estimates may not capture the full picture. As a result, the impact of sports events is often more accurately reflected in download trends.\n\n## Sports Apps: Win at Kickoff\n\nThe football calendar is packed with major tournaments, so we focused on five of the biggest events and analyzed their impact on app downloads and revenue across multiple years:\n- FIFA Club World Cup (2018, 2019, 2020, 2021, 2022, 2023, 2025)\n- UEFA EURO (2020, 2024)\n- FIFA World Cup (2018, 2022)\n- Copa América (2019, 2021, 2024)\n- The NFL (2018–2025)\n\n![](/files/img-blog/image3.hhtMH.png)\n\nThe **FIFA World Cup** is in a league of its own when it comes to Sports app downloads. It drives installs up to +297% at the opening stage and keeps them +124% above baseline across the tournament. For both downloads and revenue, it’s the start of the event that drives most of the activity, as users rush to follow matches, scores, and updates.\n\n**UEFA EURO** shows a similar pattern, but with a more moderate downloads curve. Revenue stays elevated throughout the tournament and peaks during the finals, hitting up to +66%—the strongest monetization uplift across all five events. \n\nIn some **UEFA EURO** editions, however, the picture gets a bit noisier due to an overlap with other major sports moments. The NBA finals, in particular, **can blur the true incremental effect of football alone**. \n\nThere are also a few **country-level outliers**, like when France saw a noticeable spike in downloads, largely driven by *[MPP - The Social Predictor](https://appmagic.rocks/google-play/mpp-the-social-predictor/com.monpetitprono.monpetitpronoapp?infoCountry=US&utm_source=AMArticle&utm_campaign=FIFAEffect \"MPP - The Social Predictor\")*. \n\n![](/files/img-blog/image4.9sTr3.png)\n*[Sport Apps downloads trend during UEFA EURO 2024](https://appmagic.rocks/dashboards/69be5c7079c0e?utm_source=AMArticle&utm_campaign=FIFAEffect \"Sport Apps downloads trend during UEFA EURO 2024\")*\n\nThe app peaked on June 16, 2024, just two days after the opening match, hitting 513K downloads in France.\n\n![](/files/img-blog/image8.-epmY.png)\n*[Download trends of top apps in France during UEFA EURO (2024)](https://appmagic.rocks/dashboards/69be60216a9d1?utm_source=AMArticle&utm_campaign=FIFAEffect \"Download trends of top apps in France during UEFA EURO (2024)\")*\n\nAlongside its regular advertizing, the app heavily featured UEFA EURO 2024 throughout this period.\n\n![](/files/img-blog/image9.udORA.png)\n*[Top MPP - The Social Predictor’s ad creatives around the UEFA EURO 2024 period (Jun 1–31, 2024)](https://appmagic.rocks/ad-intelligence?appId=2_1378863579&dateFrom=2024-06-01&dateTo=2024-07-31&period=&utm_source=AMArticle&utm_campaign=FIFAEffect \"Top MPP - The Social Predictor’s ad creatives around the UEFA EURO 2024 period (Jun 1–31, 2024)\")*\n\nThe **FIFA Club World Cup** generates a more moderate but consistent effect across Sports apps. Downloads and revenue remain steadily above baseline throughout the tournament, with the strongest uplift typically occurring during the final stage.\n\nThe **NFL** stands out for its distinctive season-long effect. Instead of a single sharp spike, it builds over time. Downloads peak at +64% during opening games and stay elevated through the season, with a second bump at +42% during finals. Revenue, however, is less prominent, with slight declines at later stages.\n\nSome NFL editions make it easy to identify the app categories driving downloads growth, thanks to sharp spikes around key moments of the season. For example, the 2025 NFL season saw three major peaks in downloads on September 7 and 14, 2025, and February 8, 2026, corresponding to the opening games, the first weekend of play, and the final. The main drivers behind these spikes were sports **betting apps, live sports streaming platforms, and the official NFL app**.\n\n![](/files/img-blog/image10.1.ngrTr.png)\n*[Downloads trends of top apps in the US during the NFL (2025–2026)](https://appmagic.rocks/dashboards/69bd082661c30?utm_source=AMArticle&utm_campaign=FIFAEffect \"Downloads trends of top apps in the US during the NFL (2025–2026)\")*\n\n**Copa América** shows a similar pattern to the NFL, with its biggest download spike coming at the opening stage (+41%) before settling into more moderate growth through the tournament and ending at +17% during the final. On the revenue side, it’s second only to UEFA EURO, reaching up to +60% during the final stage.\n\nHowever, like UEFA EURO, it doesn’t exist in a vacuum. In 2021, the NBA Finals overlapped with the closing stage of the Copa América tournament, likely inflating both downloads and revenue for Sports apps. A cleaner signal comes from 2024, where downloads were closer to +5% in the final stage, with revenue staying largely flat. A more realistic benchmark may be Copa América 2024, when downloads grew by around 5% during the final stage, while revenue remained largely unchanged\n\n![](/files/img-blog/image1.jvVqo.png)\n*[Revenue trend of Sport Apps during Copa América 2024 and NBA Finals 2021](https://appmagic.rocks/dashboards/69bff1921be8c?utm_source=AMArticle&utm_campaign=FIFAEffect \"Revenue trend of Sport Apps during Copa América 2024 and NBA Finals 2021\")*\n\nAll in all, here is what we’ve learned so far: \n- **FIFA World Cup** drives the strongest growth in Sports app downloads.\n- Most tournaments see their biggest spikes at the opening stage, while the **NFL** is one of the few events that consistently attracts audiences both at the very beginning and during the finals. \n- When it comes to revenue, **UEFA EURO** delivers the strongest boost, with monetization generally peaking during the final stage, although some events also see notable revenue spikes during the opening matches.\n- While most events are primarily driven by their core markets, certain editions can see country-level spikes every so often, driven by local app popularity, active marketing, or exceptional performance of the national team.\n\nAnd one more thing: context matters. Big tournaments occasionally overlap, which can distort the picture.\n\n## Sports Games: Playing the Long Game\n\nWhile Sports apps tend to see sharp but short-lived spikes during football events, Sports games show a different picture. Instead of peaking early and fading out, engagement and downloads usually build over time, and often stay elevated even after the final whistle. \n\n![](/files/img-blog/image5.vBk5f.png)\n\nLike with Sports apps, the **FIFA World Cup** is the leading metrics booster for Sports games as well. However, the shape of the curve it generates is noticeably different: while app downloads peak at the opening stage and gradually fade toward the finals, game installs see a more moderate uplift at the start, continue building throughout the tournament, and ultimately peak at +71% during the finals. Revenue follows the same trajectory, albeit at a smaller scale, reaching an uplift of up to +24% during the closing matches.\n\nDuring the FIFA World Cup 2022, audience growth was concentrated in a handful of leading games, particularly *[EA SPORTS FC™ Mobile Soccer 26](https://appmagic.rocks/google-play/ea-sports-fc-soccer-mobile-26/com.ea.gp.fifamobile?utm_source=AMArticle&utm_campaign=FIFAEffect \"EA SPORTS FC™ Mobile Soccer 26\")* and *[Soccer Superstar](https://appmagic.rocks/google-play/soccer-superstar/com.soccer.score.star?utm_source=AMArticle&utm_campaign=FIFAEffect \"Soccer Superstar\")*. And, unlike non-gaming categories, that uplift didn’t disappear after the final match; it lingered for more than a month after the tournament’s final. \n\n![](/files/img-blog/image6.1.MVHU8.png)\n*[Downloads trends of top apps in the US and the EU (2022–2023)](https://appmagic.rocks/dashboards/69c01a9050928?utm_source=AMArticle&utm_campaign=FIFAEffect \"Downloads trends of top apps in the US and the EU (2022–2023)\")*\n\nAnd it doesn’t stop at Sports games. Football tournaments tend to spill their impact over into other genres, too, usually through LiveOps. We can already see the FIFA World Cup 2026 traces showing up in Casual games. *[Gossip Harbor: Merge & Story](https://appmagic.rocks/iphone/gossip-harbor%28r%29-merge-and-story/1623318294?utm_source=AMArticle&utm_campaign=FIFAEffect \"Gossip Harbor: Merge & Story\")* launched [Goal for Goal](https://appmagic.rocks/live-ops-advanced-search?appIds=1_com.moonactive.coinmaster,1_com.dreamgames.royalmatch,1_com.mergegames.gossipharbor&search=FIFA&eventGroupId=133e93b6-d5f0-4df3-aee7-a5a227fc2b07&utm_source=AMArticle&utm_campaign=FIFAEffect \"Goal for Goal\"), *[Royal Match](https://appmagic.rocks/iphone/royal-match/1482155847?utm_source=AMArticle&utm_campaign=FIFAEffect \"Royal Match\")* introduced [Royal Cup Pass](https://appmagic.rocks/live-ops-advanced-search?appIds=1_com.moonactive.coinmaster,1_com.dreamgames.royalmatch,1_com.mergegames.gossipharbor&search=FIFA&eventGroupId=16bdc7a8-7861-4e09-b90c-421fd02a501f&utm_source=AMArticle&utm_campaign=FIFAEffect \"Royal Cup Pass\"), and *[Coin Master](https://appmagic.rocks/google-play/coin-master/com.moonactive.coinmaster?utm_source=AMArticle&utm_campaign=FIFAEffect \"Coin Master\")* went all-in with three parallel FIFA World Cup-themed events: [Present Pursuit - FIFA World Cup](https://appmagic.rocks/live-ops-advanced-search?appIds=1_com.moonactive.coinmaster,1_com.dreamgames.royalmatch,1_com.mergegames.gossipharbor&search=FIFA&eventGroupId=02d714f4-15d2-4068-a6b4-e79d685eb3db&utm_source=AMArticle&utm_campaign=FIFAEffect \"Present Pursuit - FIFA World Cup\"), [Merge Haven - FIFA World Cup](https://appmagic.rocks/live-ops-advanced-search?appIds=1_com.moonactive.coinmaster,1_com.dreamgames.royalmatch,1_com.mergegames.gossipharbor&search=FIFA&eventGroupId=a0cf1873-25ea-4283-a732-c5e19ee037fe&utm_source=AMArticle&utm_campaign=FIFAEffect \"Merge Haven - FIFA World Cup\"), and [Better Together - FIFA World Cup](https://appmagic.rocks/live-ops-advanced-search?appIds=1_com.moonactive.coinmaster,1_com.dreamgames.royalmatch,1_com.mergegames.gossipharbor&search=FIFA&eventGroupId=d076e8c6-c45d-4d78-8c47-60e630272488&utm_source=AMArticle&utm_campaign=FIFAEffect \"Better Together - FIFA World Cup\").\n\n![](/files/img-blog/image2.NZaNN.png)\n\n**UEFA EURO** follows a downloads trend similar to the FIFA World Cup, albeit on a more moderate scale, with downloads peaking at +35% during the finals. Revenue, however, spikes up earlier, increasing by +20% during the opening stage before gradually slowing toward the end of the tournament.\n\nAs with the FIFA World Cup, some editions of UEFA EURO, such as the 2024 tournament, show a similar pattern, with growth mainly driven by top titles like *[EA SPORTS FC™ Mobile Soccer 26](https://appmagic.rocks/google-play/ea-sports-fc-soccer-mobile-26/com.ea.gp.fifamobile?utm_source=AMArticle&utm_campaign=FIFAEffect \"EA SPORTS FC™ Mobile Soccer 26\")* and *[Soccer Superstar](https://appmagic.rocks/google-play/soccer-superstar/com.soccer.score.star?utm_source=AMArticle&utm_campaign=FIFAEffect \"Soccer Superstar\")*.\n\n**FIFA Club World Cup** looks quieter on the surface, especially for downloads, peaking at +13% during the finals. But revenue has a different pattern: steady growth from +23% at the opening stage to +33% during the finals makes it the strongest monetization performer among all the events analyzed.\n\nIn 2025, the tournament allowed us to spot another trend, where downloads growth was driven by a newly launched game. In this case, we suspect *[Referee Simulator 3D](https://appmagic.rocks/google-play/soccer-referee-simulator-2026/com.flatgames.football.referee.simulator?utm_source=AMArticle&utm_campaign=FIFAEffect \"Referee Simulator 3D\")* timed its release to the tournament, helping fuel category growth.\n\n![](/files/img-blog/image7.o3H0W.png)\n*[Downloads trends of top apps in the US and EU (2025)](https://appmagic.rocks/dashboards/69c019993a605?utm_source=AMArticle&utm_campaign=FIFAEffect \"Downloads trends of top apps in the US and EU (2025)\")*\n\nThe **NFL** generates a gradual increase throughout the season, with the strongest uplift occurring around the final, when downloads increase by 30% and revenue by 28%.\n\n**Copa América** delivers moderate downloads growth, with installs advancing throughout the tournament and peaking at 27% during the finals. Revenue, however, remains largely flat throughout the event.\n\nHere’s a little twist: in 2024, Copa América demonstrated a mix of the patterns we caught before. Downloads growth during the opening stage was largely driven by the new release of *[MAD FUT GENERATIONS](https://appmagic.rocks/google-play/mad-fut-generations/com.madfut.generations?utm_source=AMArticle&utm_campaign=FIFAEffect \"MAD FUT GENERATIONS\")*, while *[Soccer Superstar](https://appmagic.rocks/google-play/soccer-superstar/com.soccer.score.star?utm_source=AMArticle&utm_campaign=FIFAEffect \"Soccer Superstar\")* turned out to be the main growth driver during the finals.\n\nHere is the summary on the gaming part: \n- **FIFA World Cup** generates the strongest uplifts in both Sports game and Sports app downloads, with a very clear build-up toward the finals. \n- **Copa América** and the **NFL** show a much smaller effect on the revenue, while the **FIFA Club World Cup** was the main driver of growth.\n- Most football events follow that same “late peak” pattern, just with different intensity levels.\n- Category growth is often driven either by a handful of leading titles or by well-timed new releases launched around major football events.\n\n## Conclusion: The Winners of the Football Season \n\nThe influence that football events have on the mobile market is undeniable, with the FIFA World Cup remaining the most powerful sporting event for the mobile ecosystem year after year. \n\nIt generates the largest uplift across both Sports apps and Sports games. However, this push from the tournament happens differently across categories:\n- **Sports Apps** typically jump in both downloads and revenue during the event,\n- **Sports Games** usually build their downloads throughout the competition, and they often remain elevated after it ends. And as for revenue, the effect is usually more limited and less steady. \n\nThere is also a bigger context that occasionally blurs the effect, making it harder to track the real event or app driving the growth, such as regional events or corresponding app releases. Still, the growth of interest is undeniable, and developers across different niches can use it to grow and monetize their audience. That is why we see many developers launching football-themed LiveOps across multiple genres. \n\nIn 2026, the football club season has already wrapped up in Europe and will only be back on in the fall. Meanwhile, it is in full swing in Latin America. Now, the FIFA World Cup is just getting started, already writing new pages in the history of the sport and preparing fans worldwide for an increasingly intense level of competition. While we are still to find out which clubs and countries will be lifting the coveted trophies, one thing is certain: football’s ability to capture attention and move the mobile market remains as strong as ever!\n",
+        "publish_date": "2026-06-18T00:00:00Z",
+        "preview_image": "/files/img-blog/A2.pSlGU.jpg",
+        "meta_image": "/files/img-blog/Frame%202131330056.hTbo2.jpg",
+        "created_at": "2026-06-18T06:58:59Z",
+        "updated_at": "2026-06-18T12:08:50Z",
+        "group": "specials"
+      },
+      {
+        "id": 198,
+        "lang": "en",
+        "alias": "voodoo-new-big-three",
+        "article_type": 1,
+        "title": "VOODOO’s New Big Three: Castle Busters, Marble Sort!, and Sand Loop",
+        "author": "Maria Bolshman",
+        "description": "One Midcore hit, two successful Sort Puzzles, and millions in IAP revenue: join us as we dig into the numbers, monetization, and design choices behind three of VOODOO’s recent wins.",
+        "content": "[VOODOO](https://appmagic.rocks/publisher/voodoo/1_VOODOO?utm_source=AMArticle&utm_campaign=VoodooBig3 \"VOODOO\") made its name on Hypercasual games, helping define an entire era of mobile gaming. But the market didn’t stand still, and neither did VOODOO. Over the past few years, the publisher expanded beyond Hypercasual, testing new genres, monetization tricks, and ways to keep players engaged.\n\nThen 2026 happened, and VOODOO suddenly had three hits on its hands, climbing the charts at once… And honestly, the numbers do *not* look like the old Hypercasual VOODOO anymore.\n\n![](/files/img-blog/intro0.KcrFT.png)\n\n*[VOODOO’s top revenue drivers in 2026](https://appmagic.rocks/dashboards/6a1f506b1407b?utm_source=AMArticle&utm_campaign=VoodooBig3 \"VOODOO’s top revenue drivers in 2026\")*\n\nOver April and May, *[Castle Busters](https://appmagic.rocks/google-play/castle-busters/com.epicoro.castleclashers?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Castle Busters\")* generated over $10M in IAP revenue worldwide, *[Marble Sort!](https://appmagic.rocks/google-play/marble-sort-color-puzzle/com.microdose.balljam?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Marble Sort!\")* added nearly $9M, and *[Sand Loop](https://appmagic.rocks/iphone/sand-loop/6754363534?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Sand Loop\")* brought in more than $5M. Again, this is IAP revenue only, which is a huge change for a company known for its excellent IAA execution.\n\nInterestingly, two of the games are of the same trending Sort Puzzle genre, which led the Hybridcasual shift over the last couple of years. To be more specific, they are built around loop-based sorting gameplay, popularized by the success of *[Pixel Flow!](https://appmagic.rocks/iphone/pixel-flow-/6751056652 \"Pixel Flow!\")* and now being adopted across the industry. This clearly paid off: in May 2026, *Marble Sort!* ranked among the top-grossing Sort Puzzle games, while *Sand Loop* landed right next to it!\n\nAt the same time, *Castle Busters* is the obvious outlier here—a Midcore battler with extremely recognizable [Supercell](https://appmagic.rocks/publisher/supercell/2_488106216?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Supercell\") fingerprints all over it. The game climbed to #11 by downloads in the Midcore rankings with 5.8M installs during the month. And yes, that was enough to outperform *[Brawl Stars](https://appmagic.rocks/iphone/brawl-stars/1229016807?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Brawl Stars\")* by downloads. Of course, comparing a relatively new title to an eight-year-old live-service giant isn't exactly a fair fight. Still, for a game that borrows so openly from the *Brawl Stars* playbook, there is something almost poetic about that, but we’ll get back to it later.\n\n![](/files/img-blog/intro2.6PU28.png)\n\n*Top mobile games in May 2026: [Sort Puzzle](https://appmagic.rocks/top-charts/apps?tag=3,243715&date=2026-05-01&aggregation=month&utm_source=AMArticle&utm_campaign=VoodooBig3 \"Sort Puzzle\") and [Midcore](https://appmagic.rocks/top-charts/apps?tag=3,243571&date=2026-05-01&aggregation=month&utm_source=AMArticle&utm_campaign=VoodooBig3 \"Midcore\")*\n\nVOODOO may be chasing bigger genres and heavier monetization now, but the company’s vast IAA expertise is still easy to spot once you spend some time on these games. So let’s look at VOODOO’s new “big three” properly: how these titles perform, monetize, and tap into the trends driving mobile gaming today!\n\n## VOODOO Bursting Into the Midcore Charts\n\nMidcore? Since when is VOODOO making games of the sort? In fact, they've been at it for a while now! *[Castle Busters](https://appmagic.rocks/google-play/castle-busters/com.epicoro.castleclashers?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Castle Busters\")* wasn't VOODOO's first attempt at the genre. The publisher had been testing the waters since 2022. There were some promising signs along the way, including games like *[Hex Warriors](https://appmagic.rocks/google-play/hex-warriors/com.dong.hexwarriors?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Hex Warriors\")* and *[Tiny Clash!](https://appmagic.rocks/google-play/tiny-clash-/com.epicoro.tinyclash?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Tiny Clash!\")*, but none of those experiments came close to what happened next.\n\n![](/files/img-blog/cb1.G1h8O.png)\n\n*[VOODOO’s Midcore lineup](https://appmagic.rocks/publisher/voodoo/1_VOODOO?category=9,96,209&tags=243571&downloadsPeriod=lifetime&revenuePeriod=lifetime&sortApps=revenue&utm_source=AMArticle&utm_campaign=VoodooBig3 \"VOODOO’s Midcore lineup\")*\n\nCastle Busters launched in May 2025, and **by now, the game is already past $14.8M in IAP revenue with more than 19.7M downloads** to its name. Safe to say, this one hit on a whole new level.\n\n![](/files/img-blog/cb2.rY_WE.png)\n\n*[Castle Busters: game performance to date](https://appmagic.rocks/dashboards/6a1f5f6f84d11?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Castle Busters: game performance to date\")*\n\nBut what is *Castle Busters*? It is a tactical turn-based PvP brawler built around destructible castles, squad drafting, and short competitive matches. Two players, two castles, and a lot of things exploding in between. Every wall, tower, and platform can be destroyed. Sometimes, a single shot is all it takes to collapse half a fortress and flip the entire battle.\n\n<gallery src=\"https://appmagic.rocks/files/view/upload/Blog/gal-cb2.png, https://appmagic.rocks/files/view/upload/Blog/gal-cb1.png, https://appmagic.rocks/files/view/upload/Blog/gal-cb3.png, https://appmagic.rocks/files/view/upload/Blog/gal-cb4.png, https://appmagic.rocks/files/view/upload/Blog/gal-cb5.png, https://appmagic.rocks/files/view/upload/Blog/gal-cb6.png\" />\n\n*Castle Busters gameplay*\n\nThe game feels like the teams behind *[Angry Birds](https://appmagic.rocks/google-play/angry-birds-2/com.rovio.baba?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Angry Birds\")* and *[Brawl Stars](https://appmagic.rocks/iphone/brawl-stars/1229016807?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Brawl Stars\")* somehow ended up in the same design meeting. A couple of matches in, and the comparisons start making a lot more sense. Let's just say, while some influences are subtle, others really aren't. Then again, inspiration only gets you so far. What matters is how VOODOO adapted those ideas.\n\nDespite going fully Midcore, the game still carries plenty of VOODOO’s authentic DNA. The onboarding is fast, rewards arrive constantly, and progression keeps moving almost all the time. Whether it is a tournament, a seasonal event, or a daily reward, everything seems to push players toward one more session, one more upgrade, and eventually one more login tomorrow.\n\n<gallery src=\"https://appmagic.rocks/files/view/upload/Blog/mon-cb1.png, https://appmagic.rocks/files/view/upload/Blog/mon-cb2.png, https://appmagic.rocks/files/view/upload/Blog/mon-cb3.png, https://appmagic.rocks/files/view/upload/Blog/mon-cb4.jpg, https://appmagic.rocks/files/view/upload/Blog/mon-cb5.jpg, https://appmagic.rocks/files/view/upload/Blog/mon-cb6.png, https://appmagic.rocks/files/view/upload/Blog/mon-cb7.png, https://appmagic.rocks/files/view/upload/Blog/mon-cb8.jpg, https://appmagic.rocks/files/view/upload/Blog/mon-cb9.jpg, https://appmagic.rocks/files/view/upload/Blog/mon-cb10.jpg, https://appmagic.rocks/files/view/upload/Blog/mon-cb11.jpg\" />\n\n*Inside Castle Busters: quests, rewards, offers, passes, boosts, and more*\n\nIn *Castle Busters*, players have daily streaks and chests, plus long-term progression rewards like exclusive unit unlocks and other powerful upgrades—all of this keeps them coming back.\n\nUnlike *Brawl Stars*, players are not just upgrading units; they're doing it with timers, which creates additional pressure and monetization opportunities. Of course, waiting is optional. *Castle Busters* offers plenty of shortcuts, from the Forge Pass and resource packs to unit bundles and special offers that let players progress faster. Limited-time event deals like Wizard's Bargain, Treasure Hunt Tournament, and Druid’s Trial Tournament add even more ways to speed things up.\n\n![](/files/img-blog/cb3.pmhQL.png)\n\n*Druid's Trial Tournament: an example of a limited-time event in Castle Busters*\n\nThen there are rewarded ads, still very much part of the package. Watch a video, speed something up, grab a few extra resources, repeat—a very VOODOO way of doing things. If you want to see what that looks like turned up to eleven, [check out our *Epic Plane* breakdown](https://appmagic.rocks/blog/epic-plane?utm_source=AMArticle&utm_campaign=VoodooBig3 \"check out our *Epic Plane* breakdown\").\n\nWhat's changed? In games like *[Epic Plane](https://appmagic.rocks/google-play/epic-plane-evolution/com.WalkTalk.FlightMaster?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Epic Plane\")*, rewarded ads carried most of the monetization load, which led to rapid spending spikes and quick drop-offs as many players left. Newer titles like *Castle Busters* test a different balance: ads are there for certain rewards, but IAPs and long-term retention now take center stage, letting the game grow steadily rather than burn out.\n\n![](/files/img-blog/cb4.s9yn7.png)\n\n*Castle Busters' No Ads offer*\n\nWhile *Castle Busters* shows what happens when VOODOO goes after bigger genres, the next game proves that the publisher keeps up well with the industry trends!\n\n## VOODOO’s Sort Puzzle Breakthrough\n\nMobile Puzzles are having a bit of a loop moment right now. [Loom](https://appmagic.rocks/publisher/loom-games-oyun-yazilim-ve-pazarlama-anonim-sirketi/2_1833998834?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Loom\")’s pig-tapping conveyor puzzle, *[Pixel Flow!](https://appmagic.rocks/iphone/pixel-flow-/6751056652?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Pixel Flow!\")*, made over $100M in IAP revenue and eventually ended up in a ~$1B acquisition by [Scopely](https://appmagic.rocks/publisher/scopely-inc-/2_305003647?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Scopely\"). This success couldn't go unnoticed. Before that, there were screws and yarns, and now, there are loops and conveyors all across the subgenre!\n\n![](/files/img-blog/ms1.ta7QT.png)\n\n*[Popular conveyor-based Puzzle games](https://appmagic.rocks/dashboards/6a21941bec480?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Popular conveyor-based Puzzle games\")*\n\n*[Marble Sort!](https://appmagic.rocks/google-play/marble-sort-color-puzzle/com.microdose.balljam?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Marble Sort!\")* fits in that line of trending loop games perfectly. It is built around marbles dropping onto a moving conveyor belt, and players sort them into matching containers below before the belt runs out of space. The basics take seconds to understand. The challenge comes later, once new mechanics, tighter spaces, and increasingly chaotic and unpredictable layouts start showing up.\n\n![](/files/img-blog/ms2.L0qHq.png)\n\n*Marble Sort! gameplay*\n\nThe secret sauce of *Marble Sort!* is how it handles sorting mechanics, adding a strategic depth to players' decisions. Marbles are not just being put on the conveyor belt: they are being thrown at it, which makes them bounce, mix together, and land out of order. This creates moments when players can use the physics to their advantage, such as quickly tapping several colors to place them on the belt in random order—something impossible in *Pixel Flow!* or *Sand Loop* that we’ll get to later.\n\nIt also helps that the game feels surprisingly good to interact with. The marbles roll, click, and tumble into boxes with just enough physics to make each move feel satisfying. Because if mobile gaming has taught us anything, it is that \"satisfying\" sells.\n\nSince launching in October 2025, **the game has picked up more than 13.7M downloads and generated over $10.8M in IAP revenue**. Once again, we see the RpD unprecedented for the older VOODOO titles, achieved through well-crafted monetization in line with the best Hybridcasual practices.\n\n![](/files/img-blog/ms3.uuUpD.png)\n\n*[Marble Sort!: game performance to date](https://appmagic.rocks/dashboards/6a1f5f0277038?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Marble Sort!: game performance to date\")*\n\nPlayers can buy bundles of coins, lives, and various boosts. The Premium Kit packages several of them together, while Streak Bonus rewards players who keep coming back with doubled coin earnings over time. The Sugar Rush event adds another layer on top, tying streak progression to a limited-time event with additional rewards.\n\n<gallery src=\"https://s3.appmagic.rocks/upload/offers/cd141ae9-c2b0-4b1e-979f-11c70bda6642.Marble%20sort%20-%20Starter%20Pack%20-%2027042026.jpg, https://s3.appmagic.rocks/upload/offers/aa7aa012-51cb-4f09-b6c5-3dddcbb4aed6.Marble%20sort%20-%20Bundles%202%20-%2027042026.jpg, https://s3.appmagic.rocks/upload/offers/eabae9cd-3992-4cae-8ac2-7d4741a0190c.Marble%20sort%20-%20Basic%20-%2027042026.jpg, https://s3.appmagic.rocks/upload/offers/f9cb6826-d839-4557-849e-e2e0ac83cc3c.Marble%20sort%20-%20Buy%201%20or%20buy%20All%201%20-%2029042026.jpg, https://s3.appmagic.rocks/upload/offers/ed2c031f-dba1-4d33-865e-8e85ffc16f62.Marble%20sort%20-%20Premium%20Kit%201%20-%2028042026.jpg, https://s3.appmagic.rocks/upload/offers/1ef8dbbe-13c2-4f40-82f9-f1831f513bbe.Marble%20sort%20-%20Level%20Booster%201%20-%2030042026.jpg, https://appmagic.rocks/files/view/upload/Blog/marble-mon-1.png, https://appmagic.rocks/files/view/upload/Blog/marble-mon-2.png, https://appmagic.rocks/files/view/upload/Blog/marble-mon-3.png, https://appmagic.rocks/files/view/upload/Blog/marble-mon-4.png,\nhttps://s3.appmagic.rocks/upload/offers/df90b9a7-7e8c-48ef-a8ef-7179b297f3e9.Marble%20sort%20-%20Fail%20offer%20-%2029042026.png,\nhttps://s3.appmagic.rocks/upload/offers/751eeca8-0bc2-4e52-b8f0-5492c603da68.Marble%20sort%20-%20No%20Ads%20-%2027042026.png\" />\n\n*[Inside Marble Sort!: bundles, special offers, streak bonuses, and more](https://appmagic.rocks/monetization-intelligence?appIds=1_com.microdose.balljam&period=selectAllTime&utm_source=AMArticle&utm_campaign=VoodooBig3 \"Inside Marble Sort!: bundles, special offers, streak bonuses, and more\")*\n\nThen there are rewarded ads, still deeply woven into the experience. Need a few extra coins? Watch a video. Made a mistake? Watch another one. Tired of ads between levels? Skip the whole thing and grab the No Ads package instead.\n\nLooking at the game's IAP mix, the two No Ads offers account for 3.7% of revenue combined, while fail offers contribute another 1.9%. Most of the spending, however, comes from the Marble Sort Pack, which generates 85.5% of revenue and 86.9% of purchases.\n\nYou can check out our [IAP Revenue Distribution](https://appmagic.rocks/tool-descriptions/iap-distribution?utm_source=AMArticle&utm_campaign=VoodooBig3 \"IAP Revenue Distribution\") tool and see exactly where that revenue comes from.\n\n![](/files/img-blog/ms4.nUgcJ.png)\n\n*[Marble Sort!: IAP Revenue Distribution (iPhone App Store)](https://appmagic.rocks/dashboards/6a2946ce2db4e?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Marble Sort!: IAP Revenue Distribution (iPhone App Store)\")*\n\nWhat makes *Marble Sort!* interesting is not that it reinvented Sort Puzzles—because it didn't. The genre has already seen countless variations. *Marble Sort!* simply identified that small twist, built a strong gameplay loop around it, and made a familiar genre feel fresh again. And the next game proves that this was not just random success but a formula that the publisher can replicate!\n\n## Another Sort Puzzle, Another Hit\n\nThough it’s the third game in our analysis, *[Sand Loop](https://appmagic.rocks/iphone/sand-loop/6754363534?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Sand Loop\")* was the first to launch out of all three titles, hitting the market in October 2025. Since then, **it has brought in over $15M in IAP revenue from 9.5M downloads**, with an RpD of $1.58—one of the strongest results in VOODOO’s portfolio to date.\n\n![](/files/img-blog/sl1.lfDhk.png)\n\n*[Sand Loop: game performance to date](https://appmagic.rocks/dashboards/6a2023406aa75?utm_source=AMArticle&utm_campaign=VoodooBig3 \"Sand Loop: game performance to date\")*\n\nIt doesn’t take long to figure out what *Sand Loop* is about. Buckets move along a conveyor belt, and players fill them up with sand of the matching color, “unpainting” the image above. But half of the appeal is watching the whole thing work! Just like in *Marble Sort!*, VOODOO uses physics to create satisfying experiences and unique moments for the players. The beautiful sand picture at the beginning of the level gradually and realistically melts and distorts as certain colors get removed.\n\nAnd since it’s impossible to calculate the exact number of sand grains that will fit into the bucket (especially since this number is inconsistent and gets tweaked by the devs level by level!), it is easy to make a mistake, which helps with both balancing the difficulty curve and monetization failures.\n\n![](/files/img-blog/sl2.hdod3.png)\n\n*Sand Loop gameplay*\n\nAs levels become less forgiving, those extra lives and boosts start looking a lot more tempting—a familiar Hybridcasual move. Fail a level, run out of patience, need another attempt? The game is usually right there with a solution. Coin packs, extra lives, boosts, and even a No Ads option are always within reach.\n\n![](/files/img-blog/sl3.8nRih.png)\n\n*Inside Sand Loop: No Ads, fail offers, and coin and booster bundles*\n\nIf *Sand Loop* reminds you of *Marble Sort!*, that's because it does. VOODOO seems to have found a formula that works and keeps refining it. The mechanics change, but many of the same monetization systems keep showing up from one Puzzle game to the next. In fact, *Marble Sort!* and *Sand Loop* are only part of the publisher’s much larger Sort Puzzle lineup.\n\n![](/files/img-blog/sl4.J_XYa.png)\n\n*[VOODOO's growing Sort Puzzle portfolio](https://appmagic.rocks/publisher/voodoo/1_VOODOO?tags=3&tags=78&tags=243715&sortApps=revenue&utm_source=AMArticle&utm_campaign=VoodooBig3 \"VOODOO's growing Sort Puzzle portfolio\")*\n\nThe category keeps growing, and VOODOO isn't stopping there. It continues to explore new mechanics and genres, building on successful ideas while searching for the next one. Given their track record, we wouldn't be surprised if more hits come from VOODOO in the near future!\n\n## What’s the Takeaway?\n\n2026 feels like the start of a new chapter for VOODOO. Open the publisher’s revenue chart in AppMagic, and three fresh games immediately stand out, pushing the graph higher and higher. *Marble Sort!* and *Sand Loop* show that VOODOO is not falling behind Rollic or Loom Games in the Hybridcasual space, while *Castle Busters* proves it can also compete in the Midcore domain.\n\nTheir Hypercasual era may be wrapping up, but the publisher’s expertise in the space is still very much alive. The result is a new generation of games that combine catchy concepts, satisfying gameplay loops, and that signature ASMR feel with deeper monetization systems—all built according to the best Hybridcasual practices.\n\nKnowing VOODOO’s history of scaling successful concepts, this “new big three” may soon become a big four… a big five… just keep counting!\n\n\n",
+        "publish_date": "2026-06-15T00:00:00Z",
+        "preview_image": "/files/img-blog/A2.AmZSZ.png",
+        "meta_image": "/files/img-blog/A1.O6Phb.png",
+        "created_at": "2026-06-15T10:46:00Z",
+        "updated_at": "2026-06-15T15:49:17Z",
+        "group": "hybridcasual"
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/blog?type=2&lang=cn",
+    "respKeys": [
+      "data"
+    ],
+    "arrLen": 3,
+    "sample": [
+      {
+        "id": 192,
+        "lang": "en",
+        "alias": "turkiye-mobile-gaming-landscape-2026",
+        "article_type": 2,
+        "title": "Türkiye's Mobile Gaming Landscape 2026",
+        "author": "Alina Zlotnik and Anya Zelenina",
+        "description": "In our Türkiye's Mobile Gaming Landscape 2026, we explored the Turkish market from several angles, including overall dynamics, the investments and M&A activity, the trends shaped by Turkish major hits, and the future outlook for the region. ",
+        "content": "For anyone following the mobile gaming market over the past few years, one thing is clear: Türkiye has grown into **one of the industry’s most influential gaming hubs**. Dream, Rollic, Peak, Spyke, Grand, Loom and other globally well-known studios expand their presence in the industry, driving growth across multiple genres.\n\nTo understand what’s behind this success, we partnered with a leading mobile gaming content media platform [Gamigion](https://www.gamigion.com/ \"Gamigion\") for our latest report, **Türkiye's Mobile Gaming Landscape 2026**. This research explores the market from several angles, including overall dynamics, the investments and M&A activity fueling the ecosystem, the trends shaped by Turkish major hits, and the future outlook for the region. On top of that, the report shares insights from over a dozen of industry leaders: from founders, advisors and investors to top voices and influencers.\n\nHere are some of the key findings: \n\n- **Türkiye is outgrowing global mobile market** with +6% YoY growth, while worldwide revenue remains stagnant. \n- **The Puzzle category generates 97% of total Turkish gaming revenue**, although local developers are also actively operating in genres such as Action, Arcade, and Simulation. \n- **Investor interest keeps increasing**. Türkiye established itself as a high-ROI market with companies announcing an average of 24 funding rounds per year. \n- **Full acquisitions dominate Turkish M&A**, with full buyouts happening more often than partnerships. \n- **Turkish gaming market is maturing**, as both downloads and revenue are starting to stabilize. \n\nTürkiye is drawing more and more attention from global publishers, investors and studios, while the local ecosystem itself is becoming increasingly sustainable and scalable. The full report takes a much deeper look into it, **featuring over 50 slides with actionable data and key takeaways** for anyone looking to better understand one of the fastest-evolving gaming markets in the world. \n\n<article-report-download-button pdf=\"https://appmagic.rocks/files/view/upload/Reports/Turkiye_Mobile_Gaming_Landscape_2026.pdf?utm_source=AMReport&utm_campaign=Turkiye2026\" />",
+        "publish_date": "2026-06-03T00:00:00Z",
+        "preview_image": "/files/img-blog/cov1.ofruB.png",
+        "meta_image": "/files/img-blog/cov2.x2Neq.png",
+        "created_at": "2026-05-28T13:53:57Z",
+        "updated_at": "2026-06-03T13:30:30Z",
+        "group": "all"
+      },
+      {
+        "id": 186,
+        "lang": "en",
+        "alias": "love-and-deepspace-monetization",
+        "article_type": 2,
+        "title": "Love and Deepspace: Pulling $1B User Spend On Gacha Events",
+        "author": "Lera Kalashnikova and Anya Zelenina",
+        "description": "Love and Deepspace has turned gacha events into a billion-dollar monetization engine. So, we took a closer look at its revenue mix and LiveOps strategy to identify the features and top-grossing offers behind this growth. ",
+        "content": "Gacha mechanics work well by making rewards feel just within reach—always one lucky pull away. Some games lean into this feeling and build their entire LiveOps system around it. When that happens, gacha becomes more than a side feature—in a way, a natural extension of the core—and often the key revenue driver.\n\n*[Love and Deepspace](https://appmagic.rocks/iphone/love-and-deepspace/1618911882?utm_source=AMArticle&utm_campaign=LADS \"Love and Deepspace\")* by [Paper Games](https://appmagic.rocks/publisher/paper-games/2_946033492?utm_source=AMArticle&utm_campaign=LADS \"Paper Games\") shows how it works in action. Released in January 2024, the game made a notable leap last year and **stood one step away from entering the top 10 grossing Midcore titles of 2025**. It also outperformed another gacha-heavy hit, *[Genshin Impact](https://appmagic.rocks/google-play/genshin-impact/com.miHoYo.GenshinImpact?utm_source=AMArticle&utm_campaign=LADS \"Genshin Impact\")* by [miHoYo](https://appmagic.rocks/publisher/mihoyo/1_4759911077617645855?utm_source=AMArticle&utm_campaign=LADS \"miHoYo\"), and narrowed the gap with *[Honkai: Star Rail](https://appmagic.rocks/google-play/honkai-star-rail/com.HoYoverse.hkrpgoversea?utm_source=AMArticle&utm_campaign=LADS \"Honkai: Star Rail\")*.\n\nThe picture becomes even more telling when looking at China, the game’s main market. There, it climbed to #9 by IAP revenue in 2025, moving from the 10th spot it had already secured in its launch year. And take a closer look at the publishers standing side by side with it on the chart: [Tencent](https://appmagic.rocks/publisher/tencent/2_1586101358?utm_source=AMArticle&utm_campaign=LADS \"Tencent\"), [NetEase](https://appmagic.rocks/publisher/netease/2_656116440?utm_source=AMArticle&utm_campaign=LADS \"NetEase\"), [Century Games](https://appmagic.rocks/publisher/century-games-pte-ltd-/2_1540548141?utm_source=AMArticle&utm_campaign=LADS \"Century Games\")—all multibillion-dollar titans with more than a decade of expertise. The competition is fierce, especially for a relatively young Midcore title.\n\n![](/files/img-blog/1.Mhum3.png)\n\n*Top-grossing Midcore games in 2025: [global](https://appmagic.rocks/top-charts/apps?aggregation=year&date=2025-01-01&tag=3,243571&utm_source=AMArticle&utm_campaign=LADS \"global\") (App Store & Google Play) vs. [China](https://appmagic.rocks/top-charts/apps?aggregation=year&date=2025-01-01&tag=3,243571&country=CN&utm_source=AMArticle&utm_campaign=LADS \"China\") (App Store only)*\n\nThe main question is *how*, and we’ll get to it shortly. But first, it’s important to step back and look at the bigger picture. Games like *Love and Deepspace* or *Gehshin Impact* aren’t the only ones to leverage gacha mechanics in their LiveOps. Actually, it’s **one of the most widely used formats across Midcore titles**.\n\nOur [LiveOps Report 2025](https://appmagic.rocks/research/liveops-report-2025?utm_source=AMArticle&utm_campaign=LADS \"LiveOps Report 2025\") shows that over 80% of events in top Midcore games use this mechanic, putting it firmly in the top 3 formats. And their impact only keeps growing, with presence in the segment increasing by +60% since 2024.\n\n![](/files/img-blog/2.aSBH_.png)\n\n*Most widely used event mechanics across Midcore games in 2025*\n\nThe strength of gacha lies in its clarity and strong player motivation, which makes it a natural fit for many genres. According to our [LiveOps Advanced Search](https://appmagic.rocks/live-ops-advanced-search?appIds=1_com.camelgames.aoz,1_com.readygo.dark.gp,1_com.topgamesinc.evony,1_com.run.tower.defense,1_com.fun.lastwar.gp,1_com.global.ztmslg,1_com.lilithgame.roc.gp,1_com.greenmushroom.boomblitz.gp,1_com.totalbattle,1_com.gof.global,1_com.supercell.brawlstars,1_com.supercell.squad,1_com.nianticlabs.pokemongo,1_com.bandainamcoent.opbrww,1_com.Chillgaming.oneState,1_jp.pokemon.pokemontcgp,1_com.smallgiantgames.empires,1_com.naturalmotion.customstreetracer2,1_com.supercell.clashofclans,1_com.supercell.clashroyale,1_com.wireless.defenseland,1_com.game.kingrush,1_com.farlightgames.igame.gp,1_com.xq.archeroii,1_com.habby.capybara,1_com.blizzard.diablo.immortal,1_com.aniplex.fategrandorder.en,1_com.miHoYo.GenshinImpact,1_com.mxdzzus.google,1_com.supercell.moco,1_com.dxx.firenow,1_com.HoYoverse.Nap,1_com.activision.callofduty.shooter,1_com.tencent.ig,1_com.pixonic.wwr,1_net.wargaming.wot.blitz,1_com.papegames.lysk.en,1_com.roblox.client,1_com.square_enix.android_googleplay.ff7ecww,1_com.nexters.herowars,1_com.HoYoverse.hkrpgoversea,1_com.foxnextgames.m3,1_com.namcobandaigames.spmoja010E,1_com.plarium.raidlegends&mechanics=gacha?utm_source=AMArticle&utm_campaign=LADS \"LiveOps Advanced Search\"), this event mechanic is used in *[PUBG MOBILE](https://appmagic.rocks/iphone/pubg-mobile/1321803705?utm_source=AMArticle&utm_campaign=LADS \"PUBG MOBILE\")*, *[Kingshot](https://appmagic.rocks/iphone/kingshot/6739554056?utm_source=AMArticle&utm_campaign=LADS \"Kingshot\")*, *[Capybara Go!](https://appmagic.rocks/google-play/capybara-go-/com.habby.capybara?utm_source=AMArticle&utm_campaign=LADS \"Capybara Go!\")*, *[Puzzles & Survival](https://appmagic.rocks/google-play/puzzles-and-survival/com.global.ztmslg?utm_source=AMArticle&utm_campaign=LADS \"Puzzles & Survival\")*, and many more. But its presence also extends beyond Midcore, as Casual titles like *[Seaside Escape](https://appmagic.rocks/iphone/seaside-escape%28r%29-merge-and-story/6443755785?utm_source=AMArticle&utm_campaign=LADS \"Seaside Escape\")*, *[Carnival Tycoon](https://appmagic.rocks/iphone/carnival-tycoon-coin-games/6475709488?utm_source=AMArticle&utm_campaign=LADS \"Carnival Tycoon\")*, and *[Bingo Voyage](https://appmagic.rocks/google-play/bingo-voyage-live-bingo-game/com.bingo.cruise.free.best.top.game?utm_source=AMArticle&utm_campaign=LADS \"Bingo Voyage\")* find ways to adapt this format to match their gameplay and player behavior.\n\nIn this research, we’ll analyze how *Love and Deepspace* builds its monetization strategy around gacha events and what results it drives. The key areas we’ll cover include:\n\n- Ways in which **core gameplay** design supports gacha monetization\n- A detailed breakdown of **five gacha event types**, including their engagement drivers and top-performing offers\n- How standalone gacha events form **the game’s overall IAP revenue distribution**—and what it means for long-term growth\n- **Takeaways for Midcore teams** to draw from *Love and Deepspace*’s success story\n\nBe sure—there are plenty of insights ahead, and our journey starts with core gameplay design and how it defines the game’s growth strategy.\n\n## Core Gameplay: The Groundwork For Gacha Monetization\n\n*Love and Deepspace* was released in January 2024 by the China-based developer Paper Games and published globally under its Infold Games brand. Its main gameplay is built around a dating simulation with 3D visuals and a first-person view. From the very start, this design fully immerses players in its unique sci-fi world.\n\nAs players progress through the main story, presented as an interactive visual novel, they gradually unlock multiple game modes. Some modes lean into simulation, like the Claw Machine or the Sims-like Home feature, the latter offering opportunities for decoration and character interactions. Others focus purely on creativity, such as DIY journals or a Photo Studio with poses, SFX effects, and other creative tools.\n\n<gallery src=\"https://appmagic.rocks/files/view/upload/Blog/3.png, https://appmagic.rocks/files/view/upload/Blog/4.png, https://appmagic.rocks/files/view/upload/Blog/5.png, https://appmagic.rocks/files/view/upload/Blog/6.png, https://appmagic.rocks/files/view/upload/Blog/7.png, https://appmagic.rocks/files/view/upload/Blog/8.png, https://appmagic.rocks/files/view/upload/Blog/9.png\" />\n\nThere’s a lot going on, but not all of it directly ties into the monetization of gacha events. The core of both progression and revenue growth lies in the Battle modes. Here, players build Teams made of six cards of the same male character and fight futuristic monsters. Combat happens in a third-person view, where the player actively controls the female protagonist, fighting alongside one of the five allies.\n\nSuch standoffs usually last around 2-3 minutes, making them feel like short, Casual-like sessions, especially with the auto-battle option in place. Despite that, the mechanics are much closer to Midcore Action RPGs. Combat levels feature bosses, mobs, and varying conditions. Players can choose different battle skins for male characters (called Companions), each with unique skills, animations, builds, and matching weapons for the main character that change her combat abilities.\n\nAnd that’s how what begins as a romance story evolves into a complex gameplay with progression layers, strategy, and resource management. Difficulty scales steadily, requiring both skill mastery and high-quality cards. **This system creates both long-term engagement and strong revenue potential**, while the narrative and emotional connection to characters play a big part as well.\n\n<gallery src=\"https://appmagic.rocks/files/view/upload/Blog/10.png, https://appmagic.rocks/files/view/upload/Blog/11.png, https://appmagic.rocks/files/view/upload/Blog/12.png, https://appmagic.rocks/files/view/upload/Blog/13.png, https://appmagic.rocks/files/view/upload/Blog/14.png\" />\n\nMany gacha titles scale by releasing characters frequently. *Love and Deepspace* chooses a different path, **deepening bonds with existing characters** (there are currently only five) through new cards, which are available mostly via gacha. And when new limited cards are released, revenue spikes quickly follow. For example, the game hit its peak daily IAP revenue of $7M on December 31, 2025—the day its anniversary gacha event launched.\n\nAs a result, these events strongly drive the game’s overall performance. In total, *Love and Deepspace* has generated about $749M in IAP revenue and more than 31M downloads (considering only the iOS App Store in China, as Google Play isn’t present on that market, and both stores for other regions). This means the game already crossed the $1B User Spend benchmark, while it also expands its revenue channels with D2C options through its webshop.\n\n![](/files/img-blog/15.Pjaku.png)\n\n*[Love and Deepspace revenue, downloads, and RpD](https://appmagic.rocks/dashboards/6a06d6ab53d57?utm_source=AMArticle&utm_campaign=LADS \"Love and Deepspace revenue, downloads, and RpD\")*\n\nAt the same time, the title’s RpD has been steadily rising since launch, **peaking at $24 in December 2025**. This points to a clear focus on prioritizing LTV growth over aggressive UA—a common approach for Midcore games with high CPIs. More importantly, it shows how the game’s LiveOps strategy and monetization work in sync to increase player spend, drive repeat purchases, and sustain long-term engagement.\n\nBefore we break down the features behind this growth, it’s worth understanding what players are actually paying for and why.\n\n## Limited Character Cards: Creating Value\n\nIn *Love and Deepspace*, battle cards are the backbone of both progression and monetization. They are actually named Memories in the game, but we’ll refer to them as cards for clarity. Their value is built on several key factors:\n\n- Cards have rarities (from 3 to 5 stars), stats like HP and ATK, buffs and color types that can be matched with combat level colors to deal more damage.\n- To enhance their power, cards can be upgraded using resources and ranked up with duplicates of the same card (up to four duplicates; after that, they turn into “sand” that can be exchanged for resources).\n- The rarest 5-star cards, usually obtained through limited-time gacha events, are not just stronger in combat, but **also unlock exclusive narrative content** with interactive scenes that deliver AAA-level production quality.\n\n![](/files/img-blog/16.VA4_b.png)\n\nTo get limited event cards, players spend Deepspace Wishes (pulls), each awarding a card of random rarity. These pulls can be purchased directly or bought with hard currency earned through gameplay. Importantly, the system is fully transparent, with strict guarantees and exact drop rates displayed on the event page.\n\nThe pull history is saved, and progress carries over between new events: if you stop 15 pulls away from a guaranteed event card, the next one will drop within those 15 pulls in the following event. This level of predictability matters. When players know their chances right away and **feel like the system is fair and clear**, they’re more willing to try their luck. It also lets them plan their currency spending and purchases ahead.\n\nAlongside time-limited events, the game features a permanent gacha with standard cards that uses a separate type of Wishes. While these can be purchased, too, they are typically earned as free rewards and have little impact on monetization. That’s why we’ll only focus on gacha events and the offers tied to them.\n\n![](/files/img-blog/yghjy.IV9kY.png)\n\nUndoubtedly, card design itself plays a major role in the event’s performance. Paper Games is meticulous about every detail when developing its themes, storylines, and visuals. As shared by the studio’s Art Director, Xianzi Feng, during her [lecture at GDC](https://schedule.gdconf.com/session/designing-crush-worthy-characters-in-love-and-deepspace/915246?utm_source=AMArticle&utm_campaign=LADS \"lecture at GDC\"), even the smallest design choices, such as fabric textures or spacing between pearls on a necklace, are carefully curated to reflect the concept and each character’s personality. Everything is intentional.\n\nThis production depth, combined with the complexity of 3D visuals, affects how often new gacha events are launched (usually every 1–3 weeks). At the same time, players still need reasons to come back daily. While core gameplay tasks support DAU growth, *Love and Deepspace* relies heavily on LiveOps as its main retention driver.\n\n![](/files/img-blog/21.x0_Us.png)\n\n*[LiveOps & Updates Calendar: gacha events’ pacing in Love and Deepspace](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&mechanics=gacha&utm_source=AMArticle&utm_campaign=LADS \"LiveOps & Updates Calendar: gacha events’ pacing in Love and Deepspace\")*\n\nOur goal here is to highlight practical insights applicable to gacha monetization across the broader Midcore segment. To do that, we’ll **analyze the title’s LiveOps calendar and IAP revenue distribution side by side** and see exactly which features drive engagement and spending. In *Love and Deepspace*, there are five types of gacha events, so let’s examine each, going from highest to lowest revenue impact.\n\n## 1. All-Character Events: Revenue Spikes Up To +154%\n\nAs the LiveOps & Updates Calendar indicates, the largest revenue spikes typically come from gacha events that feature one 5-star card per character. And these events often generate enough momentum to push the game to the very top of the charts. A clear example is the [Throne of Eros](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&mechanics=gacha&sort=revenue_trend&eventGroupId=2708243f-755a-4504-ad45-ea6dc56fcfc4&utm_source=AMArticle&utm_campaign=LADS \"Throne of Eros\") event. Launched on December 31, 2025,**it drove a +154% revenue surge, taking the game to #1 across all games in China that day and #3 globally**. In total, the event generated over $22M in IAP revenue.\n\nIt’s important to note that this event was part of the game’s second anniversary and launched alongside new main story chapters and the Home feature. However, the story itself doesn’t monetize players, and the Home-related offers were limited to two low-cost options with one-time or once-a-week purchase limits. In other words, the real heavy lifting still came from LiveOps.\n\nSo, how does it work? Each event includes 5 limited cards, but to make it easier to target specific rewards, the team introduced the Precise Wish system. Players can choose 1 card and are guaranteed to get it within 140 pulls. After that, they can either switch their “wish” or continue pulling duplicates to rank up the same card. This approach keeps players motivated by giving them a clear path to the reward, rather than relying on pure randomness with a low 1-in-5 chance.\n\n![](/files/img-blog/22.0oQnN.png)\n\n*[The Throne of Eros event in the LiveOps & Updates Calendar](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&mechanics=gacha&sort=revenue_trend&eventGroupId=2708243f-755a-4504-ad45-ea6dc56fcfc4&utm_source=AMArticle&utm_campaign=LADS \"The Throne of Eros event in the LiveOps & Updates Calendar\")*\n\nAnother strong driver of spending is **milestone rewards**. As players progress through milestones, they unlock free pulls, exclusive outfits unavailable elsewhere, and Crates with selectable event cards. These milestones are intentionally placed around the number of pulls needed for guaranteed 5-star cards, nudging players to spend “just a little more” to reach the next reward.\n\nThe event page features a preview video of the cards. Watching it rewards players with hard currency, but its main role is to build interest for the gacha event. This is the longest-running event format in the game, usually lasting around three weeks, with a gap of roughly one to two months. To keep players engaged over this period, the game runs **a related event** that typically includes:\n\n- Tasks that award event currency, which can be spent in the dedicated exchange shop on 10 time-limited pulls, items, cosmetics, and upgrade materials.\n- A short visual story for each character, gradually unlocked through completing event tasks.\n- Two mini-games: one simple and accessible, and another a bit more challenging to engage Midcore players.\n\nThe design clearly targets different player motivations—from story and customization to progression and gameplay challenge. What matters here is that every event goes beyond a simple reskin: each one introduces new mini-game mechanics, distinct storylines in a 3D visual format, and fresh design themes, like the cosmic empire in [Royal Masque](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&eventGroupId=4c86623d-d9da-4fc2-b157-cc9167d85059&utm_source=AMArticle&utm_campaign=LADS \"Royal Masque\") or the pop-idol concept in [Evernit Meloride](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&sort=revenue_trend&eventGroupId=e4921e18-50ce-4805-8020-96864fcd7800&utm_source=AMArticle&utm_campaign=LADS \"Evernit Meloride\").\n\n<gallery src=\"https://appmagic.rocks/files/view/upload/Blog/23.png, https://appmagic.rocks/files/view/upload/Blog/24.png, https://appmagic.rocks/files/view/upload/Blog/25.png, https://appmagic.rocks/files/view/upload/Blog/26.png, https://appmagic.rocks/files/view/upload/Blog/27.png, https://appmagic.rocks/files/view/upload/Blog/28.png,\nhttps://appmagic.rocks/files/view/upload/Blog/29.png\" />\n\n*[The Royal Masque event in the LiveOps & Updates Calendar](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&eventGroupId=4c86623d-d9da-4fc2-b157-cc9167d85059&utm_source=AMArticle&utm_campaign=LADS \"The Royal Masque event in the LiveOps & Updates Calendar\")*\n\nThis level of variety keeps the experience fresh, but it also comes at a cost. Each event requires significant production effort, and, as a result, **LiveOps becomes the primary source of new content**, while the main story updates are released far less often.\n\nOnly teams with enough resources to keep this system up may adopt a similar approach, but even without matching this scale, there’s a valuable insight for studios here. While gacha events drive spending, dedicated features like the exchange shop, story, and mini-games don’t directly impact monetization. Their only purpose is to retain players by:\n\n- Keeping DAU high through time-gated tasks, gradually unlocked chapters, and mini-game levels\n- Extending session time and engaging different player segments with varied activities and flexible rewards\n- Driving core gameplay engagement by tying standard daily tasks to event rewards\n- Building emotional connection with characters through short but frequent interactions in stories and mini-games\n\nOn top of that, the game often runs login calendars—for example, the one integrated into the Royal Masque event page or the separate [Flowing Wealth](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&eventGroupId=1257fe43-9951-4c04-83b4-28d218c9ce1e&utm_source=AMArticle&utm_campaign=LADS \"Flowing Wealth\") calendar that ran alongside the [Mortality’s Tenderness](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&eventGroupId=545d6a6c-9daa-4b41-b9d8-c7a9a1b7dd98&utm_source=AMArticle&utm_campaign=LADS \"Mortality’s Tenderness\") gacha event in February.\n\nAdditional spending drivers come from [Memory Growth Bonus](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&sort=revenue_trend&eventGroupId=29282f0d-354a-4695-b014-9b44c1c612f6&utm_source=AMArticle&utm_campaign=LADS \"Memory Growth Bonus\") events, which always run alongside gacha events of this type. This mechanic works similarly to a “cashback” system: players level up new limited cards using resources during the event and get some resources back. For players, this is the fastest way to progress, while the time limit adds pressure to buy resources.\n\n![](/files/img-blog/30.eyIkL.png)\n\n*[Memory Growth Bonus in the LiveOps & Updates Calendar](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&sort=revenue_trend&eventGroupId=29282f0d-354a-4695-b014-9b44c1c612f6&utm_source=AMArticle&utm_campaign=LADS \"Memory Growth Bonus in the LiveOps & Updates Calendar\")*\n\nThis event also rewards players with exclusive outfits for obtaining duplicates of new limited cards through the current gacha event. Since duplicates are already used to rank up cards and increase their battle power, this delivers extra motivation for players who value customization and exclusivity.\n\nA similar idea is used to drive spending of paid-only currency. During these events, new clothes for the female protagonist are added to the store, available only for that currency; they typically range from one to five options and often match the male leads’ event outfits. This approach **turns cosmetics into a tool for strengthening emotional attachment**, while also offering multiple choices to increase the average check.\n\n![](/files/img-blog/31.Duxz8.png)\n\n*Paid-only cosmetics dedicated to [Mortality's Tenderness](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&eventGroupId=545d6a6c-9daa-4b41-b9d8-c7a9a1b7dd98&utm_source=AMArticle&utm_campaign=LADS \"Mortality's Tenderness\") gacha event*\n\nCompared to other event types, all-character gacha events stand out for their depth and flexibility in monetization. The team frequently uses them to test new features. A good example is **time-limited chain offers**, first launched [in July 2025](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&sort=revenue_trend&miEventId=23542&utm_source=AMArticle&utm_campaign=LADS \"in July 2025\") with the [Witnessed by Deepspace](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&sort=revenue_trend&eventGroupId=a36a9dd9-48a7-4346-afc3-85d46593a6a3&utm_source=AMArticle&utm_campaign=LADS \"Witnessed by Deepspace\") gacha event. According to our Monetization Intelligence, at that time, prices ranged from $0.49 to $4.99, the same range used in October. By February, the entry price was reduced to $0.29. This offer design mainly aims to improve conversion and give more accessible purchase options for low- and mid-spenders.\n\nMeanwhile, one of the tested tools used simplified gacha mechanics, which could be a good fit even for Casual titles. In the [Golden Fortune](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&sort=revenue_trend&eventGroupId=b18b8073-55c1-4b5a-bcf7-e7b48cebf289&utm_source=AMArticle&utm_campaign=LADS \"Golden Fortune\") event, players could double their random free reward by making a $0.29 daily purchase or paying $1.49 upfront to cover all twelve days. The low price made it an easy impulse buy, while the randomness added an extra layer of excitement.\n\nAnother notable experiment introduced a cooperative twist. Launched a few days before the [Throne of Eros](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&mechanics=gacha&sort=revenue_trend&eventGroupId=2708243f-755a-4504-ad45-ea6dc56fcfc4&utm_source=AMArticle&utm_campaign=LADS \"Throne of Eros\") gacha event, the [Anniversary Presale](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&sort=revenue_trend&miEventId=36198&utm_source=AMArticle&utm_campaign=LADS \"Anniversary Presale\") offered players the opportunity to buy one or both offer options and contribute to a cumulative server-wide progress, unlocking generous milestone rewards for all buyers. This social element **boosted spending through a shared goal**.\n\n![](/files/img-blog/32.EVLHw.png)\n\nWhile these features expand the game’s monetization toolkit, most of the revenue still comes from [event packs](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&sort=revenue_trend&miEventId=36305&utm_source=AMArticle&utm_campaign=LADS \"event packs\"). These bundles include upgrade resources and time-limited pulls, which later convert into less valuable standard gacha pulls once the event ends. Each pack has a purchase cap: for example, players can buy the $0.49 pack up to 5 times, while the $54.99 pack is limited to 1 purchase only. After reaching these limits, players are left with standard store offers that provide less value.\n\nTo measure their actual impact, let’s look at **the top 10 offers by revenue share during the Throne of Eros event**. Most of them are event packs priced between $4.99 and $54.99, and together they account for around 48% of the event’s total revenue. Notably, bundles including resources only, such as the $29.99 special pack, did not make the top list. This proves once again that monetization here is heavily centered on gacha rather than core progression.\n\n![](/files/img-blog/33.9pOzj.png)\n\n*[IAP Revenue Distribution: top offers by revenue share during the Throne of Eros gacha event (iOS, US only)](https://appmagic.rocks/dashboards/69efc7d1d1ff3?utm_source=AMArticle&utm_campaign=LADS \"IAP Revenue Distribution: top offers by revenue share during the Throne of Eros gacha event (iOS, US only)\")*\n\nAt the same time, a solid share of purchases came from the [Anniversary Offer](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&sort=revenue_trend&miEventId=36306&utm_source=AMArticle&utm_campaign=LADS \"Anniversary Offer\"), which alone **brought in 14% of the event’s total revenue**. This purchase gives players weekly rewards throughout the following year (hard currency, limited pulls, or resources, depending on the chosen option). Two of the options are priced at $9.99, while the third requires paid-only currency. This setup likely explains why the $14.99 currency pack also appeared among the top offers, contributing another 3.3% of total revenue.\n\nThe key drivers here were urgency and strong motivation. This yearly subscription was only available during this very gacha event, creating a heavy FOMO effect. On top of that, players were encouraged to purchase all options at once to unlock extra weekly rewards for the entire year ahead.\n\nAlongside event packs, the Aurum Pass ranks #4 among the highest-earning IAPs, generating 6.3% of revenue. Despite being labeled a pass, its mechanics are closer to a monthly subscription, offering instant paid-only currency along with daily hard-currency rewards. Since both currencies are mainly used for limited pulls or event outfits, **it stays closely tied to gacha monetization**. The same logic applies to the premium season pass, which includes both standard and limited pulls. These offers are not directly tied to the releases of limited cards, but ongoing gacha events remain the main factor defining their value.\n\n### Key Takeaways: Balance And Diversity\n\nAll-character gacha events are one of the game's key revenue drivers. The strategy behind them is built around balance: the gacha event itself drives spending through a clear guarantee system and milestone rewards, while the related events focus on engagement, with little to no monetization pressure.\n\nLooking at the Throne of Eros event, its IAP revenue distribution reveals several key points:\n\n- Event packs generated 48% of total revenue, with the $4.99 and $9.99 bundles being the most popular choices.\n- The yearly subscription stands out for its highest revenue share (14%) and drives 10% of all purchases, thanks to strong FOMO and extra motivation for all-at-once purchases.\n- Even without being directly tied to the event, the monthly subscription and premium season pass together bring in about 9% of revenue.\n\nOverall,**the system feels generous even for non-paying players, while still keeping high-value rewards behind meaningful spend**. Monetization is designed to drive revenue mainly from collectors or hardcore players as they rank up cards for combat, without hurting engagement.\n\n## 2. Limited Skin Releases: Revenue Spikes Up To +130%\n\nBattle skin releases are the next major event type in *Love and Deepspace*. To unlock a limited skin, players need to collect a pair of new character cards through gacha. Each skin comes with new abilities, combat strategies best suited for them, battle animations, and a themed outfit, along with a weapon for the female protagonist. But the value of these paired cards goes beyond battle modes: the story they unlock is longer and more visually epic compared to most other event cards.\n\n![](/files/img-blog/34.Dsqf9.png)\n\n*[The Where Silverwings Rest event in the LiveOps & Updates Calendar](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&eventGroupId=751c43f7-f828-4089-ad49-421857bbbe8a&utm_source=AMArticle&utm_campaign=LADS \"The Where Silverwings Rest event in the LiveOps & Updates Calendar\")*\n\nWhen it comes to gacha mechanics, the system is carefully designed to feel fair. Players are guaranteed one event card within 140 pulls, and at 150 pulls, they can choose the second card of the pair as a milestone reward and obtain the skin. This makes the goal feel achievable, so that players are not too overwhelmed to at least try.\n\nHowever, after that milestone, each duplicate needed to rank up the cards can take up to another 140 pulls. This is especially relevant for hardcore players, whom these events heavily target. Battle skins significantly boost combat power as is, but higher ranks also unlock new abilities. Fully upgrading both cards requires four duplicates for each, and given the game’s balance and event pacing, **achieving this without spending is extremely hard**.\n\n![](/files/img-blog/35.SAeHT.png)\n\nFor players less focused on combat, the game adds another layer of motivation, too. By ranking up the paired cards, players get new versions of the character’s outfit. Along with this system, the cosmetics are used again to drive paid-only currency spending. Unlocking the male lead’s skin grants access to matching combat outfits for the female protagonist that can be purchased with that currency. Without the skin, the same outfit can only be used as a cosmetic item in Photo Studio mode, which keeps this monetization feature closely linked to the gacha event.\n\n![](/files/img-blog/36.W4zuX.png)\n\n*Paid-only cosmetics for combat*\n\nTo introduce the skin, the game uses a soft onboarding approach. Players can preview the skin through a rewarded trailer video and try it in action in the [Companion Rehearsal](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&sort=revenue_trend&eventGroupId=8cde8766-e7e0-47d0-9b3b-b403c3b50f35&utm_source=AMArticle&utm_campaign=LADS \"Companion Rehearsal\"), which also offers valuable rewards. Together, these features showcase the visual concept and new combat skills without directly pushing to spend.\n\nThe real strength of this event type lies in its tight link to battle progression, and that’s what lays the foundation for its revenue potential. The latest notable case is [Where Silverwings Rest](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&eventGroupId=751c43f7-f828-4089-ad49-421857bbbe8a&utm_source=AMArticle&utm_campaign=LADS \"Where Silverwings Rest\"): this event **pushed the game to the #1 spot in China’s daily top-grossing chart—not only among games, but across all apps**. Globally, it also secured the #1 position among games on the event’s launch day, and its total IAP revenue then crossed $23M in just three weeks.\n\nFor the community, these events hold a special meaning. They’re seen as a way to show support for favorite characters. On launch days, players often spend more just to land the game at the top of the charts. The studio encourages this by rewarding all players if the game reaches #1 in China, turning this big win into a shared celebration.\n\n![](/files/img-blog/37.0kS-P.png)\n\n*AppMagic’s Live Store Rankings (December 2, 2025)*\n\nThe impact of these gacha events becomes even clearer when looking at the game’s App Ranking History. In China, its core market, the title entered the top 3 apps by daily revenue [14 times, with two #1 rankings](https://appmagic.rocks/dashboards/69e62cff0a818?utm_source=AMArticle&utm_campaign=LADS \"14 times, with two #1 rankings\")—both driven by battle skin releases.\n\nWith this broader context in mind, let’s break down exactly how the team makes it work. In terms of pacing, these events run for about two weeks, with one to three months between them. Meaning, each of the five male leads gets a new limited skin roughly once a year, making every release rare and long-awaited.\n\nThe strategy here mirrors what we’ve seen in all-character events. The gacha drives monetization, while **the dedicated events** are built purely to boost engagement through:\n\n- Tasks that reward players with event currency, which can be spent in the exchange shop on 10 time-limited pulls, a new 3-star card, items, and upgrades of materials.\n- Exploration with 19 linked locations, including battle levels (featuring the new skin), short narrative episodes, and basic mini-games. Each location requires a daily attempt, and any you miss can be restored with hard currency.\n\n![](/files/img-blog/38.PQg08.png)\n\n*[The Crimson Feast event in the LiveOps & Updates Calendar](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&eventGroupId=b894abaf-4fb5-4632-946c-9f2d6d56c404&utm_source=AMArticle&utm_campaign=LADS \"The Crimson Feast event in the LiveOps & Updates Calendar\")*\n\nThe goal remains clear: keep players engaged daily via tasks and exploration, while offering flexible rewards for all player segments through the exchange shop. In their design, these events are closer to reskins, even though mini-games and storylines often vary.\n\nThe key difference is that they center on a single character. To engage all players—no matter which character they like—the game keeps the event activities accessible and varied. **It creates simple daily touchpoints**: log in, visit the event page, get deeper into the theme, and try the skin. And that’s how the game promotes the current gacha event without aggressively pushing to spend.\n\nOn the monetization side, battle skin releases feature a set of [event packs](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&sort=revenue_trend&miEventId=34062&utm_source=AMArticle&utm_campaign=LADS \"event packs\") priced from $0.49 to $54.99, each with its own purchase limit. Using the [Where Silverwings Rest](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&eventGroupId=751c43f7-f828-4089-ad49-421857bbbe8a&utm_source=AMArticle&utm_campaign=LADS \" Where Silverwings Rest\") event as an example, we zoomed in on its top-earning offers and saw a similar pattern. Event packs with time-limited pulls still dominate the list, accounting for more than 73% of total revenue during the event.\n\n![](/files/img-blog/39.ntUF0.png)\n\n*[IAP Revenue Distribution: top offers by revenue share during the Where Silverwings Rest event (iOS, US only)](https://appmagic.rocks/dashboards/69efc7bc9c6ae?utm_source=AMArticle&utm_campaign=LADS \"IAP Revenue Distribution: top offers by revenue share during the Where Silverwings Rest event (iOS, US only)\")*\n\nThe most common purchase price points remain $4.99 and $9.99, as many players favor these packs for their value, even with cheaper options at hand. At the same time, the overall pricing range of top offers is wider compared to all-character events—from the $2.49 event pack to the $99.99 paid-only currency pack. The second one is actually the highest-priced offer in the game, which signals how battle skin releases effectively capture all payer segments, including whales.\n\nWhat stands out more clearly is how **spending shifts toward higher tiers**. The $27.99 event pack captures the largest share of revenue at about 22%, compared to ~8% for a similar offer in the all-character event. The most expensive event pack ($54.99) also performs better here, contributing 10.9% of revenue compared to 6.4% during the Throne of Eros event. When it comes to skins and fully ranked cards that significantly boost progression, players are far more willing to spend on high-priced offers.\n\n### Key Takeaways: Progression Impact And Rarity\n\nAt first glance, events focused on a single character might seem limited by his popularity. In practice, however, **the team’s design choices turn it into a strength**. At the core of this strategy are the heavy impact on progression, epic concepts, rarity, and special meaning for the community.\n\nWe took a closer look at the top offers from Where Silverwings Rest to highlight key monetization insights:\n\n- Event packs account for more than 73% of total event revenue.\n- The $4.99 and $9.99 packs remain the most common purchases.\n- Players are more willing to buy the highest-priced offers—such as the $54.99 event pack or the $99.99 paid-only currency pack—because the reward justifies the spend for them.\n\nThe approach is similar: the supporting LiveOps layer sustains engagement, while the gacha mechanics balance accessibility—lower pressure to obtain the skin—with depth that still pushes hardcore players to spend.\n\n## 3. Birthday Celebrations: Revenue Spikes Up To +50%\n\nGacha events dedicated to characters’ birthdays lean heavily into emotional connection. The same could be said about any event in the game, but these take it much further. They recreate real-life celebrations with gift preparations, cakes, singing “happy birthday”, and spending time together. The visual story unlocked by the limited card also revolves around celebrations and even lets players record their own voice message with birthday wishes.\n\nEach birthday event features one card of the male character, showcased through a rewarded teaser, along with reruns of his birthday cards from previous years. Both follow the standard guarantee system, ensuring the event card within 140 pulls. However, it’s the only event type without milestone rewards tied to pulling.\n\n![](/files/img-blog/40.0cfI0.png)\n\n*[The Duskbright Steps event in the LiveOps & Updates Calendar](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&sort=revenue_trend&eventGroupId=6c4eff3f-194a-44f4-8f74-604dfe2258f2&utm_source=AMArticle&utm_campaign=LADS \"The Duskbright Steps event in the LiveOps & Updates Calendar\")*\n\nThat doesn’t mean players don’t get any free content. Rewards are still available in **the related event**, which typically includes:\n\n- A short visual story with chapters unlocking every day or two\n- A customizable plushie of the character\n- A mini-game where players collect materials and use earned points to unlock plushie parts\n- Tasks that grant event currency, which can be exchanged in the shop for 10 time-limited pulls, 3-star cards, cosmetics, items, and upgrade materials\n\nThese events are designed as memorable moments that players want to share with the characters. To reinforce this feeling, the game gives them keepsakes. The DIY plushie and the themed cake are saved as interactive items in the Home feature, while an immersive interaction becomes available in that feature only on the character’s birthday date. Altogether, this creates a deeply personal experience.\n\n![](/files/img-blog/41.uMjV0.png)\n\nAlongside DIY activities and narrative, the event features a Casual mini-game, reused across all birthday events throughout the same year to reduce production costs. In 2026, the team focused on puzzle mechanics, gradually increasing difficulty with new boosters and conditions. This choice is not surprising given the growing momentum of Casual Puzzles in both revenue and user base, which we noted in our [Casual Games Report 2025](https://appmagic.rocks/research/casual-report-2025?utm_source=AMArticle&utm_campaign=LADS \"Casual Games Report 2025\"). Their use in *Love and Deepspace* shows once again how the game walks a thin line between Casual and Midcore audiences.\n\n![](/files/img-blog/42._8r49.png)\n\n*[The Each Step To You event in the LiveOps & Updates Calendar](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&eventGroupId=e84311e6-40db-4be1-b4a6-270be6c72218&utm_source=AMArticle&utm_campaign=LADS \"The Each Step To You event in the LiveOps & Updates Calendar\")*\n\nHowever, it comes with a trade-off. Birthday events offer less depth and value for hardcore players, **relying primarily on emotion and creative freedom**. Although birthday cards are used in battle, their impact is noticeably lower compared to battle skins. And that’s one of the reasons why revenue growth here doesn’t come close to what we’ve seen before.\n\nDespite this, birthday events play a key role in the community and serve as a strong driver of short-term engagement, typically lasting around a week. Their monetization relies solely on limited [event packs](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&miEventId=40301&utm_source=AMArticle&utm_campaign=LADS \"event packs\") priced between $0.49 and $49.99. To see exactly what drives their revenue, let’s break down the top offers by IAP revenue share of the [Duskbright Steps](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&sort=revenue_trend&eventGroupId=6c4eff3f-194a-44f4-8f74-604dfe2258f2&utm_source=AMArticle&utm_campaign=LADS \"Duskbright Steps\") birthday event, which generated roughly $4.9M in a week.\n\nWhat stands out is that the $14.99 [premium pass](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&eventGroupId=39cc7bdf-9a00-4a78-9591-09a2faba99d5&utm_source=AMArticle&utm_campaign=LADS \"premium pass\") sits at the top **with 17.5% of the event’s total revenue**. This is largely due to timing: the pass launched alongside the birthday event. The same applies to its $9.99 option, which also ranks among the top offers. In this case, the team effectively leveraged the attention around the event to boost purchases of seasonal offers.\n\n![](/files/img-blog/43.-a-Hm.png)\n\n*[IAP Revenue Distribution: top offers by revenue share during the Duskbright Steps event (iOS, US only)](https://appmagic.rocks/dashboards/69eb6abf7b69a?utm_source=AMArticle&utm_campaign=LADS \"IAP Revenue Distribution: top offers by revenue share during the Duskbright Steps event (iOS, US only)\")*\n\nStill, event packs remain the backbone of monetization. Together, they generate more than 53% of total revenue, with the $27.99 pack bringing in nearly 16%. In terms of frequency, players prefer the $4.99 and $2.99 tiers—accessible price points that appeal to low- and mid-spenders. The monthly subscription, along with its exclusive weekly pack, acts as a supporting layer, encouraging players to spend regularly.\n\n### Key Takeaways: Special Moments To Share\n\nBirthday events recreate real-life celebrations through narrative, DIY gifts, and immersive interactions, making the experience very personal. They are mainly built around emotional engagement rather than monetization pressure.\n\nThis focus is reflected in their revenue structure:\n\n- The timing aligned with the release of a new season pass, resulting in ~18% of event revenue coming from an offer not directly tied to the themed gacha event.\n- Event packs with time-limited pulls generated more than half of total IAP revenue, with the $27.99 pack as the main contributor.\n\nWhile birthday events have a lower revenue impact, they take their rightful place as part of the LiveOps strategy by fitting naturally into the game’s romantic concept.\n\n## 4. Solo Events: Revenue Spikes Up To +30%\n\nAlongside larger formats, the game also runs gacha events focused on a single new character card, not tied to any specific occasion. These events last about a week and follow the standard guarantee system with milestone rewards such as free pulls, exclusive cosmetics, and upgrade resources.\n\nAs in all-character events, the milestones are carefully aligned with the guarantee system. For example, even if players obtain the card early, they still need to reach 70 total pulls for a special outfit that isn’t available for direct purchase. Some rewards are added to the permanent shop later, but only after a long delay, which helps maintain FOMO.\n\n![](/files/img-blog/yjfg.m6siW.png)\n*[The Secret's Kiss event in the LiveOps & Updates Calendar](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&mechanics=gacha&sort=revenue_trend&eventGroupId=e711a92f-3111-4d67-b424-c7079e50ade1&utm_source=AMArticle&utm_campaign=LADS \"The Secret's Kiss event in the LiveOps & Updates Calendar\")*\n\nPlayers can preview the card through a rewarded video, while **the supporting event** promotes the theme through:\n\n- A short visual story with chapters unlocking every 1–2 days\n- A mini-game where points lead to milestone rewards (cosmetics, soft currency, and resources), with new levels unlocked by days\n- A customizable avatar of the female MC on the event page\n\nThis is the only event type without an exchange shop, relying instead on a simpler but less flexible milestone system. The design leans heavily into accessibility, using Casual Puzzle mechanics—for example, the Sort Puzzle gameplay in [Curious Chase](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&sort=revenue_trend&period=selectLast365days&eventGroupId=31949e92-5832-46da-a7a3-13c8a40b7bcf&utm_source=AMArticle&utm_campaign=LADS \"Curious Chase\") or Match 3D mechanics in [Cuteness Charge](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&sort=revenue_trend&eventGroupId=d318a176-40b8-4eb3-ab15-67094268f4ab&utm_source=AMArticle&utm_campaign=LADS \"Cuteness Charge\"). Levels unlock gradually over time, supporting short-term retention.\n\n![](/files/img-blog/yjty.1lEOq.png)\n*Solo events in Love and Deepspace: [Cuteness Charge](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&sort=revenue_trend&eventGroupId=d318a176-40b8-4eb3-ab15-67094268f4ab&utm_source=AMArticle&utm_campaign=LADS \"Cuteness Charge\"), [Curious Chase](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&sort=revenue_trend&period=selectLast365days&eventGroupId=31949e92-5832-46da-a7a3-13c8a40b7bcf&utm_source=AMArticle&utm_campaign=LADS \"Curious Chase\")*\n\nAlongside these events, the game introduces limited [event packs](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectAllTime&mechanics=gacha&miEventId=37515&utm_source=AMArticle&utm_campaign=LADS \"event packs\") priced between $0.49 and $49.99. In the [Secret's Kiss](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&mechanics=gacha&sort=revenue_trend&eventGroupId=e711a92f-3111-4d67-b424-c7079e50ade1&utm_source=AMArticle&utm_campaign=LADS \"Secret's Kiss\") solo event, for example, these packs dominate the list of top-performers, **accounting for roughly 55% of the total revenue** generated during the event.\n\n![](/files/img-blog/52.o0GdN.png)\n\n*Top offers by revenue share during the Secret’s Kiss event (iOS, US only)*\n\nThe $4.99 pack stands out as both the top-grossing and most frequently purchased option, showing a strong match between price and perceived value. One notable exception appears here: for the first time across all event types, a resource-only pack ($49.99) enters the top 10. This offer targets whales, providing one of the game’s rarest resources that’s meaningful for progression.\n\n### Key Takeaways: Steady Content Flow\n\nSolo gacha events mainly play a supporting role in monetization, keeping the content flow steady and the player base continuously engaged. The related LiveOps features add variety through Puzzle mechanics and simple reward systems, but this comes at the cost of depth and flexibility. In [Secret's Kiss](https://appmagic.rocks/live-ops-calendar?appId=1_com.papegames.lysk.en&period=selectLast365days&mechanics=gacha&sort=revenue_trend&eventGroupId=e711a92f-3111-4d67-b424-c7079e50ade1&utm_source=AMArticle&utm_campaign=LADS \"Secret's Kiss\"), the overall pattern remains: event packs contribute around 55% of total revenue, forming the core of its monetization.\n\n## 5. Reruns of Past Gacha Events\n\nWhile this isn’t exactly a distinct category on its own, its monetization works differently enough to stand out. Since early 2025, the game has been rerunning past gacha events across all types. These reruns keep the original mechanics intact, such as the Precise Wish for all-character events or the selectable card at 150 pulls for battle skins. However, the supporting content, like mini-games, tasks, or stories, isn’t included.\n\nReruns still come with dedicated event packs that include time-limited pulls, which can only be used for reruns. As with new events, pulls can be purchased with hard currency. The key difference lies in the structure: there are fewer special packs, and purchase limits are often tighter. **This changes the overall balance** and makes reruns more expensive for players.\n\n![](/files/img-blog/53.SaAN7.png)\n\nFrom a strategic standpoint, this likely aims to make new events seem even more attractive. Long gaps between original runs and reruns—sometimes up to two years—also reinforce FOMO. Still, there’s a downside. Reruns primarily target new players, yet the higher cost may discourage them early on. This is especially true for collectors, who may feel that completing a set requires too much time and spending.\n\nMeasuring the exact impact of reruns is tricky, as they often overlap with new events. Still, the LiveOps calendar reveals a consistent pattern: revenue spikes on their launch days are noticeably lower than those of new gacha events.\n\n## Overall Revenue Structure: How It All Comes Together\n\nStepping back from individual event types, let’s explore how they shape the game’s broader LiveOps strategy and monetization. By looking at **the game’s top-performing offers in 2025**, we can see how these elements work together at scale.\n\nEvery monetization strategy starts with the first purchase—and in *Love and Deepspace*, gacha events play a central role in driving that conversion. Our data highlights [which offers](https://appmagic.rocks/dashboards/69eb75f60f024?utm_source=AMArticle&utm_campaign=LADS \"which offers\") bring players into spending:\n\n- $4.99 packs (both event and standard) lead the way, accounting for **nearly 20% of all first purchases in 2025**. They also top the chart as the most common purchase, making up 20% of all transactions.\n- $9.99 packs—featured across all-character events, battle skin releases, and their reruns—follow with 10%, showing how **these events motivate players to make their first purchase**.\n- The monthly subscription generates over 6%, helping build ongoing spending habits.\n- The $12.99 and $27.99 packs, present across all events, each add another 6%, proving that **higher price tiers can still convert first-time buyers** when perceived value is strong.\n\nThe key insight here is the gap between accessibility and choice. While the game offers many low-priced options starting at $0.29 that are clearly designed for impulse buys, most players still choose the more expensive offers even as their first spend.\n\nWhat further highlights the impact of the LiveOps strategy is **the total revenue share of the offers in 2025**. Many IAPs on that top list include time-limited event packs. Together with some store packs, they bring in 60% of total revenue. Supporting this structure are recurring systems, such as the premium pass and the monthly subscription, which together contribute over 7% of annual revenue and reinforce consistent spending behavior.\n\n![](/files/img-blog/54.fQtDx.png)\n\n*[IAP Revenue Distribution: top offers by revenue share in 2025](https://appmagic.rocks/dashboards/69eb84a4e35bb?utm_source=AMArticle&utm_campaign=LADS \"IAP Revenue Distribution: top offers by revenue share in 2025\")*\n\nTo put this into perspective, the monetization structure here differs from other gacha-heavy titles like *[Honkai: Star Rail](https://appmagic.rocks/google-play/honkai-star-rail/com.HoYoverse.hkrpgoversea?utm_source=AMArticle&utm_campaign=LADS \"Honkai: Star Rail\")* and *[Genshin Impact](https://appmagic.rocks/google-play/genshin-impact/com.miHoYo.GenshinImpact?utm_source=AMArticle&utm_campaign=LADS \"Genshin Impact\")* by [miHoYo](https://appmagic.rocks/publisher/mihoyo/1_4759911077617645855?utm_source=AMArticle&utm_campaign=LADS \"miHoYo\"). In those games, monetization relies mostly on paid-only currency packs, which generated more than 74% of IAP revenue in *Honkai: Star Rail* and 82% in *Genshin Impact* in 2025. In contrast, similar packs account for only about 11% in *Love and Deepspace* in the same year.\n\nBoth strategies can perform well, but they shape player behavior very differently. In *Love and Deepspace*, monetization is tied much more closely to LiveOps and time-limited offers. For players, this sets a clear goal: if they want a new limited card, they spend directly in order to get it. Time pressure and purchase limits strengthen this through FOMO and impulse-driven spending at peak interest.\n\nThis model is built around emotional spending. Instead of calculating efficiency, players think in terms of “how many pulls do I need to get him?” The decision shifts from logic to attachment. **Missing a card feels like missing a meaningful moment with the character, a piece of their story**.\n\nHowever, there’s a potential downside: revenue becomes highly dependent on event pacing, content quality, and character popularity. Core gameplay and permanent systems play a much smaller role. This model can deliver strong results, but it demands consistent execution. If events slow down or fail to resonate, revenue can quickly follow. Long-term success here depends on how narrative depth, LiveOps activity, and monetization reinforce each other at every step of the player journey.\n\n## Conclusion: Not Betting On Luck\n\nIn about two years, *Love and Deepspace* has generated more than $749M in IAP revenue, and that kind of success doesn’t happen by chance. At its core lies monetization built around gacha events, carefully integrated into the main gameplay. What starts as a romance story gradually evolves into a complex system where combat modes and character cards become the heart of progression. **This shift builds the foundation for revenue growth**, and this is where gacha comes in.\n\nMost of the strongest battle cards are available only through gacha events, making them a key monetization driver. Besides combat power, the cards deliver exclusive story content with AAA-level production quality, turning each pull into both a gameplay upgrade and access to the game’s lore.\n\n<gallery src=\"https://appmagic.rocks/files/view/upload/Blog/55.png, https://appmagic.rocks/files/view/upload/Blog/56.png, https://appmagic.rocks/files/view/upload/Blog/57.png, https://appmagic.rocks/files/view/upload/Blog/58.png,\nhttps://appmagic.rocks/files/view/upload/Blog/59.png\" />\n\nTo keep this system running smoothly, the game structures its LiveOps calendar around five types of gacha events. Among them, **battle skin releases and events featuring cards of each character stand out as the main growth engines**, often driving the biggest revenue spikes. \n\nWhat makes the strategy work in the long run is balance. Monetization pressure is paired with engagement drivers in a way that feels rewarding even for non-spenders, while high-value content stays behind a clear paywall. By analyzing both the LiveOps calendar and IAP revenue distribution, we can see how each feature supports a specific goal:\n\n![](/files/img-blog/60-.uBjyM.png)\n\nIn this model, revenue growth is tightly linked to the pacing and quality of gacha events. The numbers reflect this clearly: **time-limited event packs generate around 60% of total revenue**, while regular features like passes and subscriptions play a supporting role. \n\nThis structure holds both opportunities and challenges. On the one hand, it allows the game to generate strong revenue spikes. On the other hand, it depends heavily on a consistent flow of high-value content, well-planned timing, and a deep understanding of player behavior. Besides being a revenue driver, gacha events become a key source of content and a character-development tool that reinforces emotional attachment over time. \n\nAnd that leads to a broader takeaway. Love and Deepspace proves something any Midcore team can benefit from: gacha monetization works when it feels like an integral part of the experience rather than a separate layer on top. When LiveOps, progression, and monetization move in sync, **spending feels like a step deeper into the game’s world, not a push.** And that’s what keeps players around in the long run and sustains steady, scalable growth. \n\n\n\n\n\n\n",
+        "publish_date": "2026-05-19T00:00:00Z",
+        "preview_image": "/files/img-blog/cover2.9Vez5.png",
+        "meta_image": "/files/img-blog/cover1.0348R.png",
+        "created_at": "2026-05-19T07:49:05Z",
+        "updated_at": "2026-05-19T11:50:46Z",
+        "group": "specials"
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/blog?type=3&lang=cn",
+    "respKeys": [
+      "data"
+    ],
+    "arrLen": 2,
+    "sample": [
+      {
+        "id": 190,
+        "lang": "en",
+        "alias": "wishlists",
+        "article_type": 3,
+        "title": "Wishlists",
+        "author": "Maria Bolshman",
+        "description": "Track audience interest, wishlist growth, and conversion into purchases across Steam games.",
+        "content": "Wishlists reflect player interest in games on Steam and remain one of the strongest early signals of demand. Players often start adding titles to their wishlists months or even years before release, making wishlist activity useful for tracking pre-launch interest and monitoring market trends.\n\n![](/files/img-blog/wishlists1.p2FPn.png)\n\n*You can find the Most Wishlisted ranking in the [Top Games](https://appmagic.rocks/steam?aggregation=quarter&date=2026-01-01 \"Top Games\") section*\n\nAppMagic provides wishlist data in three formats:\n\n- **Active Wishlists**: the estimated number of users who currently have the game in their wishlist.\n- **New Wishlists**: the estimated number of users who added the game to their wishlist during a specified period.\n- **Converted Wishlists**: the estimated number of users who purchased the game after previously wishlisting it.\n\nTogether, these metrics show how player interest grows over time and how much of it turns into purchases.\n\n## Track Wishlist Trends Over Time\n\nOur tool helps teams compare pre-launch and post-launch wishlisting and conversion across Steam games.\n\nBefore launch, **Active and New Wishlists** help compare audience growth across upcoming titles and measure the impact of demos, Steam festivals, trailers, or marketing campaigns.\n\n**New Wishlists** are particularly useful for spotting sudden growth after demos, festivals, or major announcements. Unlike Active Wishlists, which reflect the total level of interest on a selected date, New Wishlists show how quickly players are adding a game to their wishlists during a specified period.\n\nAfter launch, **Converted Wishlists** help connect player interest with actual purchases. While most wishlist-tracking tools focus on visibility and audience size alone, Converted Wishlists add another layer by showing how much of that interest ultimately translates into purchases.\n\n![](/files/img-blog/wishlists2.s_-Zo.png)\n\n*[Wishlist trends for REPLACED across Active, New, and Converted Wishlists](https://appmagic.rocks/dashboards/69fb37f71c30e \"Wishlist trends for REPLACED across Active, New, and Converted Wishlists\")*\n\nThese metrics can help answer the following questions, amongst others:\n\n- Which upcoming games are attracting the most player interest?\n- What types of events drive the strongest wishlist growth?\n- How much wishlist activity eventually turns into purchases?\n- Which games convert wishlists into purchases more effectively?\n\n## Data Coverage\n\nWishlist metrics are estimated using tracked public Steam profiles, wishlist activity, and user libraries collected over time. **Wishlist data is available starting from May 1st, 2025, with regional breakdowns across approximately 30 countries**.\n\nSome games may not have enough visible wishlist activity to generate reliable estimates. Converted Wishlists are also unavailable for free-to-play titles.\n\n<request-form text=\"To request demo access to AppMagic's Wishlist metrics, please click below to fill out the form.\" />\n",
+        "publish_date": "2026-05-26T00:00:00Z",
+        "preview_image": "/files/img-blog/w1._92pp.jpg",
+        "meta_image": "/files/img-blog/w2.R8fGr.png",
+        "created_at": "2026-05-26T15:30:07Z",
+        "updated_at": "2026-05-26T15:31:22Z",
+        "group": "all"
+      },
+      {
+        "id": 177,
+        "lang": "en",
+        "alias": "iap-distribution",
+        "article_type": 3,
+        "title": "IAP Revenue Distribution",
+        "author": "Maria Bolshman",
+        "description": "Use our IAP Revenue Distribution tool to identify offers that generate the most value and to compare ways in which competitors structure their monetization.",
+        "content": "**IAP Revenue Distribution** shows how revenue from in-app purchases is distributed between individual offers on both Google Play and the App Store. Instead of looking at total IAP revenue, you can see which SKUs (unique offer IDs) generate the largest share of earnings, which ones are bought most often, and how spending is structured inside a game or app.\n\nThe tool gives you offer-level visibility of competitor monetization. Filter by app, store, and time period to view up to 20 top-performing offers ranked by their revenue contribution.\n\n![](/files/img-blog/IAPD%20S1.ckGhO.png)\n\n*You can find the IAP Revenue Distribution under [Deconstructions](https://appmagic.rocks/dashboards/in-app-purchases-distribution \"Deconstructions\")*\n\nEach offer can be studied from the following angles:\n\n• **Price:** offer’s current price.\n\n• **Offer Revenue:** estimated revenue that the selected offer contributed.\n\n• **Revenue Share:** the percentage of total IAP revenue generated by the offer.\n\n• **Quantity Share:** the percentage of total purchases attributed to the offer.\n\n• **1st Purchase Share:** the share of first purchases that go to the offer.\n\n• **Associated Offers:** with [Monetization Intelligence](https://appmagic.rocks/monetization-intelligence \"Monetization Intelligence\") integration, the tool allows you to quickly obtain offer screenshots and tags.\n\nIn rare cases, the same offer ID may appear with multiple price points. Each price point is displayed separately, and SKU rankings depend on the time period you select.\n\n## Why Offer-Level Visibility Matters\n\nTotal revenue only tells you how much an app earns, but not how exactly it is generated. With offer-level visibility, you can see whether a project relies on one dominant SKU or spreads revenue across multiple tiers. You can compare purchase frequency across price points and understand how monetization is structured within the game.\n\nThis helps answer questions like:\n\n• Which offers generate the largest share of revenue?\n\n• Which offers are purchased most frequently?\n\n• Are high-frequency purchases also high-value?\n\n• What price levels consistently perform in this genre?\n\nIt also helps track the evolution of a developer’s monetization strategy over time. By comparing offers across different periods, teams can spot which bundles or deals increase purchase frequency, shift revenue distribution, or drive more first-time purchases.\n\nWithout this feature, teams rely on assumptions, internal data, or surface-level rankings. There’s no structured way to benchmark how revenue is distributed across offers in competing apps. And this metric fills that gap.\n\n![](/files/img-blog/IAPD%20S2.KYBJh.png)\n\nMany of these offers can also be explored in more detail through the integrated [Monetization Intelligence](https://appmagic.rocks/monetization-intelligence \"Monetization Intelligence\") view, where you can see how they appear in the game and what triggers them.\n\n## Where Does the Data Come From?\n\n**The metric is currently available for the US market only**. The data is based on real purchase data from US users and covers around 1,000 top-grossing gaming and non-gaming apps across major subgenres.\n\nUnlike most public rankings based only on App Store listings, IAP Revenue Distribution also includes data on Google Play purchases. This helps teams compare how the same game monetizes across stores and pin down differences in player behavior and spending.\n\nA few important details about the data:\n\n• Data is available weekly or monthly, which helps capture stable monetization patterns\n\n• Updates typically arrive with a delay of up to two weeks needed to validate the data\n\n• Non-gaming apps usually show fewer offers, as subscriptions dominate their monetization\n\n## Who Benefits Most?\n\nIAP Revenue Distribution is designed for mobile apps monetizing through in-app purchases, both gaming and non-gaming. It is most useful for:\n\n• Product and monetization teams seeking to refine pricing and bundles\n\n• LiveOps and economy managers balancing in-game economies\n\n• Analysts benchmarking competitors and revenue structure\n\nFor all these teams, it boils down to the same thing: what actually drives IAP revenue. Revenue doesn’t come from IAPs as a category. It comes from specific offers at specific price points. IAP Revenue Distribution helps you understand how that revenue is actually built.\n\n<request-form text=\"To request demo access to AppMagic's IAP Revenue Distribution tool, please click below to fill out the form.\" />\n\n\n\n\n\n",
+        "publish_date": "2026-03-11T00:00:00Z",
+        "preview_image": "/files/img-blog/IAPD%20P1.ZKAVy.png",
+        "meta_image": "/files/img-blog/IAPD%20P2.KHMqu.png",
+        "created_at": "2026-03-10T11:46:16Z",
+        "updated_at": "2026-04-20T15:55:01Z",
+        "group": "all"
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/mailing?email=hawkiethehawk@163.com",
+    "respKeys": [],
+    "arrLen": 0,
+    "sample": []
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/favorites?user_uid=5b4e7204-9d41-44d1-bf97-88fc228bbcb2",
+    "respKeys": [
+      "user_id",
+      "user_uid",
+      "username",
+      "app_ids",
+      "creative_ids",
+      "publisher_ids",
+      "keywords",
+      "offers"
+    ],
+    "arrLen": null,
+    "sample": null
+  },
+  {
+    "method": "GET",
+    "url": "https://appmagic.rocks/api/v2/top/united-apps?aggregation=week&topDepth=100&store=5&country=WW&date=2026-06-01&tag=126",
+    "respKeys": [
+      "data",
+      "date"
+    ],
+    "arrLen": 100,
+    "sample": [
+      {
+        "top_featuring": {
+          "application": {
+            "categories": [
+              "175",
+              "209",
+              "212",
+              "88",
+              "96",
+              "97",
+              "99",
+              "1",
+              "9",
+              "10",
+              "12"
+            ],
+            "icon_url": "https://play-lh.googleusercontent.com/95Moc1fyNQ-fmn0yunSlaCJdAUTUqyyq-eSN7nCfTgJ9jrJoLopjgX37GIPeT5m_igbph-c577vX5xc87GJkbA",
+            "name": "Pictonico!",
+            "store_ids": [
+              "1_com.nintendo.zana",
+              "2_6754666867",
+              "3_6754666867"
+            ],
+            "publisher": {
+              "id": 14286,
+              "name": "Nintendo Co., Ltd.",
+              "head_company_name": "Nintendo Group",
+              "headquarter": "JP",
+              "majority_of_employees_location": "US",
+              "decision_makers_location": "US",
+              "linkedin_headcount": 6409,
+              "place": 343
+            },
+            "publisherIds": [
+              {
+                "store": 1,
+                "store_publisher_id": "7277267556905944956",
+                "store_id": "1_7277267556905944956"
+              },
+              {
+                "store": 2,
+                "store_publisher_id": "1062496488",
+                "store_id": "2_1062496488"
+              },
+              {
+                "store": 3,
+                "store_publisher_id": "1062496488",
+                "store_id": "3_1062496488"
+              }
+            ],
+            "store_application_ids": [
+              "com.nintendo.zana",
+              "6754666867"
+            ],
+            "stores": [
+              1,
+              2,
+              3
+            ],
+            "removed_stores": [],
+            "tags": [
+              {
+                "id": 3,
+                "name": "Games",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "domain"
+              },
+              {
+                "id": 243658,
+                "name": "Arcade: Other",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  2
+                ],
+                "type": "games"
+              },
+              {
+                "id": 244469,
+                "name": "Comedy",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "themes"
+              },
+              {
+                "id": 243425,
+                "name": "Stylized",
+                "priority": 3,
+                "status": 3,
+                "parent_ids": [],
+                "type": "artstyles"
+              },
+              {
+                "id": 243419,
+                "name": "2D",
+                "priority": 5,
+                "status": 3,
+                "parent_ids": [],
+                "type": "artstyles"
+              },
+              {
+                "id": 126,
+                "name": "Hypercasual",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "meta"
+              },
+              {
+                "id": 2,
+                "name": "Arcade",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "games"
+              }
+            ],
+            "united_application_id": 18826752,
+            "releaseDate": "2026-05-19T00:00:00Z",
+            "release_date_info": {
+              "store": 1,
+              "store_application_id": "com.nintendo.zana",
+              "country": "US"
+            },
+            "first_detected": "2026-05-19T01:45:09Z",
+            "last_release_date": "2026-05-20"
+          },
+          "diff": 0,
+          "top_featuring": 1
+        },
+        "top_free": {
+          "application": {
+            "categories": [
+              "175",
+              "209",
+              "219",
+              "88",
+              "96",
+              "99",
+              "107",
+              "1",
+              "9",
+              "12",
+              "20"
+            ],
+            "icon_url": "https://play-lh.googleusercontent.com/lMmSA4L1MNUvZ3w4c_T10tJvrptwAdObx8WxAzn5SuboyQtrwMPy1Grqqlgg6qBpgf4PQWvk7QPsiPy6R5ZIQQ",
+            "name": "Arrows – Puzzle Escape",
+            "store_ids": [
+              "1_com.ecffri.arrows",
+              "2_6748397500",
+              "3_6748397500"
+            ],
+            "publisher": {
+              "id": 21275,
+              "name": "Miniclip.com",
+              "head_company_name": "Tencent",
+              "headquarter": "CH",
+              "majority_of_employees_location": "PT",
+              "decision_makers_location": "CY",
+              "linkedin_headcount": 1453,
+              "place": 11
+            },
+            "publisherIds": [
+              {
+                "store": 1,
+                "store_publisher_id": "8964310704118504564",
+                "store_id": "1_8964310704118504564"
+              },
+              {
+                "store": 2,
+                "store_publisher_id": "1579865033",
+                "store_id": "2_1579865033"
+              },
+              {
+                "store": 3,
+                "store_publisher_id": "1579865033",
+                "store_id": "3_1579865033"
+              }
+            ],
+            "store_application_ids": [
+              "com.ecffri.arrows",
+              "6748397500"
+            ],
+            "stores": [
+              1,
+              2,
+              3
+            ],
+            "removed_stores": [],
+            "tags": [
+              {
+                "id": 126,
+                "name": "Hypercasual",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "meta"
+              },
+              {
+                "id": 243424,
+                "name": "Abstract",
+                "priority": 3,
+                "status": 3,
+                "parent_ids": [],
+                "type": "artstyles"
+              },
+              {
+                "id": 243820,
+                "name": "Slide",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  243367
+                ],
+                "type": "games"
+              },
+              {
+                "id": 243419,
+                "name": "2D",
+                "priority": 5,
+                "status": 3,
+                "parent_ids": [],
+                "type": "artstyles"
+              },
+              {
+                "id": 3,
+                "name": "Games",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "domain"
+              },
+              {
+                "id": 243367,
+                "name": "Block Puzzle",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  78
+                ],
+                "type": "games"
+              },
+              {
+                "id": 243949,
+                "name": "XS",
+                "priority": 0,
+                "status": 1,
+                "parent_ids": [],
+                "type": "complexity"
+              },
+              {
+                "id": 244742,
+                "name": "Arrow Puzzle",
+                "priority": 0,
+                "status": 1,
+                "parent_ids": [
+                  243820
+                ],
+                "type": "games"
+              },
+              {
+                "id": 78,
+                "name": "Puzzle",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "games"
+              }
+            ],
+            "united_application_id": 17057327,
+            "releaseDate": "2025-07-09T00:00:00Z",
+            "release_date_info": {
+              "store": 1,
+              "store_application_id": "com.ecffri.arrows",
+              "country": "US"
+            },
+            "first_detected": "2025-07-11T05:44:04Z",
+            "last_release_date": "2026-06-23"
+          },
+          "diff": 0,
+          "top_free": 1
+        },
+        "top_grossing": {
+          "application": {
+            "categories": [
+              "88",
+              "96",
+              "107",
+              "175",
+              "209",
+              "219",
+              "1",
+              "9",
+              "20"
+            ],
+            "icon_url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/1c/4c/9b/1c4c9be2-86ea-b6ab-bcd8-307d87113df4/Placeholder.mill/0x514h.jpg",
+            "name": "Pixel Flow!",
+            "store_ids": [
+              "2_6751056652",
+              "1_com.loomgames.pixelflow",
+              "3_6751056652"
+            ],
+            "publisher": {
+              "id": 5607410738,
+              "name": "Loom Games Oyun Yazilim ve Pazarlama Anonim Sirketi",
+              "head_company_name": "Scopely",
+              "headquarter": "TR",
+              "majority_of_employees_location": "TR",
+              "decision_makers_location": "TR",
+              "linkedin_headcount": 13,
+              "place": 132
+            },
+            "publisherIds": [
+              {
+                "store": 2,
+                "store_publisher_id": "1833998834",
+                "store_id": "2_1833998834"
+              },
+              {
+                "store": 1,
+                "store_publisher_id": "4664566881393189258",
+                "store_id": "1_4664566881393189258"
+              },
+              {
+                "store": 3,
+                "store_publisher_id": "1833998834",
+                "store_id": "3_1833998834"
+              }
+            ],
+            "store_application_ids": [
+              "6751056652",
+              "com.loomgames.pixelflow"
+            ],
+            "stores": [
+              2,
+              1,
+              3
+            ],
+            "removed_stores": [],
+            "tags": [
+              {
+                "id": 243715,
+                "name": "Sort Puzzle",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  78
+                ],
+                "type": "games"
+              },
+              {
+                "id": 243949,
+                "name": "XS",
+                "priority": 0,
+                "status": 1,
+                "parent_ids": [],
+                "type": "complexity"
+              },
+              {
+                "id": 78,
+                "name": "Puzzle",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "games"
+              },
+              {
+                "id": 126,
+                "name": "Hypercasual",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "meta"
+              },
+              {
+                "id": 3,
+                "name": "Games",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "domain"
+              },
+              {
+                "id": 244055,
+                "name": "Hybridcasual",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "features"
+              }
+            ],
+            "united_application_id": 17235107,
+            "releaseDate": "2025-08-17T00:00:00Z",
+            "release_date_info": {
+              "store": 2,
+              "store_application_id": "6751056652",
+              "country": "US"
+            },
+            "first_detected": "2025-08-20T04:11:06Z",
+            "last_release_date": "2026-06-24"
+          },
+          "diff": 0,
+          "top_grossing": 1
+        }
+      },
+      {
+        "top_featuring": {
+          "application": {
+            "categories": [
+              "175",
+              "209",
+              "219",
+              "88",
+              "96",
+              "99",
+              "107",
+              "1",
+              "9",
+              "12",
+              "20"
+            ],
+            "icon_url": "https://play-lh.googleusercontent.com/z54K2UZPuABcdfrjgcRc0_--d3V1WMPFcrvYku299sV4PJXEz7oosH8G3ZvZtkTjbiXpyc196MGWMi9zcVa9TA",
+            "name": "Amaze GO! - 箭头解谜",
+            "store_ids": [
+              "1_com.oakever.arrows",
+              "2_6758326278",
+              "3_6758326278"
+            ],
+            "publisher": {
+              "id": 86043,
+              "name": "Learnings",
+              "head_company_name": "",
+              "headquarter": "CN",
+              "majority_of_employees_location": "CN",
+              "decision_makers_location": "CN",
+              "linkedin_headcount": 39,
+              "place": 30
+            },
+            "publisherIds": [
+              {
+                "store": 1,
+                "store_publisher_id": "9154199097976797965",
+                "store_id": "1_9154199097976797965"
+              },
+              {
+                "store": 2,
+                "store_publisher_id": "1658671470",
+                "store_id": "2_1658671470"
+              },
+              {
+                "store": 3,
+                "store_publisher_id": "1658671470",
+                "store_id": "3_1658671470"
+              }
+            ],
+            "store_application_ids": [
+              "com.oakever.arrows",
+              "6758326278"
+            ],
+            "stores": [
+              1,
+              2,
+              3
+            ],
+            "removed_stores": [],
+            "tags": [
+              {
+                "id": 243820,
+                "name": "Slide",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  243367
+                ],
+                "type": "games"
+              },
+              {
+                "id": 243367,
+                "name": "Block Puzzle",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  78
+                ],
+                "type": "games"
+              },
+              {
+                "id": 78,
+                "name": "Puzzle",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "games"
+              },
+              {
+                "id": 126,
+                "name": "Hypercasual",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "meta"
+              },
+              {
+                "id": 3,
+                "name": "Games",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "domain"
+              }
+            ],
+            "united_application_id": 18068932,
+            "releaseDate": "2026-02-04T00:00:00Z",
+            "release_date_info": {
+              "store": 1,
+              "store_application_id": "com.oakever.arrows",
+              "country": "IN"
+            },
+            "first_detected": "2026-02-09T01:33:03Z",
+            "last_release_date": "2026-06-23"
+          },
+          "diff": 1,
+          "top_featuring": 2
+        },
+        "top_free": {
+          "application": {
+            "categories": [
+              "175",
+              "209",
+              "219",
+              "88",
+              "96",
+              "99",
+              "107",
+              "1",
+              "9",
+              "12",
+              "20"
+            ],
+            "icon_url": "https://play-lh.googleusercontent.com/z54K2UZPuABcdfrjgcRc0_--d3V1WMPFcrvYku299sV4PJXEz7oosH8G3ZvZtkTjbiXpyc196MGWMi9zcVa9TA",
+            "name": "Amaze GO! - 箭头解谜",
+            "store_ids": [
+              "1_com.oakever.arrows",
+              "2_6758326278",
+              "3_6758326278"
+            ],
+            "publisher": {
+              "id": 86043,
+              "name": "Learnings",
+              "head_company_name": "",
+              "headquarter": "CN",
+              "majority_of_employees_location": "CN",
+              "decision_makers_location": "CN",
+              "linkedin_headcount": 39,
+              "place": 30
+            },
+            "publisherIds": [
+              {
+                "store": 1,
+                "store_publisher_id": "9154199097976797965",
+                "store_id": "1_9154199097976797965"
+              },
+              {
+                "store": 2,
+                "store_publisher_id": "1658671470",
+                "store_id": "2_1658671470"
+              },
+              {
+                "store": 3,
+                "store_publisher_id": "1658671470",
+                "store_id": "3_1658671470"
+              }
+            ],
+            "store_application_ids": [
+              "com.oakever.arrows",
+              "6758326278"
+            ],
+            "stores": [
+              1,
+              2,
+              3
+            ],
+            "removed_stores": [],
+            "tags": [
+              {
+                "id": 243820,
+                "name": "Slide",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  243367
+                ],
+                "type": "games"
+              },
+              {
+                "id": 243367,
+                "name": "Block Puzzle",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  78
+                ],
+                "type": "games"
+              },
+              {
+                "id": 78,
+                "name": "Puzzle",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "games"
+              },
+              {
+                "id": 126,
+                "name": "Hypercasual",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "meta"
+              },
+              {
+                "id": 3,
+                "name": "Games",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "domain"
+              }
+            ],
+            "united_application_id": 18068932,
+            "releaseDate": "2026-02-04T00:00:00Z",
+            "release_date_info": {
+              "store": 1,
+              "store_application_id": "com.oakever.arrows",
+              "country": "IN"
+            },
+            "first_detected": "2026-02-09T01:33:03Z",
+            "last_release_date": "2026-06-23"
+          },
+          "diff": 0,
+          "top_free": 2
+        },
+        "top_grossing": {
+          "application": {
+            "categories": [
+              "88",
+              "96",
+              "99",
+              "107",
+              "175",
+              "209",
+              "216",
+              "219",
+              "1",
+              "9",
+              "12",
+              "20"
+            ],
+            "icon_url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/f7/ee/b5/f7eeb54c-4470-0719-36c3-ed714b1c3d28/Placeholder.mill/0x514h.jpg",
+            "name": "All in Hole: Black Hole Games",
+            "store_ids": [
+              "2_6503284107",
+              "1_com.homagames.studio.allinhole",
+              "3_6503284107"
+            ],
+            "publisher": {
+              "id": 5604850379,
+              "name": "Homa",
+              "head_company_name": "",
+              "headquarter": "FR",
+              "majority_of_employees_location": "FR",
+              "decision_makers_location": "FR",
+              "linkedin_headcount": 633,
+              "place": 93
+            },
+            "publisherIds": [
+              {
+                "store": 2,
+                "store_publisher_id": "1508492426",
+                "store_id": "2_1508492426"
+              },
+              {
+                "store": 1,
+                "store_publisher_id": "4656343638685426415",
+                "store_id": "1_4656343638685426415"
+              },
+              {
+                "store": 3,
+                "store_publisher_id": "1508492426",
+                "store_id": "3_1508492426"
+              }
+            ],
+            "store_application_ids": [
+              "6503284107",
+              "com.homagames.studio.allinhole"
+            ],
+            "stores": [
+              2,
+              1,
+              3
+            ],
+            "removed_stores": [],
+            "tags": [
+              {
+                "id": 243420,
+                "name": "3D",
+                "priority": 5,
+                "status": 3,
+                "parent_ids": [],
+                "type": "artstyles"
+              },
+              {
+                "id": 244055,
+                "name": "Hybridcasual",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "features"
+              },
+              {
+                "id": 126,
+                "name": "Hypercasual",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "meta"
+              },
+              {
+                "id": 243425,
+                "name": "Stylized",
+                "priority": 3,
+                "status": 3,
+                "parent_ids": [],
+                "type": "artstyles"
+              },
+              {
+                "id": 3,
+                "name": "Games",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "domain"
+              },
+              {
+                "id": 243949,
+                "name": "XS",
+                "priority": 0,
+                "status": 1,
+                "parent_ids": [],
+                "type": "complexity"
+              },
+              {
+                "id": 2,
+                "name": "Arcade",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [],
+                "type": "games"
+              },
+              {
+                "id": 243923,
+                "name": "Eat & Grow",
+                "priority": 0,
+                "status": 3,
+                "parent_ids": [
+                  2
+                ],
+                "type": "games"
+              }
+            ],
+            "united_application_id": 14071518,
+            "releaseDate": "2023-06-14T00:00:00Z",
+            "release_date_info": {
+              "store": 1,
+              "store_application_id": "com.homagames.studio.allinhole",
+              "country": "US"
+            },
+            "first_detected": "2023-06-21T01:47:18Z",
+            "last_release_date": "2026-06-24"
+          },
+          "diff": 0,
+          "top_grossing": 2
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "https://appmagic.rocks/api/v2/sentry",
+    "postData": "{\"sent_at\":\"2026-06-26T10:21:26.183Z\",\"sdk\":{\"name\":\"sentry.javascript.angular\",\"version\":\"10.57.0\"},\"dsn\":\"https://7eecf182752768632317dc3761a5875e@sentry.appmagic.rocks/3\"}\n{\"type\":\"session\"}\n{\"sid\":\"3b2e3ce05ebc49729dbe90c04554a6e6\",\"init\":false,\"started\":\"2026-06-26T10:21:24.875Z\",\"timestamp\":\"2026-06-26T10:21:26.183Z\",\"status\":\"exited\",\"errors\":0,\"attrs\":{\"release\":\"7d25901f14729ff05d074757d443eaa50b5870dd\",\"environment\":\"appmagic.rocks\",\"user_agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36\"}}"
+  },
+  {
+    "method": "POST",
+    "url": "https://appmagic.rocks/api/v2/sentry",
+    "postData": "{\"sent_at\":\"2026-06-26T10:21:26.184Z\",\"sdk\":{\"name\":\"sentry.javascript.angular\",\"version\":\"10.57.0\"},\"dsn\":\"https://7eecf182752768632317dc3761a5875e@sentry.appmagic.rocks/3\"}\n{\"type\":\"session\"}\n{\"sid\":\"3e5af91fa3f94b77ab14919647560ab5\",\"init\":true,\"started\":\"2026-06-26T10:21:26.183Z\",\"timestamp\":\"2026-06-26T10:21:26.183Z\",\"status\":\"ok\",\"errors\":0,\"attrs\":{\"release\":\"7d25901f14729ff05d074757d443eaa50b5870dd\",\"environment\":\"appmagic.rocks\",\"user_agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36\"}}"
+  }
+]
