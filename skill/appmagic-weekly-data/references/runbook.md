@@ -63,18 +63,24 @@ $cats = @(
 
 `CAT` must be an environment variable. Do not pass it as `node scripts\appmagic-weekly.js <cat>`.
 
-## Login / Re-login
+## Login / Re-login (WeChat QR)
 
-Login state lives in the project-root `.appmagic-userdata` Playwright profile. Establish or refresh it when this is the first run, or when the weekly API returns 401 / only 100 rows (token missing or expired).
+Login state lives in the project-root `.appmagic-userdata` Playwright profile. Establish or refresh it on the first run, or when the weekly API returns 401 / only 100 rows (token missing or expired).
+
+The login script runs **headless** and automates everything up to the scan: opens `https://appmagic.rocks/login` (Chinese locale, which exposes the WeChat entry), dismisses the cookie banner, ticks the consent checkbox, clicks "用WeChat登录", and saves the WeChat QR code to an image file. You scan it once with the WeChat mobile app; the script polls `localStorage['datamagic.token']` and exits automatically when login succeeds.
 
 ```powershell
 $SkillRoot = Resolve-Path <path-to-this-skill>
 $env:APPMAGIC_PROJECT_DIR = (Resolve-Path .).Path
-$env:APPMAGIC_EMAIL = "you@example.com"   # optional; pre-fills the email field
 node (Join-Path $SkillRoot "scripts\appmagic-login.js")
+# 打开生成的二维码图片 → 手机微信「扫一扫」→ 确认
 ```
 
-A real (headed) browser window opens. Complete login manually (password, email code, or Google). The session is written to `.appmagic-userdata` live; once you confirm you are logged in, stop that process from the outside. Do not open a second Playwright session against the same profile while it runs. Never delete `.appmagic-userdata` unless you intend to re-login.
+- QR image: `<project>\appmagic-wechat-qr.png` (override with `APPMAGIC_QR_FILE`). It is deleted automatically on success.
+- The token is written to `.appmagic-userdata` and reused by the scraper for the token's lifetime — you do not log in every run.
+- Why QR, not the one-click "快捷登录": quick login needs the browser to reach the local WeChat client; an automated/headless Chromium cannot get that permission, so WeChat falls back to QR. The phone scan is the one unavoidable manual step — the rest is automated.
+
+> Options: `APPMAGIC_LOGIN_WAIT_MIN` (scan window, default 5), `APPMAGIC_HEADLESS=0` (show the window for debugging), `APPMAGIC_LOGIN_URL`, `APPMAGIC_QR_FILE`. Do not open a second Playwright session against the same profile while it runs. Never delete `.appmagic-userdata` unless you intend to re-login.
 
 ## Preflight
 

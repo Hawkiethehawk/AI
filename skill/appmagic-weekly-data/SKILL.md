@@ -7,7 +7,7 @@ description: Run, rerun, verify, and export the AppMagic weekly data workflow fo
 
 Use this skill from an AppMagic project root, or provide the project root through `APPMAGIC_PROJECT_DIR` / `-ProjectDir`.
 
-Prerequisites (install once): Node.js + `@playwright/test` + Chromium, Python + `openpyxl`, and a logged-in `.appmagic-userdata` profile. See [references/runbook.md](references/runbook.md) sections "Prerequisites" and "Login / Re-login".
+Prerequisites (install once): Node.js + `@playwright/test` + Chromium, Python + `openpyxl`, and a logged-in `.appmagic-userdata` profile (WeChat QR login). See [references/runbook.md](references/runbook.md) sections "Prerequisites" and "Login / Re-login (WeChat QR)".
 
 This is a portable agent skill: any capable LLM or coding agent can follow it, including Codex, Claude, and other automation agents. The workflow is API-first. The production scraper calls AppMagic API endpoints through the persisted Playwright profile, then writes JSON and Excel files. Do not use DOM text, screenshots, or the date picker to add facts that the API response does not prove.
 
@@ -18,7 +18,7 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
 - Do not mix DOM confirmation into API output. If the scrape path is API-only, keep reporting API-only evidence.
 - Use exactly one Chromium/Playwright session against `.appmagic-userdata` at a time. Before diagnostics or reruns, check for existing AppMagic scraper/browser processes.
 - Preserve `.appmagic-userdata`; it stores login state. Do not delete it unless the user explicitly asks and understands re-login is required.
-- If the weekly API returns 401 or only 100 rows, login is missing/expired. Re-establish it with `scripts\appmagic-login.js` (see runbook "Login / Re-login") before retrying; do not delete the profile.
+- If the weekly API returns 401 or only 100 rows, login is missing/expired. Re-establish it with `scripts\appmagic-login.js` (headless WeChat QR login: it auto-saves the QR image, you scan once; see runbook "Login / Re-login (WeChat QR)") before retrying; do not delete the profile.
 - For a full fresh rerun, use `FORCE_REFRESH=1` instead of deleting login state.
 - The scraper selects category by environment variable `CAT`; passing the category as a CLI argument does not select it.
 
