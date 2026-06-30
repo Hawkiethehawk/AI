@@ -4,10 +4,10 @@ This runbook is deliberately ASCII-safe in executable snippets. Build non-ASCII 
 
 ## Paths
 
-- Project: `E:\LLM-Sandbox\Claude\project\AppMagic`
-- Scraper: `scripts\appmagic-weekly.js`
-- Per-category Excel exporter: `scripts\appmagic_xlsx.py`
-- Merged Excel exporter: `scripts\appmagic_xlsx_merged.py`
+- Project: the AppMagic project root supplied by `APPMAGIC_PROJECT_DIR`, `-ProjectDir`, or the current working directory
+- Scraper: this skill's `scripts\appmagic-weekly.js`
+- Per-category Excel exporter: this skill's `scripts\appmagic_xlsx.py`
+- Merged Excel exporter: this skill's `scripts\appmagic_xlsx_merged.py`
 - Login profile: `.appmagic-userdata`
 - JSON output: `output\data\appmagic-<CAT>-weekly.json`
 - Excel output: `output\xlsx\AppMagic-<CAT>-<YYYYMMDD>.xlsx` and `output\xlsx\AppMagic-<YYYYMMDD>.xlsx`
@@ -41,10 +41,10 @@ $cats = @(
 
 ## Preflight
 
-Run from the project directory:
+Run from the AppMagic project root:
 
 ```powershell
-Set-Location E:\LLM-Sandbox\Claude\project\AppMagic
+Set-Location $ProjectDir
 Get-CimInstance Win32_Process |
   Where-Object {
     $_.CommandLine -like '*appmagic-weekly*' -or
@@ -59,21 +59,39 @@ If rerunning and these are stale AppMagic scraper/browser processes, stop only t
 ## Fresh Single-Category Run
 
 ```powershell
-Set-Location E:\LLM-Sandbox\Claude\project\AppMagic
-function U([int[]]$codes) { -join ($codes | ForEach-Object { [char]$_ }) }
-$env:CAT = U 0x8D85,0x4F11,0x95F2
-$env:FORCE_REFRESH = '1'
-node scripts\appmagic-weekly.js
-Remove-Item Env:CAT -ErrorAction SilentlyContinue
-Remove-Item Env:FORCE_REFRESH -ErrorAction SilentlyContinue
+$ProjectDir = Resolve-Path .
+$SkillRoot = Resolve-Path <path-to-this-skill>
+& (Join-Path $SkillRoot "scripts\run_appmagic_weekly.ps1") -ProjectDir $ProjectDir -WeekAnchor "YYYY-MM-DD" -Fresh -Categories @((U 0x8D85,0x4F11,0x95F2))
 ```
 
-Use `FORCE_REFRESH=1` whenever the user says to clear cache, rerun from scratch, avoid old data, or not reuse yesterday's files.
+Use `FORCE_REFRESH=1` or `-Fresh` whenever the user says to clear cache, rerun from scratch, avoid old data, or not reuse yesterday's files.
+
+Manual equivalent:
+
+```powershell
+Set-Location $ProjectDir
+function U([int[]]$codes) { -join ($codes | ForEach-Object { [char]$_ }) }
+$env:CAT = U 0x8D85,0x4F11,0x95F2
+$env:WEEK_ANCHOR = "YYYY-MM-DD"
+$env:FORCE_REFRESH = '1'
+node (Join-Path $SkillRoot "scripts\appmagic-weekly.js")
+Remove-Item Env:CAT -ErrorAction SilentlyContinue
+Remove-Item Env:WEEK_ANCHOR -ErrorAction SilentlyContinue
+Remove-Item Env:FORCE_REFRESH -ErrorAction SilentlyContinue
+```
 
 ## Fresh All-Category Run
 
 ```powershell
-Set-Location E:\LLM-Sandbox\Claude\project\AppMagic
+$ProjectDir = Resolve-Path .
+$SkillRoot = Resolve-Path <path-to-this-skill>
+& (Join-Path $SkillRoot "scripts\run_appmagic_weekly.ps1") -ProjectDir $ProjectDir -WeekAnchor "YYYY-MM-DD" -Fresh
+```
+
+Manual equivalent:
+
+```powershell
+Set-Location $ProjectDir
 function U([int[]]$codes) { -join ($codes | ForEach-Object { [char]$_ }) }
 $cats = @(
   (U 0x8D85,0x4F11,0x95F2),
@@ -84,19 +102,29 @@ $cats = @(
   ('PDF' + (U 0x9605,0x8BFB,0x5668))
 )
 $env:FORCE_REFRESH = '1'
+$env:WEEK_ANCHOR = "YYYY-MM-DD"
 foreach ($cat in $cats) {
   $env:CAT = $cat
-  node scripts\appmagic-weekly.js
+  node (Join-Path $SkillRoot "scripts\appmagic-weekly.js")
   if ($LASTEXITCODE -ne 0) { throw "AppMagic scrape failed for $cat" }
 }
 Remove-Item Env:CAT -ErrorAction SilentlyContinue
+Remove-Item Env:WEEK_ANCHOR -ErrorAction SilentlyContinue
 Remove-Item Env:FORCE_REFRESH -ErrorAction SilentlyContinue
 ```
 
 ## Excel Export
 
 ```powershell
-Set-Location E:\LLM-Sandbox\Claude\project\AppMagic
+$ProjectDir = Resolve-Path .
+$SkillRoot = Resolve-Path <path-to-this-skill>
+& (Join-Path $SkillRoot "scripts\run_appmagic_weekly.ps1") -ProjectDir $ProjectDir -ExportOnly
+```
+
+Manual equivalent:
+
+```powershell
+Set-Location $ProjectDir
 function U([int[]]$codes) { -join ($codes | ForEach-Object { [char]$_ }) }
 $cats = @(
   (U 0x8D85,0x4F11,0x95F2),
@@ -108,10 +136,10 @@ $cats = @(
 )
 foreach ($cat in $cats) {
   if (Test-Path "output\data\appmagic-$cat-weekly.json") {
-    python scripts\appmagic_xlsx.py $cat
+    python (Join-Path $SkillRoot "scripts\appmagic_xlsx.py") $cat
   }
 }
-python scripts\appmagic_xlsx_merged.py
+python (Join-Path $SkillRoot "scripts\appmagic_xlsx_merged.py")
 ```
 
 ## Validation
@@ -119,8 +147,8 @@ python scripts\appmagic_xlsx_merged.py
 If code was edited:
 
 ```powershell
-node --check scripts\appmagic-weekly.js
-python -m py_compile scripts\appmagic_xlsx.py scripts\appmagic_xlsx_merged.py
+node --check (Join-Path $SkillRoot "scripts\appmagic-weekly.js")
+python -m py_compile (Join-Path $SkillRoot "scripts\appmagic_xlsx.py") (Join-Path $SkillRoot "scripts\appmagic_xlsx_merged.py")
 ```
 
 Read workbook headers and counts:

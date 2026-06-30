@@ -1,13 +1,13 @@
 ---
 name: appmagic-weekly-data
-description: Run, rerun, verify, and export the local AppMagic weekly data workflow for app ranking research. Use when the user asks to pull AppMagic data, rerun a weekly AppMagic job, clear/rebuild AppMagic caches, generate AppMagic Excel reports, check AppMagic login/API status, or explain whether a weekly AppMagic API result can prove its ending date.
+description: Run, rerun, verify, and export the AppMagic weekly data workflow for app ranking research. Use when the user asks to pull AppMagic data, rerun a weekly AppMagic job, clear/rebuild AppMagic caches, generate AppMagic Excel reports, check AppMagic login/API status, or explain whether a weekly AppMagic API result can prove its ending date.
 ---
 
 # AppMagic Weekly Data
 
-Use this skill for the local AppMagic project at `E:\LLM-Sandbox\Claude\project\AppMagic`.
+Use this skill from an AppMagic project root, or provide the project root through `APPMAGIC_PROJECT_DIR` / `-ProjectDir`.
 
-This is a portable agent skill: any capable LLM or coding agent can follow it, including Codex, Claude, and other local automation agents. The workflow is API-first. The production scraper calls AppMagic API endpoints through the persisted Playwright profile, then writes JSON and Excel files. Do not use DOM text, screenshots, or the date picker to add facts that the API response does not prove.
+This is a portable agent skill: any capable LLM or coding agent can follow it, including Codex, Claude, and other automation agents. The workflow is API-first. The production scraper calls AppMagic API endpoints through the persisted Playwright profile, then writes JSON and Excel files. Do not use DOM text, screenshots, or the date picker to add facts that the API response does not prove.
 
 ## Core Rules
 
@@ -27,23 +27,24 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
    - If the year or category set is ambiguous and cannot be safely inferred, ask one concise question.
 
 2. Inspect the current project state.
-   - Read `scripts/appmagic-weekly.js` for `WEEKS`, `CATS`, `FORCE_REFRESH`, and output paths.
+   - Read `scripts/appmagic-weekly.js` inside this skill for `WEEK_ANCHOR`, `WEEKS`, `CATS`, `FORCE_REFRESH`, and output paths.
    - Check whether any `appmagic-weekly`, `run_all`, or `.appmagic-userdata` Chromium process is running.
    - If a process is running and the user asked to rerun, stop only the AppMagic job processes needed to free the profile.
 
 3. Configure the run.
-   - Update `WEEKS` in `scripts/appmagic-weekly.js` only when the requested week anchor differs from the current script.
+   - Pass `WEEK_ANCHOR=YYYY-MM-DD` or `-WeekAnchor YYYY-MM-DD` when the requested week anchor differs from the current Monday.
    - Use `FORCE_REFRESH=1` for "clear cache", "fresh", "do not reuse", or date-sensitive reruns.
    - Use `LIST_ONLY=1` only when the user explicitly wants to skip slow country enrichment.
 
 4. Run data collection.
-   - For one category: set `$env:CAT='<category>'`; then run `node scripts\appmagic-weekly.js`.
+   - Prefer this skill's `scripts\run_appmagic_weekly.ps1` entrypoint.
+   - For one category manually: set `$env:CAT='<category>'`; then run this skill's `scripts\appmagic-weekly.js`.
    - For all default categories, iterate the known category labels and set `CAT` for each run.
    - Do not launch a second Playwright profile while the scraper is running; monitor logs and files instead.
 
 5. Export Excel.
-   - Run `python scripts\appmagic_xlsx.py <category>` for each completed category JSON.
-   - Run `python scripts\appmagic_xlsx_merged.py` for the combined workbook.
+   - Run this skill's `scripts\appmagic_xlsx.py <category>` for each completed category JSON.
+   - Run this skill's `scripts\appmagic_xlsx_merged.py` for the combined workbook.
    - If a category was interrupted before its final JSON was written, do not include it silently; report that it is excluded.
 
 6. Verify and report.
