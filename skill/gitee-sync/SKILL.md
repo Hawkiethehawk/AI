@@ -1,7 +1,7 @@
 ---
 name: gitee-sync
 description: 连接并操作私有 gitee 仓库 configured targetthehawk/AI（码云）。当涉及 gitee/码云、向该仓库 push/pull、同步或发布 skill、查询仓库状态或远程信息时使用。首次用 `gitee.sh setup <token>` 一次性保存 gitee Personal Access Token（之后自动复用，无需再问），每次使用先自检仓库内所有 skill 是否有更新。Trigger 词：gitee、码云、推送/拉取仓库、同步 skill、看仓库状态、发布到远程。
-version: 1.0.0
+version: 1.1.0
 author: Built for the configured targetthehawk/AI repo
 license: MIT
 metadata:
@@ -25,8 +25,7 @@ metadata:
 
 ## 每次使用的固定动作（顺序不可省）
 
-1. **第一步永远是自检仓库内 skill 更新**：`bash scripts/gitee.sh check`
-   —— 拉取 gitee 最新，并把**仓库内**每个 skill 同步到运行时。**只检查仓库内的 skill**，不动运行时里非仓库的 skill。
+1. **第一步永远是 `bash scripts/gitee.sh check`**：先对**整个仓库** `git pull --rebase` 跟上 gitee（每次都拉，不再按小时节流），再把**仓库内**每个有变化的 skill 同步到运行时。**只动仓库内的 skill**，不碰运行时里非仓库的 skill。
 2. 再执行用户要的具体操作（见下方命令）。
 
 ## 一次性配置 token
@@ -41,7 +40,7 @@ metadata:
 
 | 命令 | 作用 |
 |---|---|
-| `gitee.sh check` | 自检并同步仓库内所有 skill（每次第一步） |
+| `gitee.sh check` | 整库 `git pull` 同步 + 把仓库内所有有变化的 skill 同步到运行时（每次第一步） |
 | `gitee.sh status` | 工作区状态 + 各 skill 版本 + 与远程领先/落后 |
 | `gitee.sh pull` | 拉取最新（rebase） |
 | `gitee.sh push "msg"` | add + commit + rebase + push |
@@ -60,7 +59,7 @@ metadata:
 
 ## 验收自检
 
-- [ ] 每次先跑 `gitee.sh check`，仅同步仓库内 skill
+- [ ] 每次先跑 `gitee.sh check`：整库 pull + 同步仓库内 skill
 - [ ] token 仅 setup 一次、保存在仓库外、未出现在对话/命令历史/提交里
 - [ ] push 走 `gitee.sh push`（含 rebase），不直接 `git push` 绕过
 - [ ] 涉及 gitee 的请求确实由本 skill 处理（hook 已提示）

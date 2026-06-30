@@ -70,7 +70,7 @@ except Exception as e:
     cat <<EOF
 gitee.sh — 私有仓库 $OWNER/$NAME 助手
   setup <token>   一次性保存 gitee Personal Access Token（验证后存 $TOKEN_FILE）
-  check           自检仓库内所有 skill 是否有更新并同步到运行时（每次必做）
+  check           整库 git pull 同步 + 仓库内所有 skill 同步到运行时（每次必做）
   status          工作区状态 + 各 skill 版本 + 与远程领先/落后
   pull            git pull --rebase
   push [msg]      add + commit + rebase + push

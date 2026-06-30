@@ -5,8 +5,8 @@
 #   ⚠️ 请只修改 repo 里的 skill，不要直接改运行时副本 ~/.claude/skills/*，
 #      否则本脚本会用 repo 版本覆盖你在运行时的改动。
 #
-# 用途：每次调用任意 skill 前自检——若 repo 有更新（含别处推到 gitee 的），
-#       自动把最新版同步到运行时目录，并打印一行变更摘要。
+# 用途：每次调用任意 skill 前自检——先整库 git pull 跟上 gitee（含别处推来的更新），
+#       再把有变化的 skill 同步到运行时目录，并打印一行变更摘要。
 #
 # 可移植：任何 agent harness 都能调用  ->  bash <repo>/scripts/skill-selfcheck.sh
 #   - 在 Claude Code 中由 PreToolUse(matcher=Skill) hook 自动触发；
@@ -18,18 +18,12 @@ SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${SKILL_REPO:-$(cd "$SELF/.." && pwd)}"
 SRC="$REPO/skill"
 DST="$HOME/.claude/skills"
-STAMP="$DST/.last-skill-pull"
 
 [ -d "$SRC" ] || { echo "[skill-selfcheck] 找不到 skill 源目录: $SRC" >&2; exit 0; }
 mkdir -p "$DST"
 
-# 1) 每小时最多一次：让本地 repo 跟上 gitee（容错，网络问题不阻塞 skill 使用）
-now=$(date +%s)
-last=0; [ -f "$STAMP" ] && last="$(stat -c %Y "$STAMP" 2>/dev/null || echo 0)"
-if [ $(( now - last )) -gt 3600 ]; then
-  timeout 15 git -C "$REPO" pull --rebase --quiet 2>/dev/null || true
-  touch "$STAMP"
-fi
+# 1) 每次都整库同步：让本地 repo 跟上 gitee（容错，网络问题不阻塞 skill 使用）
+timeout 20 git -C "$REPO" pull --rebase --quiet 2>/dev/null || true
 
 # 2) 逐个 skill：运行时缺失或与 repo 不一致 → 同步整目录到运行时
 changed=""
