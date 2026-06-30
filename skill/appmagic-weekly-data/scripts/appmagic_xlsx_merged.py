@@ -116,18 +116,31 @@ COLS = [('序号',5,'c'),('游戏名',28,'l'),('品类',12,'c'),('Tag路径',22,
 H = {name: i+1 for i, (name, _, _) in enumerate(COLS)}
 
 wb = Workbook(); ws = wb.active
-groups = []; mdef = None; gen = ''
+groups = []; mdef = None; gen = ''; anchors = {}
 for cat in ORDER:
     d = load(cat)
     if not d: continue
     mdef = mdef or d.get('marketDef')
     gen = gen or d.get('generatedAt', '')[:10]
+    anchors[cat] = (d.get('weeks') or [''])[0]
     groups.append((cat, d['_mon'], sorted(d['focus'], key=lambda r: r['rank'])))
+
+# 跨周校验：各品类必须同一周锚点，否则默认中止（避免把不同周的数据静默拼到一张表）
+distinct = sorted(set(a for a in anchors.values() if a))
+if len(distinct) > 1 and os.environ.get('ALLOW_MIXED_WEEKS') != '1':
+    detail = ' / '.join(f'{c}={a}' for c, a in anchors.items())
+    raise SystemExit(
+        f'[abort] 合并的品类周锚点不一致: {detail}\n'
+        '请用同一 WEEK_ANCHOR 重跑落后的品类，或设 ALLOW_MIXED_WEEKS=1 强制合并（标题会标注混周）。'
+    )
+mixed = len(distinct) > 1
+
 total = sum(len(g) for _, _, g in groups)
 mon = max((_mon for _, _mon, _ in groups), default='')
 ws.title = mon if mon else 'Sheet1'
 
-ws['A1'] = f'AppMagic 周报 · 全品类（{"/".join(c for c,_,_ in groups)}）· {mon} 当周（免费榜）'; ws['A1'].font = TITLE_FONT
+_mix_note = f'  ⚠️ 混周合并：{" / ".join(f"{c}={a}" for c, a in anchors.items())}' if mixed else ''
+ws['A1'] = f'AppMagic 周报 · 全品类（{"/".join(c for c,_,_ in groups)}）· {mon} 当周（免费榜）{_mix_note}'; ws['A1'].font = TITLE_FONT
 ws['A2'] = ('口径：全球(WW)·周聚合·免费榜·Top1000 | 变化量正=上升(绿)/负=下降(红)/NEW(黄) | '
             '重点关注=排名变化突出或潜力新品 | 数据源 AppMagic API · 生成 ' + gen)
 ws['A2'].font = NOTE_FONT

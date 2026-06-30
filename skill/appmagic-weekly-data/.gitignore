@@ -1,0 +1,5 @@
+# 环境本地产物，勿入库
+__pycache__/
+*.pyc
+node_modules/
+.appmagic-userdata/

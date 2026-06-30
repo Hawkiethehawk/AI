@@ -2,6 +2,30 @@
 
 This runbook is deliberately ASCII-safe in executable snippets. Build non-ASCII category names from Unicode code points so it works across Codex, Claude, PowerShell, and terminals with different encodings.
 
+## Prerequisites
+
+Install these once. `$SkillRoot` is this skill's root directory.
+
+- **Node.js + Playwright.** The scraper/login scripts `require('@playwright/test')`. Node resolves modules upward from the script's folder, so install them under `$SkillRoot` (the skill lives in `~/.claude/skills/...`, a different tree from the project root — installing only in the project will not be found).
+
+  ```powershell
+  Set-Location $SkillRoot
+  npm install @playwright/test
+  npx playwright install chromium
+  ```
+
+- **Python + openpyxl.** The exporters need it:
+
+  ```powershell
+  pip install openpyxl
+  ```
+
+- **Login profile.** Authenticated calls need `.appmagic-userdata` in the project root. See "Login / Re-login" below.
+
+- **Optional tags dictionary.** `output\data\appmagic-tags-full.json` is an optional array dump of AppMagic's full tag taxonomy. If present, products that come back with empty `tags` get their category Tag-path backfilled from it. If absent, that backfill is silently skipped and those rows show a blank Tag path — the main workflow is unaffected. The skill does not generate this file; supply it only if you need the backfill.
+
+> Do not commit `node_modules/` or `.appmagic-userdata/` to the repo. They are environment-local.
+
 ## Paths
 
 - Project: the AppMagic project root supplied by `APPMAGIC_PROJECT_DIR`, `-ProjectDir`, or the current working directory
@@ -38,6 +62,19 @@ $cats = @(
 ```
 
 `CAT` must be an environment variable. Do not pass it as `node scripts\appmagic-weekly.js <cat>`.
+
+## Login / Re-login
+
+Login state lives in the project-root `.appmagic-userdata` Playwright profile. Establish or refresh it when this is the first run, or when the weekly API returns 401 / only 100 rows (token missing or expired).
+
+```powershell
+$SkillRoot = Resolve-Path <path-to-this-skill>
+$env:APPMAGIC_PROJECT_DIR = (Resolve-Path .).Path
+$env:APPMAGIC_EMAIL = "you@example.com"   # optional; pre-fills the email field
+node (Join-Path $SkillRoot "scripts\appmagic-login.js")
+```
+
+A real (headed) browser window opens. Complete login manually (password, email code, or Google). The session is written to `.appmagic-userdata` live; once you confirm you are logged in, stop that process from the outside. Do not open a second Playwright session against the same profile while it runs. Never delete `.appmagic-userdata` unless you intend to re-login.
 
 ## Preflight
 

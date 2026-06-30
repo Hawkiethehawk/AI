@@ -7,7 +7,8 @@ const path = require('path');
 
 const PROJECT_DIR = path.resolve(process.env.APPMAGIC_PROJECT_DIR || process.cwd());
 const USER_DATA_DIR = path.resolve(PROJECT_DIR, '.appmagic-userdata');
-const EMAIL = 'configured targetthehawk@163.com';
+// 账号通过环境变量提供（不写死、不入库）：set APPMAGIC_EMAIL=you@example.com
+const EMAIL = process.env.APPMAGIC_EMAIL || '';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 (async () => {
@@ -27,13 +28,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     );
     if (signin) { await signin.click().catch(() => {}); await sleep(2500); }
     const emailInput = await page.$('input[type="email"], input[name*="mail" i], input[placeholder*="mail" i]');
-    if (emailInput) { await emailInput.fill(EMAIL); console.log('  ✅ 已自动填入邮箱:', EMAIL); }
+    if (emailInput && EMAIL) { await emailInput.fill(EMAIL); console.log('  ✅ 已自动填入邮箱:', EMAIL); }
+    else if (!EMAIL) console.log('  ℹ️ 未设置 APPMAGIC_EMAIL，请在窗口里手动输入登录邮箱（或设环境变量后重跑可自动预填）');
     else console.log('  ℹ️ 未自动定位到邮箱输入框，请在窗口里手动点登录并输入邮箱:', EMAIL);
   } catch (e) { console.log('  自动填邮箱跳过:', e.message); }
 
   console.log('\n========================================================');
   console.log('  浏览器窗口已打开。请在窗口中完成登录：');
-  console.log('  邮箱:', EMAIL, '（密码 / 邮箱验证码 / Google 任一方式均可）');
+  console.log('  邮箱:', EMAIL || '(未设置 APPMAGIC_EMAIL，手动输入)', '（密码 / 邮箱验证码 / Google 任一方式均可）');
   console.log('  登录成功后，回到对话告诉我，我会保存登录态并继续抓取。');
   console.log('========================================================\n');
 

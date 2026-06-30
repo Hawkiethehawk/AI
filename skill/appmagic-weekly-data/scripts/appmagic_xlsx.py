@@ -109,7 +109,7 @@ H = {name: i+1 for i, (name, _, _) in enumerate(COLS)}
 
 ws['A1'] = f'AppMagic 周报 · {CAT} · {weeks[0]} 当周（免费榜）'; ws['A1'].font = TITLE_FONT
 ws['A2'] = ('口径：全球(WW)·周聚合·免费榜·Top1000 | 变化量正=上升(绿)/负=下降(红)/NEW(黄) | '
-            '重点关注=变化突出(前10绝对↑≥5 / 10-200相对↑>50%)或潜力新品(首进50-100+陌生发行商+美日重≥25%) | 数据源 AppMagic API · 生成 ' + data["generatedAt"][:10])
+            '重点关注=变化突出(前10绝对↑≥5 / 10-200相对↑>50%)或潜力新品(首进50-100+陌生发行商+成熟市场下载占比≥25%) | 数据源 AppMagic API · 生成 ' + data["generatedAt"][:10])
 ws['A2'].font = NOTE_FONT
 ws['A3'] = ('市场定义： 成熟市场(高ARPU)= ' + ' '.join(mdef['mature']) + '   ｜   新兴市场= ' + ' '.join(mdef['emerging']))
 ws['A3'].font = NOTE_FONT
