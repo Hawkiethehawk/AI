@@ -2,6 +2,14 @@ ai-temp/
 .gitee_token
 *.token
 
+# Playwright 本地认证状态（含 session cookie，不入库）
+.appmagic-auth.json
+.appmagic-userdata/
+
+# 依赖与外部克隆仓库，不入库
+node_modules/
+output/repos/
+
 # skill 本机私有环境（含 IP/MAC/tailnet 等具体拓扑），同步到运行时但绝不入库
 env.local.md
 *.local.md
