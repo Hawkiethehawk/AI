@@ -245,7 +245,7 @@ async function main() {
   const isBig = p => BIG_PUBS.some(b => (p||'').toLowerCase().includes(b));
 
   // 3) 重点集（按本周排名分档，只看排名上升幅度；外加新品）
-  // 前5:↑≥3 | 6-10:↑≥5 | 11-50:↑≥10 | 51-100:↑≥20 | 101-200:↑≥20 | 201-300:↑≥30 | >300:不选
+  // 前5:↑≥3 | 6-10:↑≥5 | 11-50:↑≥10 | 51-100:↑≥20 | 101-200:↑≥30 | >200:不选
   const riseThreshold = (rank) => {
     if (rank <= 5) return 3;
     if (rank <= 10) return 5;

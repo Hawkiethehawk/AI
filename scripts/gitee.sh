@@ -41,7 +41,7 @@ case "$cmd" in
     ;;
   push)
     msg="${1:-update}"
-    git -C "$REPO" add -A -- skill scripts .gitignore   # 只同步 skill/脚本，不误传 output/ 等未跟踪目录
+    git -C "$REPO" add -A -- skill scripts project archived .gitignore   # 同步 skill/脚本/project 真源/archived，不误传根 output/ 等未跟踪目录
     git -C "$REPO" commit -m "$msg" || echo "(无改动可提交)"
     git -C "$REPO" pull --rebase origin "$BRANCH" && git -C "$REPO" push origin "$BRANCH"
     ;;

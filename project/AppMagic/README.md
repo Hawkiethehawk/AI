@@ -151,7 +151,7 @@ python AppMagic/scripts/appmagic_xlsx.py 超休闲
 
 读取 `appmagic-{品类}-weekly.json`，输出 `AppMagic-{品类}-{YYYYMMDD}.xlsx`。
 
-**输出列（20 列）：**
+**输出列（19 列）：**
 序号 | 游戏名（超链接） | 品类 | Tag路径 | 本周排名 | 上周排名 | 变化量 | 6周排名轨迹 | Top50稳定性 | 近30天下载国Top5 | 近30天收入国Top5 | 市场属性 | 上线日期 | 评分 | 评论数 | 发行商 | 总部 | 重点关注 | 备注
 
 **格式约定：**
