@@ -192,11 +192,10 @@ function tagPath(tags = []) {
   return seq.join(' → ');
 }
 
-async function fetchWeek(page, date) {
-  return await page.evaluate(async ({ date, tag, depth }) => {
-    const tok = (localStorage.getItem('datamagic.token') || '').replace(/^"|"$/g, '');
+async function fetchWeek(page, date, token) {
+  return await page.evaluate(async ({ date, tag, depth, token }) => {
     const u = `/api/v2/top/united-apps?aggregation=week&topDepth=${depth}&store=5&country=WW&date=${date}&tag=${tag}`;
-    const r = await fetch(u, { headers: { Authorization: 'Bearer ' + tok } });
+    const r = await fetch(u, { headers: { Authorization: 'Bearer ' + token } });
     if (!r.ok) return { err: r.status };
     const j = await r.json();
     const arr = j.data || [];
@@ -216,20 +215,17 @@ async function fetchWeek(page, date) {
       });
     }
     return { date: j.date, rows };
-  }, { date, tag: CATEGORY.tag, depth: TOP_DEPTH });
+  }, { date, tag: CATEGORY.tag, depth: TOP_DEPTH, token });
 }
 
-async function enrichApp(page, uid, storeIds, skipAppInfo = false) {
-  // storeIds: ["1_pkg","2_id","3_id"]; 评分优先 GP(1) 再 iOS(2)
+async function enrichApp(page, uid, storeIds, skipAppInfo, token) {
+  // storeIds: ["1_pkg","2_id","3_id"]; 评分优先 GP(1) 再 iOS(2)；token 由 Node 侧账号池传入
   const parse = storeIds.map(s => { const i = s.indexOf('_'); return { store: +s.slice(0, i), appId: s.slice(i + 1) }; });
   const pref = parse.find(x => x.store === 1) || parse.find(x => x.store === 2) || parse[0];
-  return await page.evaluate(async ({ uid, store, appId, skipAppInfo }) => {
-    const tok = (localStorage.getItem('datamagic.token') || '').replace(/^"|"$/g, '');
-    const H = { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' };
+  return await page.evaluate(async ({ uid, store, appId, skipAppInfo, token }) => {
+    const H = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
     const sl = ms => new Promise(r => setTimeout(r, ms));
     const jsafe = async r => { const t = await r.text(); try { return JSON.parse(t); } catch { return null; } };
-    // valid(j) 判定是否"真正成功"，否则退避重试（限流会返回 JSON 错误对象）
-    // tries=1 = 单次请求（不内部重试，避免浪费配额；靠轮间冷却恢复）
     const getJSON = async (url, opt, valid, tries = 1) => {
       for (let i = 0; i < tries; i++) {
         try { const r = await fetch(url, opt); const j = await jsafe(r); if (j != null && valid(j)) return j; } catch {}
@@ -245,16 +241,22 @@ async function enrichApp(page, uid, storeIds, skipAppInfo = false) {
       if (d && !d.message) { rating = d.rating; reviews = d.reviews; contentRating = d.content_rating; released = d.released; }
       await sl(400 + Math.random() * 800);
     }
-    let countries = null;
-    let dc = await getJSON(`/api/v2/united-applications/data-countries?united_application_id=${uid}`, { headers: H },
-      j => Array.isArray(j) || Array.isArray(j.data), 1);
-    if (dc && !Array.isArray(dc) && Array.isArray(dc.data)) dc = dc.data;
-    if (Array.isArray(dc)) {
-      countries = dc.map(c => ({ c: c.Country, dlp: c.Last30DaysDownloadsPercent, dl: c.Last30DaysDownloads, revp: c.Last30DaysRevenuePercent, rev: c.Last30DaysRevenue }))
-        .filter(c => c.dlp > 0 || c.revp > 0);
-    }
-    return { rating, reviews, contentRating, released, countries };
-  }, { uid, store: pref?.store, appId: pref?.appId, skipAppInfo });
+    // data-countries：单独 fetch 以捕获 429（限流 → 交给 Node 侧切下一个账号）
+    let countries = null, rateLimited = false;
+    try {
+      const r = await fetch(`/api/v2/united-applications/data-countries?united_application_id=${uid}`, { headers: H });
+      if (r.status === 429) rateLimited = true;
+      else {
+        let dc = await jsafe(r);
+        if (dc && !Array.isArray(dc) && Array.isArray(dc.data)) dc = dc.data;
+        if (Array.isArray(dc)) {
+          countries = dc.map(c => ({ c: c.Country, dlp: c.Last30DaysDownloadsPercent, dl: c.Last30DaysDownloads, revp: c.Last30DaysRevenuePercent, rev: c.Last30DaysRevenue }))
+            .filter(c => c.dlp > 0 || c.revp > 0);
+        }
+      }
+    } catch {}
+    return { rating, reviews, contentRating, released, countries, rateLimited };
+  }, { uid, store: pref?.store, appId: pref?.appId, skipAppInfo, token });
 }
 
 function summarizeCountries(countries) {
@@ -277,9 +279,41 @@ function summarizeCountries(countries) {
   return { dlList, revList, dlCount: byDl.length, revCount: byRev.length, usjpPct: usjp, mature, emerging, market };
 }
 
+// 多账号 token 池：扫描 .appmagic-userdata / -b / -c … 逐个读出 token（data-countries 撞 429 切账号，扩配额，规避单账号 ~100 次/窗口限流）
+async function collectTokens() {
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+  let dirs = [];
+  try { dirs = fs.readdirSync(PROJECT_DIR).filter(d => /^\.appmagic-userdata(-.+)?$/.test(d)); } catch {}
+  dirs.sort((a, b) => (a === '.appmagic-userdata' ? -1 : b === '.appmagic-userdata' ? 1 : a.localeCompare(b)));
+  const pool = [];
+  for (const d of dirs) {
+    const full = path.resolve(PROJECT_DIR, d);
+    try { if (!fs.statSync(full).isDirectory()) continue; } catch { continue; }
+    let c;
+    try {
+      c = await chromium.launchPersistentContext(full, { headless: true, args: ['--disable-blink-features=AutomationControlled'], userAgent: UA, viewport: { width: 1920, height: 1080 } });
+      const pg = c.pages()[0] || await c.newPage();
+      await pg.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await sleep(2500);
+      const tok = await pg.evaluate(() => (localStorage.getItem('datamagic.token') || '').replace(/^"|"$/g, ''));
+      await c.close();
+      if (tok) { pool.push({ dir: d, token: tok, cooldownUntil: 0 }); console.log(`  ✅ 账号 ${d} token 就绪`); }
+      else console.log(`  ⚠️ 账号 ${d} 无 token（未登录）`);
+    } catch (e) { console.log(`  ⚠️ 账号 ${d} 读取失败: ${e.message}`); try { if (c) await c.close(); } catch {} }
+  }
+  return pool;
+}
+
 async function main() {
   updateRunState({ status: 'running', startedMs: RUN_T0, weekly_done: false, enrich_done: false, xlsx_done: false, output: OUT_JSON });
   writeProgress();
+  // 采集前收集多账号 token 池（data-countries 撞 429 就切账号）
+  const tokenPool = await collectTokens();
+  if (!tokenPool.length) { console.error('无可用账号 token，请先登录（node scripts/appmagic-login.js）'); updateRunState({ status: 'error', error: 'no token' }); process.exit(2); }
+  console.log(`账号 token 池：${tokenPool.length} 个 [${tokenPool.map(t => t.dir).join(', ')}]`);
+  const DC_COOLDOWN = parseInt(process.env.DC_COOLDOWN_MS || '120000', 10);
+  let tokenRR = 0;
+  const pickToken = () => { const now = Date.now(); for (let k = 0; k < tokenPool.length; k++) { const t = tokenPool[(tokenRR++) % tokenPool.length]; if (t.cooldownUntil <= now) return t; } return null; };
   const ctx = await chromium.launchPersistentContext(USER_DATA_DIR, {
     headless: true, args: ['--disable-blink-features=AutomationControlled'],
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -301,7 +335,7 @@ async function main() {
     weekData = {};
     let anyErr = false;
     for (const d of WEEKS) {
-      const w = await fetchWeek(page, d);
+      const w = await fetchWeek(page, d, (pickToken() || tokenPool[0]).token);
       if (w.err) { console.log(`  ⚠️ ${d} 失败 ${w.err}`); weekData[d] = { rows: [] }; anyErr = true; }
       else { console.log(`  ✅ ${d} -> ${w.rows.length} 行 (#1 ${w.rows[0]?.name})`); weekData[d] = w; }
       await sleepRandom(2000, 5000);
@@ -410,32 +444,46 @@ async function main() {
   }
   console.log(`\n缓存命中国别 ${hits}/${focus.length}，待补 ${focus.length - hits} 个`);
 
-  // 逐个处理：成功后随机停 2-5s；缺国别按固定 120s 退避重试
-  const MAXA = parseInt(process.env.MAXA || '8', 10);
+  // 逐个处理：data-countries 撞 429 就切下一个账号 token；全部账号冷却时才等待
   async function enrichOneWithWait(r, i, n) {
-    for (let attempt = 1; attempt <= MAXA; attempt++) {
-      try {
-        const e = await enrichApp(page, r.uid, r.storeIds, r.rating != null); // 已有评分则跳过 app-info，只补国别
+    let tries = 0; const maxTries = tokenPool.length * 3 + 3;
+    while (tries++ < maxTries) {
+      let t = pickToken();
+      if (!t) {
+        const soon = Math.min(...tokenPool.map(x => x.cooldownUntil)) - Date.now();
+        const waitMs = Math.max(soon, 1000);
+        console.log(`  [${i}/${n}] #${r.rank} ${r.name} | 全部账号冷却 → 等 ${Math.round(waitMs / 1000)}s`);
+        await sleep(waitMs);
+        continue;
+      }
+      let e = null;
+      try { e = await enrichApp(page, r.uid, r.storeIds, r.rating != null, t.token); } catch (err) { /* 网络异常，换个账号再试 */ }
+      if (e) {
         if (e.rating != null) r.rating = e.rating;
         if (e.reviews != null) r.reviews = e.reviews;
         if (e.contentRating) r.contentRating = e.contentRating;
         if (e.released) r.release = e.released;
+        if (e.rateLimited) {
+          t.cooldownUntil = Date.now() + DC_COOLDOWN;
+          console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ⚠️ ${t.dir} 限流(429) → 冷却 ${Math.round(DC_COOLDOWN / 1000)}s，切账号`);
+          continue;
+        }
         const cs = summarizeCountries(e.countries);
         if (cs) r.country = cs;
         cache[r.uid] = { rating: r.rating, reviews: r.reviews, contentRating: r.contentRating, release: r.release, country: r.country };
         saveCache(cache);
-      } catch (err) { /* 视为缺国别 */ }
+      }
       if (r.country) {
-        console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ★${r.rating?.toFixed?.(2)||'-'} | ${r.country.dlCount}国${attempt>1?` (第${attempt}次)`:''}`);
+        console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ★${r.rating?.toFixed?.(2) || '-'} | ${r.country.dlCount}国 [${t.dir}]`);
         return true;
       }
-      if (attempt < MAXA) {
-        const waitMs = backoffMs(attempt);
-        console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ⚠️缺国别 → 停 ${Math.round(waitMs/1000)}s 重试(${attempt}/${MAXA})`);
-        await sleep(waitMs);
+      if (e && !e.rateLimited) { // 非限流但无国别 → 该 app 确实没有国别数据
+        console.log(`  [${i}/${n}] #${r.rank} ${r.name} | 无国别数据，跳过`);
+        return false;
       }
+      // e 为 null(网络异常) → 继续换账号重试
     }
-    console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ❌ ${MAXA}次仍缺，跳过`);
+    console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ❌ 重试超限，跳过`);
     return false;
   }
 
@@ -476,7 +524,9 @@ async function main() {
 }
 // 登录态自检：headless 探测 topDepth=1000 是否 200（能识别未登录/已过期），供 ps1 编排调用
 async function checkAuth() {
-  const ctx = await chromium.launchPersistentContext(USER_DATA_DIR, {
+  const pool = await collectTokens();
+  if (!pool.length) { console.log('❌ 无任何账号 token（未登录）'); process.exit(1); }
+  const ctx = await chromium.launchPersistentContext(path.resolve(PROJECT_DIR, pool[0].dir), {
     headless: true, args: ['--disable-blink-features=AutomationControlled'],
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
     viewport: { width: 1920, height: 1080 },
@@ -485,14 +535,16 @@ async function checkAuth() {
     const page = ctx.pages()[0] || await ctx.newPage();
     await page.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await sleep(3000);
-    const ok = await page.evaluate(async ({ date, tag }) => {
-      const tok = (localStorage.getItem('datamagic.token') || '').replace(/^"|"$/g, '');
-      if (!tok) return false;
-      try { const r = await fetch(`/api/v2/top/united-apps?aggregation=week&topDepth=1000&store=5&country=WW&date=${date}&tag=${tag}`, { headers: { Authorization: 'Bearer ' + tok } }); return r.ok; } catch { return false; }
-    }, { date: WEEKS[0], tag: CATEGORY.tag });
-    console.log(ok ? '✅ 登录态有效' : '❌ 未登录或登录已过期');
+    let validCount = 0;
+    for (const t of pool) {
+      const ok = await page.evaluate(async ({ date, tag, token }) => {
+        try { const r = await fetch(`/api/v2/top/united-apps?aggregation=week&topDepth=1000&store=5&country=WW&date=${date}&tag=${tag}`, { headers: { Authorization: 'Bearer ' + token } }); return r.ok; } catch { return false; }
+      }, { date: WEEKS[0], tag: CATEGORY.tag, token: t.token });
+      if (ok) validCount++;
+    }
+    console.log(validCount > 0 ? `✅ 账号池 ${pool.length} 个，其中 ${validCount} 个有效` : '❌ 所有账号 token 均失效');
     await ctx.close();
-    process.exit(ok ? 0 : 1);
+    process.exit(validCount > 0 ? 0 : 1);
   } catch (e) { console.error('checkAuth 失败:', e.message); try { await ctx.close(); } catch {} process.exit(1); }
 }
 

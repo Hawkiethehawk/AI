@@ -6,7 +6,7 @@ const { chromium } = require('@playwright/test');
 const path = require('path');
 
 const PROJECT_DIR = path.resolve(process.env.APPMAGIC_PROJECT_DIR || process.cwd());
-const USER_DATA_DIR = path.resolve(PROJECT_DIR, '.appmagic-userdata');
+const USER_DATA_DIR = path.resolve(PROJECT_DIR, process.env.APPMAGIC_USERDATA_DIR || '.appmagic-userdata');
 // 账号通过环境变量提供（不写死、不入库）：set APPMAGIC_EMAIL=you@example.com
 const EMAIL = process.env.APPMAGIC_EMAIL || '';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
