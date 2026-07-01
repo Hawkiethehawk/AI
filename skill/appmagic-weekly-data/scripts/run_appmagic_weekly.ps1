@@ -43,13 +43,19 @@ if ($ListOnly) { $env:LIST_ONLY = "1" }
 
 try {
   if (-not $ExportOnly) {
-    # auth self-check: if not logged in, open login window (headed, manual) then continue; once only
-    $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $authed = ($LASTEXITCODE -eq 0); Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
-    if (-not $authed) {
-      Write-Host "  [auth] Not logged in. Opening login window, please complete login in the window..."
-      node (Join-Path $ScriptDir "appmagic-login.js")
-      $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $authed = ($LASTEXITCODE -eq 0); Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
-      if (-not $authed) { throw "Login not completed, aborted. Please log in manually and retry." }
+    # ensure ALL configured accounts are logged in (data-countries quota is per-account; multi-account extends it)
+    $accounts = @('.appmagic-userdata', '.appmagic-userdata-b', '.appmagic-userdata-c')
+    if ($env:APPMAGIC_ACCOUNTS) { $accounts = $env:APPMAGIC_ACCOUNTS -split ',' }
+    foreach ($acc in $accounts) {
+      $env:APPMAGIC_USERDATA_DIR = $acc
+      $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $ok = ($LASTEXITCODE -eq 0); Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
+      if (-not $ok) {
+        Write-Host "  [auth] account $acc invalid - opening login window, please complete login..."
+        node (Join-Path $ScriptDir "appmagic-login.js")
+        $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $ok = ($LASTEXITCODE -eq 0); Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
+        if (-not $ok) { Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue; throw "account $acc login not completed, aborted." }
+      }
+      Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
     }
     foreach ($cat in $Categories) {
       $env:CAT = $cat

@@ -5,7 +5,7 @@ const { chromium } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 const PROJECT_DIR = path.resolve(process.env.APPMAGIC_PROJECT_DIR || process.cwd());
-const USER_DATA_DIR = path.resolve(PROJECT_DIR, '.appmagic-userdata');
+const USER_DATA_DIR = path.resolve(PROJECT_DIR, process.env.APPMAGIC_USERDATA_DIR || '.appmagic-userdata');
 // 输出目录在 WEEKS(周锚点)确定后按起始日期归档，见下方 OUT_BASE
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function rand(min, max) { return Math.random() * (max - min) + min; }
@@ -523,10 +523,10 @@ async function main() {
   await ctx.close();
 }
 // 登录态自检：headless 探测 topDepth=1000 是否 200（能识别未登录/已过期），供 ps1 编排调用
+// 检查单个 profile(由 APPMAGIC_USERDATA_DIR 指定)的登录态；供 ps1 逐账号自检+补登
 async function checkAuth() {
-  const pool = await collectTokens();
-  if (!pool.length) { console.log('❌ 无任何账号 token（未登录）'); process.exit(1); }
-  const ctx = await chromium.launchPersistentContext(path.resolve(PROJECT_DIR, pool[0].dir), {
+  const label = process.env.APPMAGIC_USERDATA_DIR || '.appmagic-userdata';
+  const ctx = await chromium.launchPersistentContext(USER_DATA_DIR, {
     headless: true, args: ['--disable-blink-features=AutomationControlled'],
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
     viewport: { width: 1920, height: 1080 },
@@ -535,16 +535,14 @@ async function checkAuth() {
     const page = ctx.pages()[0] || await ctx.newPage();
     await page.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await sleep(3000);
-    let validCount = 0;
-    for (const t of pool) {
-      const ok = await page.evaluate(async ({ date, tag, token }) => {
-        try { const r = await fetch(`/api/v2/top/united-apps?aggregation=week&topDepth=1000&store=5&country=WW&date=${date}&tag=${tag}`, { headers: { Authorization: 'Bearer ' + token } }); return r.ok; } catch { return false; }
-      }, { date: WEEKS[0], tag: CATEGORY.tag, token: t.token });
-      if (ok) validCount++;
-    }
-    console.log(validCount > 0 ? `✅ 账号池 ${pool.length} 个，其中 ${validCount} 个有效` : '❌ 所有账号 token 均失效');
+    const ok = await page.evaluate(async ({ date, tag }) => {
+      const tok = (localStorage.getItem('datamagic.token') || '').replace(/^"|"$/g, '');
+      if (!tok) return false;
+      try { const r = await fetch(`/api/v2/top/united-apps?aggregation=week&topDepth=1000&store=5&country=WW&date=${date}&tag=${tag}`, { headers: { Authorization: 'Bearer ' + tok } }); return r.ok; } catch { return false; }
+    }, { date: WEEKS[0], tag: CATEGORY.tag });
+    console.log(ok ? `✅ ${label} 登录态有效` : `❌ ${label} 未登录/已过期`);
     await ctx.close();
-    process.exit(validCount > 0 ? 0 : 1);
+    process.exit(ok ? 0 : 1);
   } catch (e) { console.error('checkAuth 失败:', e.message); try { await ctx.close(); } catch {} process.exit(1); }
 }
 
