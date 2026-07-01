@@ -196,7 +196,7 @@ async function fetchWeek(page, date, token) {
   return await page.evaluate(async ({ date, tag, depth, token }) => {
     const u = `/api/v2/top/united-apps?aggregation=week&topDepth=${depth}&store=5&country=WW&date=${date}&tag=${tag}`;
     const r = await fetch(u, { headers: { Authorization: 'Bearer ' + token } });
-    if (!r.ok) return { err: r.status };
+    if (!r.ok) { let body = ''; try { body = (await r.text()).slice(0, 160); } catch {} return { err: r.status, body }; }
     const j = await r.json();
     const arr = j.data || [];
     // 只取免费榜
@@ -336,7 +336,7 @@ async function main() {
     let anyErr = false;
     for (const d of WEEKS) {
       const w = await fetchWeek(page, d, (pickToken() || tokenPool[0]).token);
-      if (w.err) { console.log(`  ⚠️ ${d} 失败 ${w.err}`); weekData[d] = { rows: [] }; anyErr = true; }
+      if (w.err) { const hint = w.err === 429 ? ' (限流)' : (w.err === 400 && /max limit/i.test(w.body || '') ? ' (未认证/topDepth 超限)' : (w.err === 401 ? ' (登录失效)' : '')); console.log(`  ⚠️ ${d} 失败 ${w.err}${hint} ${w.body || ''}`); weekData[d] = { rows: [] }; anyErr = true; }
       else { console.log(`  ✅ ${d} -> ${w.rows.length} 行 (#1 ${w.rows[0]?.name})`); weekData[d] = w; }
       await sleepRandom(2000, 5000);
     }
