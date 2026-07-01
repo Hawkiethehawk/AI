@@ -12,6 +12,15 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectDir = (Resolve-Path $ProjectDir).Path
 
+# 统一计算周锚点并传给 js/py，保证三者归档目录一致：output/AppMagic-<YYYYMMDD>/
+if (-not $WeekAnchor) {
+  $d = (Get-Date).ToUniversalTime().Date
+  $WeekAnchor = $d.AddDays(-((([int]$d.DayOfWeek) + 6) % 7)).ToString('yyyy-MM-dd')
+}
+$env:WEEK_ANCHOR = $WeekAnchor
+$Mon = $WeekAnchor.Replace('-', '')
+$OutBase = Join-Path $ProjectDir ("output\AppMagic-{0}" -f $Mon)
+
 function U([int[]]$codes) {
   -join ($codes | ForEach-Object { [char]$_ })
 }
@@ -43,7 +52,7 @@ try {
 
   if (-not $SkipExcel) {
     foreach ($cat in $Categories) {
-      $json = Join-Path $ProjectDir ("output\data\appmagic-{0}-weekly.json" -f $cat)
+      $json = Join-Path $OutBase ("data\appmagic-{0}-weekly.json" -f $cat)
       if (Test-Path $json) {
         python (Join-Path $ScriptDir "appmagic_xlsx.py") $cat
         if ($LASTEXITCODE -ne 0) { throw "Excel export failed for $cat" }

@@ -7,14 +7,22 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 PROJECT_DIR = Path(os.environ.get('APPMAGIC_PROJECT_DIR', Path.cwd())).resolve()
-DATA_DIR = PROJECT_DIR / 'output' / 'data'
-XLSX_DIR = PROJECT_DIR / 'output' / 'xlsx'
+def _current_monday():
+    import datetime
+    d = datetime.datetime.utcnow().date()
+    return (d - datetime.timedelta(days=d.weekday())).isoformat()
+# 按起始日期(周锚点)归档：output/AppMagic-<YYYYMMDD>/
+ANCHOR = os.environ.get('WEEK_ANCHOR') or _current_monday()
+MON = ANCHOR.replace('-', '')
+OUT_BASE = PROJECT_DIR / 'output' / f'AppMagic-{MON}'
+DATA_DIR = OUT_BASE / 'data'
+XLSX_DIR = OUT_BASE / 'xlsx'
 DEFAULT_CAT = ''.join(chr(x) for x in [0x8D85, 0x4F11, 0x95F2])
 CAT = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('CAT', DEFAULT_CAT)
 SRC = DATA_DIR / f'appmagic-{CAT}-weekly.json'
 data = json.load(open(SRC, encoding='utf-8'))
 weeks = data['weeks']
-mon = (weeks[0] or '').replace('-', '')
+mon = (weeks[0] or '').replace('-', '') or MON
 OUT = XLSX_DIR / f'AppMagic-{CAT}-{mon}.xlsx'
 records = data['records']
 focus = data['focus']

@@ -6,8 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const PROJECT_DIR = path.resolve(process.env.APPMAGIC_PROJECT_DIR || process.cwd());
 const USER_DATA_DIR = path.resolve(PROJECT_DIR, '.appmagic-userdata');
-const OUTPUT_DATA_DIR = path.resolve(PROJECT_DIR, 'output/data');
-fs.mkdirSync(OUTPUT_DATA_DIR, { recursive: true });
+// 输出目录在 WEEKS(周锚点)确定后按起始日期归档，见下方 OUT_BASE
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function rand(min, max) { return Math.random() * (max - min) + min; }
 function sleepRandom(minMs, maxMs) { return sleep(rand(minMs, maxMs)); }
@@ -54,6 +53,11 @@ function buildWeekAnchors(anchor, count = 6) {
 const WEEKS = process.env.WEEKS
   ? process.env.WEEKS.split(',').map(s => s.trim()).filter(Boolean)
   : buildWeekAnchors(process.env.WEEK_ANCHOR || currentMondayAnchor());
+// 按起始日期(周锚点)归档：output/AppMagic-<YYYYMMDD>/，不同周互不覆盖
+const WEEK_MON = (WEEKS[0] || '').replace(/-/g, '');
+const OUT_BASE = path.resolve(PROJECT_DIR, 'output', `AppMagic-${WEEK_MON}`);
+const OUTPUT_DATA_DIR = path.resolve(OUT_BASE, 'data');
+fs.mkdirSync(OUTPUT_DATA_DIR, { recursive: true });
 const TOP_DEPTH = 1000;
 const TOP_DEPTH_DETAIL = parseInt(process.env.TOP_DEPTH_DETAIL || '1000', 10);
 const OUT_JSON = path.resolve(OUTPUT_DATA_DIR, `appmagic-${CATEGORY.label}-weekly.json`);
@@ -78,8 +82,8 @@ function updateRunState(patch) {
 // ---- 实时进度看板：自刷新 HTML（双击 output/appmagic-progress.html 即可实时查看，无需服务/无 CORS）----
 const RUN_T0 = Date.now();
 const CAT_ORDER = Object.keys(CATS);
-const PROGRESS_HTML = path.resolve(PROJECT_DIR, 'output', 'appmagic-progress.html');
-const PROGRESS_JSON = path.resolve(PROJECT_DIR, 'output', 'appmagic-progress.json');
+const PROGRESS_HTML = path.resolve(OUT_BASE, 'appmagic-progress.html');
+const PROGRESS_JSON = path.resolve(OUT_BASE, 'appmagic-progress.json');
 function fmtDur(ms) {
   if (ms == null) return '—';
   const s = Math.round(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
