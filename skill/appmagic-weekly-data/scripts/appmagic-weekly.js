@@ -53,20 +53,20 @@ function buildWeekAnchors(anchor, count = 6) {
 const WEEKS = process.env.WEEKS
   ? process.env.WEEKS.split(',').map(s => s.trim()).filter(Boolean)
   : buildWeekAnchors(process.env.WEEK_ANCHOR || currentMondayAnchor());
-// 按起始日期(周锚点)归档：output/AppMagic-<YYYYMMDD>/，不同周互不覆盖
+// 统一平铺放 output/folder/；文件名带周锚点(YYYYMMDD)防止不同起始日期互相覆盖
 const WEEK_MON = (WEEKS[0] || '').replace(/-/g, '');
-const OUT_BASE = path.resolve(PROJECT_DIR, 'output', `AppMagic-${WEEK_MON}`);
-const OUTPUT_DATA_DIR = path.resolve(OUT_BASE, 'data');
+const OUT_BASE = path.resolve(PROJECT_DIR, 'output', 'folder');
+const OUTPUT_DATA_DIR = OUT_BASE;
 fs.mkdirSync(OUTPUT_DATA_DIR, { recursive: true });
 const TOP_DEPTH = 1000;
 const TOP_DEPTH_DETAIL = parseInt(process.env.TOP_DEPTH_DETAIL || '1000', 10);
-const OUT_JSON = path.resolve(OUTPUT_DATA_DIR, `appmagic-${CATEGORY.label}-weekly.json`);
+const OUT_JSON = path.resolve(OUTPUT_DATA_DIR, `appmagic-${CATEGORY.label}-${WEEK_MON}-weekly.json`);
 // 当天缓存：榜单首页缓存 + 国别采集缓存 + 运行状态
 const TODAY = new Date().toISOString().split('T')[0];
 const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
-const CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-enrich-cache-${TODAY}.json`);
-const WEEKLY_CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-weekly-cache-${CATEGORY.label}-${TODAY}.json`);
-const RUN_STATE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-run-state-${TODAY}.json`);
+const CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-enrich-cache-${WEEK_MON}.json`);
+const WEEKLY_CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-weekly-cache-${CATEGORY.label}-${WEEK_MON}.json`);
+const RUN_STATE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-run-state-${WEEK_MON}.json`);
 function loadCache() { if (FORCE_REFRESH) return {}; try { return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8')); } catch { return {}; } }
 function saveCache(c) { fs.writeFileSync(CACHE_FILE, JSON.stringify(c), 'utf-8'); }
 function loadWeeklyCache() { if (FORCE_REFRESH) return null; try { return JSON.parse(fs.readFileSync(WEEKLY_CACHE_FILE, 'utf-8')); } catch { return null; } }
@@ -82,8 +82,8 @@ function updateRunState(patch) {
 // ---- 实时进度看板：自刷新 HTML（双击 output/appmagic-progress.html 即可实时查看，无需服务/无 CORS）----
 const RUN_T0 = Date.now();
 const CAT_ORDER = Object.keys(CATS);
-const PROGRESS_HTML = path.resolve(OUT_BASE, 'appmagic-progress.html');
-const PROGRESS_JSON = path.resolve(OUT_BASE, 'appmagic-progress.json');
+const PROGRESS_HTML = path.resolve(OUT_BASE, `appmagic-progress-${WEEK_MON}.html`);
+const PROGRESS_JSON = path.resolve(OUT_BASE, `appmagic-progress-${WEEK_MON}.json`);
 function fmtDur(ms) {
   if (ms == null) return '—';
   const s = Math.round(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;

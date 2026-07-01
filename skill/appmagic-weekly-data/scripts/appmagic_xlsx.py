@@ -14,12 +14,12 @@ def _current_monday():
 # 按起始日期(周锚点)归档：output/AppMagic-<YYYYMMDD>/
 ANCHOR = os.environ.get('WEEK_ANCHOR') or _current_monday()
 MON = ANCHOR.replace('-', '')
-OUT_BASE = PROJECT_DIR / 'output' / f'AppMagic-{MON}'
-DATA_DIR = OUT_BASE / 'data'
-XLSX_DIR = OUT_BASE / 'xlsx'
+OUT_BASE = PROJECT_DIR / 'output' / 'folder'
+DATA_DIR = OUT_BASE
+XLSX_DIR = OUT_BASE
 DEFAULT_CAT = ''.join(chr(x) for x in [0x8D85, 0x4F11, 0x95F2])
 CAT = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('CAT', DEFAULT_CAT)
-SRC = DATA_DIR / f'appmagic-{CAT}-weekly.json'
+SRC = DATA_DIR / f'appmagic-{CAT}-{MON}-weekly.json'
 data = json.load(open(SRC, encoding='utf-8'))
 weeks = data['weeks']
 mon = (weeks[0] or '').replace('-', '') or MON

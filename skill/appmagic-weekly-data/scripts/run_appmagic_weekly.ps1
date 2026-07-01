@@ -19,7 +19,7 @@ if (-not $WeekAnchor) {
 }
 $env:WEEK_ANCHOR = $WeekAnchor
 $Mon = $WeekAnchor.Replace('-', '')
-$OutBase = Join-Path $ProjectDir ("output\AppMagic-{0}" -f $Mon)
+$OutBase = Join-Path $ProjectDir "output\folder"
 
 function U([int[]]$codes) {
   -join ($codes | ForEach-Object { [char]$_ })
@@ -52,7 +52,7 @@ try {
 
   if (-not $SkipExcel) {
     foreach ($cat in $Categories) {
-      $json = Join-Path $OutBase ("data\appmagic-{0}-weekly.json" -f $cat)
+      $json = Join-Path $OutBase ("appmagic-{0}-{1}-weekly.json" -f $cat, $Mon)
       if (Test-Path $json) {
         python (Join-Path $ScriptDir "appmagic_xlsx.py") $cat
         if ($LASTEXITCODE -ne 0) { throw "Excel export failed for $cat" }

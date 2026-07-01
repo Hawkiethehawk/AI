@@ -33,10 +33,10 @@ Install these once. `$SkillRoot` is this skill's root directory.
 - Per-category Excel exporter: this skill's `scripts\appmagic_xlsx.py`
 - Merged Excel exporter: this skill's `scripts\appmagic_xlsx_merged.py`
 - Login profile: `.appmagic-userdata`
-- Output root (archived by week anchor): `output\AppMagic-<YYYYMMDD>\` — every week anchor gets its own folder; different anchors never overwrite each other. In the manual fallback snippets below, replace `output\data` / `output\xlsx` with `output\AppMagic-<YYYYMMDD>\data` / `...\xlsx`.
-- JSON output: `output\AppMagic-<YYYYMMDD>\data\appmagic-<CAT>-weekly.json`
-- Excel output: `output\AppMagic-<YYYYMMDD>\xlsx\AppMagic-<CAT>-<YYYYMMDD>.xlsx` and `...\xlsx\AppMagic-<YYYYMMDD>.xlsx`
-- Progress dashboard: `output\AppMagic-<YYYYMMDD>\appmagic-progress.html` (auto-refresh 2s; double-click to open)
+- Output folder (flat, all products here): `output\folder\` — every week anchor gets its own folder; different anchors never overwrite each other. In the manual fallback snippets below, replace `output\data` / `output\xlsx` with `output\folder`. Every filename carries the anchor `<YYYYMMDD>` so different week anchors never overwrite.
+- JSON output: `output\folder\appmagic-<CAT>-<YYYYMMDD>-weekly.json`
+- Excel output: `output\folder\AppMagic-<CAT>-<YYYYMMDD>.xlsx` and `output\folder\AppMagic-<YYYYMMDD>.xlsx`
+- Progress dashboard: `output\folder\appmagic-progress-<YYYYMMDD>.html` (auto-refresh 2s; double-click to open)
 
 ## Default Categories
 

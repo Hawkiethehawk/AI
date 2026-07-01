@@ -14,9 +14,9 @@ def _current_monday():
 # 按起始日期(周锚点)归档：output/AppMagic-<YYYYMMDD>/
 ANCHOR = os.environ.get('WEEK_ANCHOR') or _current_monday()
 MON = ANCHOR.replace('-', '')
-OUT_BASE = PROJECT_DIR / 'output' / f'AppMagic-{MON}'
-DATA_DIR = OUT_BASE / 'data'
-XLSX_DIR = OUT_BASE / 'xlsx'
+OUT_BASE = PROJECT_DIR / 'output' / 'folder'
+DATA_DIR = OUT_BASE
+XLSX_DIR = OUT_BASE
 def u(*codes):
     return ''.join(chr(x) for x in codes)
 ORDER = [
@@ -29,7 +29,7 @@ ORDER = [
 ]
 
 def load(cat):
-    p = DATA_DIR / f'appmagic-{cat}-weekly.json'
+    p = DATA_DIR / f'appmagic-{cat}-{MON}-weekly.json'
     if not os.path.exists(p):
         print('  [skip] no data:', cat); return None
     d = json.load(open(p, encoding='utf-8'))
