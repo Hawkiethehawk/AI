@@ -69,7 +69,15 @@ const WEEKLY_CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-weekly-cache-$
 const RUN_STATE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-run-state.json`);
 function loadCache() { if (FORCE_REFRESH) return {}; try { return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8')); } catch { return {}; } }
 function saveCache(c) { fs.writeFileSync(CACHE_FILE, JSON.stringify(c), 'utf-8'); }
-function loadWeeklyCache() { if (FORCE_REFRESH) return null; try { return JSON.parse(fs.readFileSync(WEEKLY_CACHE_FILE, 'utf-8')); } catch { return null; } }
+function loadWeeklyCache() {
+  if (FORCE_REFRESH) return null;
+  try {
+    const c = JSON.parse(fs.readFileSync(WEEKLY_CACHE_FILE, 'utf-8'));
+    const cur = WEEKS[0];
+    if (!c || !c[cur] || !(c[cur].rows && c[cur].rows.length)) return null; // 坏缓存(本周空)→视为无效，重拉
+    return c;
+  } catch { return null; }
+}
 function saveWeeklyCache(c) { fs.writeFileSync(WEEKLY_CACHE_FILE, JSON.stringify(c), 'utf-8'); }
 function loadRunState() { try { return JSON.parse(fs.readFileSync(RUN_STATE_FILE, 'utf-8')); } catch { return {}; } }
 function saveRunState(s) { fs.writeFileSync(RUN_STATE_FILE, JSON.stringify(s, null, 2), 'utf-8'); }
@@ -291,13 +299,20 @@ async function main() {
     updateRunState({ weekly_done: true, weekly_rows: Object.fromEntries(Object.entries(weekData).map(([k,v]) => [k, (v.rows||[]).length])) });
   } else {
     weekData = {};
+    let anyErr = false;
     for (const d of WEEKS) {
       const w = await fetchWeek(page, d);
-      if (w.err) { console.log(`  ⚠️ ${d} 失败 ${w.err}`); weekData[d] = { rows: [] }; }
+      if (w.err) { console.log(`  ⚠️ ${d} 失败 ${w.err}`); weekData[d] = { rows: [] }; anyErr = true; }
       else { console.log(`  ✅ ${d} -> ${w.rows.length} 行 (#1 ${w.rows[0]?.name})`); weekData[d] = w; }
       await sleepRandom(2000, 5000);
     }
-    saveWeeklyCache(weekData);
+    // 严格：任一周失败或本周为空则不写缓存（避免脏缓存被下次复用），本次仍用内存数据继续产出
+    const curEmpty = !(weekData[WEEKS[0]].rows && weekData[WEEKS[0]].rows.length);
+    if (anyErr || curEmpty) {
+      console.log('  ⚠️ 有周抓取失败或本周为空，跳过写当天缓存（下次重拉）');
+    } else {
+      saveWeeklyCache(weekData);
+    }
     updateRunState({ weekly_done: true, weekly_rows: Object.fromEntries(Object.entries(weekData).map(([k,v]) => [k, (v.rows||[]).length])) });
   }
 
