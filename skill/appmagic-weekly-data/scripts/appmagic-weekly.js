@@ -12,8 +12,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function rand(min, max) { return Math.random() * (max - min) + min; }
 function sleepRandom(minMs, maxMs) { return sleep(rand(minMs, maxMs)); }
 function backoffMs(attempt) {
-  const plan = [60000, 180000, 300000, 300000, 300000, 300000, 300000, 300000];
-  return plan[Math.min(attempt - 1, plan.length - 1)];
+  return 120000; // 固定 120s 退避（不再指数递增）
 }
 
 // ---- 配置 ----
@@ -58,7 +57,7 @@ const WEEKS = process.env.WEEKS
 const TOP_DEPTH = 1000;
 const TOP_DEPTH_DETAIL = parseInt(process.env.TOP_DEPTH_DETAIL || '1000', 10);
 const OUT_JSON = path.resolve(OUTPUT_DATA_DIR, `appmagic-${CATEGORY.label}-weekly.json`);
-// 当天缓存：榜单首页缓存 + 富化缓存 + 运行状态
+// 当天缓存：榜单首页缓存 + 国别采集缓存 + 运行状态
 const TODAY = new Date().toISOString().split('T')[0];
 const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
 const CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-enrich-cache-${TODAY}.json`);
@@ -74,6 +73,62 @@ function updateRunState(patch) {
   const s = loadRunState();
   s[CATEGORY.label] = { ...(s[CATEGORY.label] || {}), ...patch, updatedAt: new Date().toISOString() };
   saveRunState(s);
+}
+
+// ---- 实时进度看板：自刷新 HTML（双击 output/appmagic-progress.html 即可实时查看，无需服务/无 CORS）----
+const RUN_T0 = Date.now();
+const CAT_ORDER = Object.keys(CATS);
+const PROGRESS_HTML = path.resolve(PROJECT_DIR, 'output', 'appmagic-progress.html');
+const PROGRESS_JSON = path.resolve(PROJECT_DIR, 'output', 'appmagic-progress.json');
+function fmtDur(ms) {
+  if (ms == null) return '—';
+  const s = Math.round(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  return h ? `${h}h ${m}m` : (m ? `${m}m ${ss}s` : `${ss}s`);
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function writeProgress() {
+  const st = loadRunState();
+  const now = Date.now();
+  let doneCats = 0, totalFocus = 0, totalFail = 0, totalDur = 0, curDur = 0;
+  const LAB = { wait: '待采集', weekly: '榜单采集中', enrich: '国别采集中', running: '采集中', done: '完成', error: '出错' };
+  const rows = CAT_ORDER.map(label => {
+    const s = st[label] || {};
+    const status = s.status || 'wait';
+    if (status === 'done') doneCats++;
+    totalFocus += s.focus_count || 0;
+    totalFail += (s.enrich_pending ? s.enrich_pending.length : 0);
+    let dur = s.durationMs;
+    if (dur == null && s.startedMs) dur = now - s.startedMs;
+    if (s.durationMs != null) totalDur += s.durationMs;
+    else if (status !== 'wait' && dur != null) curDur = dur;
+    const pct = status === 'done' ? 100 : (s.enrich_n ? Math.round((s.enrich_i || 0) * 100 / s.enrich_n) : (status === 'wait' ? 0 : 5));
+    const prog = s.enrich_n ? `${s.enrich_i || 0}/${s.enrich_n}` : (status === 'done' ? '完成' : '—');
+    const cls = status === 'done' ? 'done' : (status === 'error' ? 'err' : (status === 'wait' ? 'wait' : 'run'));
+    return { label, status, lab: LAB[status] || status, cls, curRows: s.curRows, focus: s.focus_count, pct, prog, dur, cur: s.cur_app };
+  });
+  const overall = Math.round(doneCats * 100 / CAT_ORDER.length);
+  const finished = doneCats === CAT_ORDER.length;
+  const curRow = rows.find(r => r.status !== 'done' && r.status !== 'wait');
+  const data = { anchor: WEEKS[0], updatedAt: new Date().toISOString(), overall, doneCats, total: CAT_ORDER.length, totalFocus, totalFail, cats: rows };
+  try { fs.writeFileSync(PROGRESS_JSON, JSON.stringify(data, null, 2), 'utf-8'); } catch {}
+  const trs = rows.map(r => `<tr><td><span class="dot ${r.cls}"></span>${esc(r.label)}</td><td class="${r.cls}">${r.lab}</td><td class="n">${r.curRows != null ? r.curRows : '—'}</td><td class="n">${r.focus != null ? r.focus : '—'}</td><td><span class="mini"><i style="width:${r.pct}%"></i></span><span class="pg">${r.prog}</span></td><td class="n">${fmtDur(r.dur)}</td></tr>`).join('');
+  const html = `<!doctype html><html lang="zh"><head><meta charset="utf-8">${finished ? '' : '<meta http-equiv="refresh" content="2">'}<title>AppMagic 采集进度 · ${esc(WEEKS[0])}</title>
+<style>body{font-family:system-ui,"Segoe UI",sans-serif;background:#16181c;color:#e6e6e6;margin:0;padding:22px}
+.h{display:flex;justify-content:space-between;align-items:baseline}.t{font-size:16px;font-weight:700}.s{font-size:12px;color:#9aa0a6}
+.bar{height:14px;border-radius:7px;background:#2a2d31;overflow:hidden;margin:10px 0}.bar>i{display:block;height:100%;background:${finished ? '#3fb950' : '#4f8cff'};width:${overall}%}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}th,td{text-align:left;padding:7px 9px;border-bottom:1px solid #33363b}
+th{color:#9aa0a6;font-weight:600}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.done{color:#3fb950}.run{color:#4f8cff}.wait{color:#9aa0a6}.err{color:#f85149}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px}.dot.done{background:#3fb950}.dot.run{background:#4f8cff}.dot.wait{background:#555}.dot.err{background:#f85149}
+.mini{display:inline-block;width:90px;height:8px;border-radius:4px;background:#2a2d31;overflow:hidden;vertical-align:middle}.mini>i{display:block;height:100%;background:#4f8cff}.pg{font-size:11px;color:#9aa0a6;margin-left:8px;font-variant-numeric:tabular-nums}
+.foot{display:flex;gap:20px;margin-top:14px;font-size:12px;color:#9aa0a6}.foot b{color:#e6e6e6;font-variant-numeric:tabular-nums}</style></head>
+<body><div class="h"><div class="t">AppMagic 周报采集 · ${esc(WEEKS[0])}</div><div class="s">${finished ? '✅ 全部完成' : '每 2 秒自动刷新'} · 更新 ${new Date().toLocaleTimeString('zh-CN')}</div></div>
+<div class="bar"><i></i></div><div class="s">总体 ${doneCats}/${CAT_ORDER.length} 品类完成 · ${overall}%</div>
+<table><thead><tr><th>品类</th><th>状态</th><th class="n">榜单</th><th class="n">重点</th><th>国别采集</th><th class="n">用时</th></tr></thead><tbody>${trs}</tbody></table>
+${curRow && curRow.cur ? `<div class="s" style="margin-top:10px">▶ 当前：<b style="color:#e6e6e6">${esc(curRow.cur)}</b></div>` : ''}
+<div class="foot"><span>累计用时 <b>${fmtDur(totalDur + curDur)}</b></span><span>重点合计 <b>${totalFocus}</b></span><span>待补/失败 <b>${totalFail}</b></span></div>
+</body></html>`;
+  try { fs.writeFileSync(PROGRESS_HTML, html, 'utf-8'); } catch {}
 }
 // 全量 tag 字典（用于回退补全空 tags 产品的 Tag 路径）
 const TAGS_FULL_PATH = path.resolve(OUTPUT_DATA_DIR, 'appmagic-tags-full.json');
@@ -211,7 +266,8 @@ function summarizeCountries(countries) {
 }
 
 async function main() {
-  updateRunState({ status: 'running', weekly_done: false, enrich_done: false, xlsx_done: false, output: OUT_JSON });
+  updateRunState({ status: 'running', startedMs: RUN_T0, weekly_done: false, enrich_done: false, xlsx_done: false, output: OUT_JSON });
+  writeProgress();
   const ctx = await chromium.launchPersistentContext(USER_DATA_DIR, {
     headless: true, args: ['--disable-blink-features=AutomationControlled'],
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -250,6 +306,7 @@ async function main() {
 
   const cur = WEEKS[0], prev = WEEKS[1];
   const curRows = weekData[cur].rows;
+  updateRunState({ status: 'weekly', curRows: curRows.length }); writeProgress();
   const rankMaps = {}; // date -> uid->rank
   for (const d of WEEKS) { rankMaps[d] = new Map(weekData[d].rows.map(r => [r.uid, r.rank])); }
 
@@ -317,6 +374,7 @@ async function main() {
     return riser || firstInTop100;
   });
   console.log(`\n重点集 ${focus.length} 个（共 ${records.length}），开始 enrich…`);
+  updateRunState({ focus_count: focus.length }); writeProgress();
 
   // 4) enrich 重点集（持久化缓存 + 自适应限速，规避 data-countries 限流）
   const cache = loadCache();
@@ -333,7 +391,7 @@ async function main() {
   }
   console.log(`\n缓存命中国别 ${hits}/${focus.length}，待补 ${focus.length - hits} 个`);
 
-  // 逐个处理：成功后随机停 2-5s；缺国别按指数退避 60s→180s→300s（之后维持 300s）重试
+  // 逐个处理：成功后随机停 2-5s；缺国别按固定 120s 退避重试
   const MAXA = parseInt(process.env.MAXA || '8', 10);
   async function enrichOneWithWait(r, i, n) {
     for (let attempt = 1; attempt <= MAXA; attempt++) {
@@ -362,14 +420,16 @@ async function main() {
     return false;
   }
 
-  // LIST_ONLY=1：只产出清单（榜单+筛选+排序），跳过慢速国别富化
+  // LIST_ONLY=1：只产出清单（榜单+筛选+排序），跳过慢速国别采集
   const LIST_ONLY = process.env.LIST_ONLY === '1';
   if (!LIST_ONLY) {
     const todo = focus.filter(r => !r.country);
-    console.log(`\n开始逐个补国别：${todo.length} 个（成功后随机停 2-5s；缺则按 60s→180s→300s 退避重试）`);
+    console.log(`\n开始逐个补国别：${todo.length} 个（成功后随机停 2-5s；缺则固定 120s 退避重试）`);
     let i = 0;
     for (const r of todo) {
       i++;
+      updateRunState({ status: 'enrich', enrich_i: i, enrich_n: todo.length, cur_app: `#${r.rank} ${r.name}` });
+      writeProgress();
       const ok = await enrichOneWithWait(r, i, todo.length);
       if (ok) await sleepRandom(2000, 5000);   // 成功后随机 2-5s 间隔再下一个
     }
@@ -377,7 +437,7 @@ async function main() {
     console.log(`\nenrich 完成，仍缺国别: ${pending.length}（${pending.map(r=>'#'+r.rank).join(' ')}）`);
     updateRunState({ enrich_done: true, focus_count: focus.length, enrich_pending: pending.map(r => `#${r.rank}`) });
   } else {
-    console.log(`\n[LIST_ONLY] 仅产出清单，跳过国别富化。重点 ${focus.length} 个`);
+    console.log(`\n[LIST_ONLY] 仅产出清单，跳过国别采集。重点 ${focus.length} 个`);
   }
   // 潜力新品/成熟市场标记（需国别，放在 enrich 之后统一处理）
   for (const r of focus) {
@@ -390,8 +450,15 @@ async function main() {
 
   fs.writeFileSync(OUT_JSON, JSON.stringify({ category: CATEGORY, weeks: WEEKS, generatedAt: new Date().toISOString(),
     marketDef: { mature: MATURE_LIST, emerging: EMERGING_LIST }, records, focus }, null, 2), 'utf-8');
-  updateRunState({ status: 'done', weekly_done: true, enrich_done: true, xlsx_done: false, output: OUT_JSON, records: records.length, focus: focus.length });
+  updateRunState({ status: 'done', weekly_done: true, enrich_done: true, xlsx_done: false, output: OUT_JSON, records: records.length, focus: focus.length, durationMs: Date.now() - RUN_T0 });
+  writeProgress();
   console.log('\n📁', OUT_JSON, '| 全量', records.length, '| 重点', focus.length);
   await ctx.close();
 }
-main().catch(e => { updateRunState({ status: 'error', error: String(e) }); console.error('Fatal:', e); process.exit(1); });
+if (process.env.PROGRESS_ONLY === '1') {
+  // 只按当前 run-state 刷新进度看板并退出（不采集），可用于随时重绘 output/appmagic-progress.html
+  writeProgress();
+  console.log('progress.html refreshed:', PROGRESS_HTML);
+} else {
+  main().catch(e => { updateRunState({ status: 'error', error: String(e) }); writeProgress(); console.error('Fatal:', e); process.exit(1); });
+}
