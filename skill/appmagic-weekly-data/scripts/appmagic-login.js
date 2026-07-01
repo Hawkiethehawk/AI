@@ -36,14 +36,18 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   console.log('\n========================================================');
   console.log('  浏览器窗口已打开。请在窗口中完成登录：');
   console.log('  邮箱:', EMAIL || '(未设置 APPMAGIC_EMAIL，手动输入)', '（密码 / 邮箱验证码 / Google 任一方式均可）');
-  console.log('  登录成功后，回到对话告诉我，我会保存登录态并继续抓取。');
+  console.log('  登录成功后脚本会自动检测到并退出，无需手动关闭窗口。');
   console.log('========================================================\n');
 
-  // 保持运行 + 心跳（不自动导航，避免打断你的操作）
-  for (let i = 0; i < 480; i++) {
-    await sleep(15000);
-    const cookies = await ctx.cookies();
-    console.log(`[心跳 ${i}] url=${page.url()} cookies=${cookies.length}`);
+  // 轮询 token：登录成功即自动退出(exit 0)；超时(默认5分钟)退出码 1。供 ps1 编排调用
+  const WAIT_MIN = parseInt(process.env.APPMAGIC_LOGIN_WAIT_MIN || '5', 10);
+  const deadline = Date.now() + WAIT_MIN * 60 * 1000;
+  while (Date.now() < deadline) {
+    await sleep(3000);
+    const tok = await page.evaluate(() => (localStorage.getItem('datamagic.token') || '').replace(/^"|"$/g, ''));
+    if (tok) { console.log(`\n🎉 登录成功（token 长度 ${tok.length}），已落盘到 .appmagic-userdata。`); await ctx.close(); process.exit(0); }
   }
+  console.log(`\n⚠️ ${WAIT_MIN} 分钟内未检测到登录，超时退出。重跑本脚本可再次登录。`);
   await ctx.close();
+  process.exit(1);
 })().catch(e => { console.error('Fatal:', e); process.exit(1); });

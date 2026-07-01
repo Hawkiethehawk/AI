@@ -43,6 +43,14 @@ if ($ListOnly) { $env:LIST_ONLY = "1" }
 
 try {
   if (-not $ExportOnly) {
+    # auth self-check: if not logged in, open login window (headed, manual) then continue; once only
+    $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $authed = ($LASTEXITCODE -eq 0); Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
+    if (-not $authed) {
+      Write-Host "  [auth] Not logged in. Opening login window, please complete login in the window..."
+      node (Join-Path $ScriptDir "appmagic-login.js")
+      $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $authed = ($LASTEXITCODE -eq 0); Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
+      if (-not $authed) { throw "Login not completed, aborted. Please log in manually and retry." }
+    }
     foreach ($cat in $Categories) {
       $env:CAT = $cat
       node (Join-Path $ScriptDir "appmagic-weekly.js")

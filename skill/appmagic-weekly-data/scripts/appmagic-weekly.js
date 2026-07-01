@@ -459,7 +459,31 @@ async function main() {
   console.log('\n📁', OUT_JSON, '| 全量', records.length, '| 重点', focus.length);
   await ctx.close();
 }
-if (process.env.PROGRESS_ONLY === '1') {
+// 登录态自检：headless 探测 topDepth=1000 是否 200（能识别未登录/已过期），供 ps1 编排调用
+async function checkAuth() {
+  const ctx = await chromium.launchPersistentContext(USER_DATA_DIR, {
+    headless: true, args: ['--disable-blink-features=AutomationControlled'],
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    viewport: { width: 1920, height: 1080 },
+  });
+  try {
+    const page = ctx.pages()[0] || await ctx.newPage();
+    await page.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await sleep(3000);
+    const ok = await page.evaluate(async ({ date, tag }) => {
+      const tok = (localStorage.getItem('datamagic.token') || '').replace(/^"|"$/g, '');
+      if (!tok) return false;
+      try { const r = await fetch(`/api/v2/top/united-apps?aggregation=week&topDepth=1000&store=5&country=WW&date=${date}&tag=${tag}`, { headers: { Authorization: 'Bearer ' + tok } }); return r.ok; } catch { return false; }
+    }, { date: WEEKS[0], tag: CATEGORY.tag });
+    console.log(ok ? '✅ 登录态有效' : '❌ 未登录或登录已过期');
+    await ctx.close();
+    process.exit(ok ? 0 : 1);
+  } catch (e) { console.error('checkAuth 失败:', e.message); try { await ctx.close(); } catch {} process.exit(1); }
+}
+
+if (process.env.CHECK_AUTH === '1') {
+  checkAuth();
+} else if (process.env.PROGRESS_ONLY === '1') {
   // 只按当前 run-state 刷新进度看板并退出（不采集），可用于随时重绘 output/appmagic-progress.html
   writeProgress();
   console.log('progress.html refreshed:', PROGRESS_HTML);
