@@ -90,6 +90,7 @@ function updateRunState(cat, patch) {
 
 // ---- 实时进度看板：自刷新 HTML（双击 output/appmagic-progress.html 即可实时查看，无需服务/无 CORS）----
 const RUN_T0 = Date.now();
+let POOL_SIZE = 0, RL_COUNT = 0; // 账号数、累计 429(供看板展示)
 const CAT_ORDER = Object.keys(CATS);
 const PROGRESS_HTML = path.resolve(OUT_BASE, 'appmagic-progress.html');
 const PROGRESS_JSON = path.resolve(OUT_BASE, 'appmagic-progress.json');
@@ -122,7 +123,7 @@ function writeProgress() {
   const overall = Math.round(doneCats * 100 / CAT_ORDER.length);
   const finished = doneCats === CAT_ORDER.length;
   const curRow = rows.find(r => r.status !== 'done' && r.status !== 'wait');
-  const data = { anchor: WEEKS[0], updatedAt: new Date().toISOString(), overall, doneCats, total: CAT_ORDER.length, totalFocus, totalFail, cats: rows };
+  const data = { anchor: WEEKS[0], updatedAt: new Date().toISOString(), overall, doneCats, total: CAT_ORDER.length, totalFocus, totalFail, totalRows: rows.reduce((s, r) => s + (r.curRows || 0), 0), poolSize: POOL_SIZE, rateLimited: RL_COUNT, runElapsed: Date.now() - RUN_T0, cats: rows };
   try { fs.writeFileSync(PROGRESS_JSON, JSON.stringify(data, null, 2), 'utf-8'); } catch {}
   const trs = rows.map(r => `<tr><td><span class="dot ${r.cls}"></span>${esc(r.label)}</td><td class="${r.cls}">${r.lab}</td><td class="n">${r.curRows != null ? r.curRows : '—'}</td><td class="n">${r.focus != null ? r.focus : '—'}</td><td><span class="mini"><i style="width:${r.pct}%"></i></span><span class="pg">${r.prog}</span></td><td class="n">${fmtDur(r.dur)}</td></tr>`).join('');
   const html = `<!doctype html><html lang="zh"><head><meta charset="utf-8">${finished ? '' : '<meta http-equiv="refresh" content="2">'}<title>AppMagic 采集进度 · ${esc(WEEKS[0])}</title>
@@ -312,6 +313,7 @@ async function main() {
   writeProgress();
   const tokenPool = await collectTokens();
   if (!tokenPool.length) { console.error('无可用账号 token，请先登录（node scripts/appmagic-login.js）'); for (const cat of cats) updateRunState(cat, { status: 'error', error: 'no token' }); process.exit(2); }
+  POOL_SIZE = tokenPool.length;
   console.log(`账号 token 池：${tokenPool.length} 个 [${tokenPool.map(t => t.dir).join(', ')}]`);
   const DC_COOLDOWN = parseInt(process.env.DC_COOLDOWN_MS || '120000', 10);
   const DC_GAP = parseInt(process.env.DC_GAP_MS || '1000', 10); // 国别采集每个 app 间隔（任务1：默认 1s）
@@ -486,6 +488,7 @@ async function enrichOneCat(page, r, acc, catCache, cooldown) {
       if (e.contentRating) r.contentRating = e.contentRating;
       if (e.released) r.release = e.released;
       if (e.rateLimited) {
+        RL_COUNT++;
         console.log(`  [${acc.dir}] #${r.rank} ${r.name} 429 → 等 ${Math.round(cooldown / 1000)}s`);
         const until = Date.now() + cooldown;
         while (Date.now() < until) { writeProgress(); await sleep(Math.min(5000, until - Date.now())); } // 冷却期每5s刷看板，避免假死
