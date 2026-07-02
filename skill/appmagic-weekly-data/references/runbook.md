@@ -63,20 +63,26 @@ $cats = @(
 )
 ```
 
-`CAT` must be an environment variable. Do not pass it as `node scripts\appmagic-weekly.js <cat>`.
+The scraper runs **all categories in one process** (path A). Do NOT set `CAT` — the single-category mode is gone. The category code points above are still handy for reference / editing `CATS`.
 
-## Login / Re-login
+## Login / Re-login (multi-account)
 
-Login state lives in the project-root `.appmagic-userdata` Playwright profile. Establish or refresh it when this is the first run, or when the weekly API returns 401 / only 100 rows (token missing or expired).
+国别采集把品类分给多账号并行（配额按账号，约 100 次/窗口）。默认 3 账号，各登录到独立 profile：`.appmagic-userdata`(A，兼榜单账号) / `.appmagic-userdata-b` / `.appmagic-userdata-c`。
+
+每个账号登录一次（`APPMAGIC_USERDATA_DIR` 指定 profile；脚本检测到登录成功会自动关闭窗口）：
 
 ```powershell
 $SkillRoot = Resolve-Path <path-to-this-skill>
 $env:APPMAGIC_PROJECT_DIR = (Resolve-Path .).Path
-$env:APPMAGIC_EMAIL = "you@example.com"   # optional; pre-fills the email field
-node (Join-Path $SkillRoot "scripts\appmagic-login.js")
+foreach ($p in '.appmagic-userdata','.appmagic-userdata-b','.appmagic-userdata-c') {
+  $env:APPMAGIC_USERDATA_DIR = $p
+  # $env:APPMAGIC_EMAIL = "acct@example.com"   # optional, pre-fills email
+  node (Join-Path $SkillRoot "scripts\appmagic-login.js")   # headed, complete login manually
+}
+Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
 ```
 
-A real (headed) browser window opens. Complete login manually (password, email code, or Google). The session is written to `.appmagic-userdata` live; once you confirm you are logged in, stop that process from the outside. Do not open a second Playwright session against the same profile while it runs. Never delete `.appmagic-userdata` unless you intend to re-login.
+Token 是 opaque、数天会失效。正常无需手动登录：`run_appmagic_weekly.ps1` **采集前会逐账号自检、失效自动弹窗补登**。Token 存活期间长期复用。绝不删除 profile 目录，除非要重登。
 
 ## Preflight
 
@@ -93,33 +99,11 @@ Get-CimInstance Win32_Process |
   Select-Object ProcessId,Name,CommandLine
 ```
 
-If rerunning and these are stale AppMagic scraper/browser processes, stop only those AppMagic processes before opening another Playwright context.
+If rerunning and these are stale AppMagic scraper/browser processes, stop them before opening another Playwright context.
 
-## Fresh Single-Category Run
+## Run (path A: one process, all categories)
 
-```powershell
-$ProjectDir = Resolve-Path .
-$SkillRoot = Resolve-Path <path-to-this-skill>
-& (Join-Path $SkillRoot "scripts\run_appmagic_weekly.ps1") -ProjectDir $ProjectDir -WeekAnchor "YYYY-MM-DD" -Fresh -Categories @((U 0x8D85,0x4F11,0x95F2))
-```
-
-Use `FORCE_REFRESH=1` or `-Fresh` whenever the user says to clear cache, rerun from scratch, avoid old data, or not reuse yesterday's files.
-
-Manual equivalent:
-
-```powershell
-Set-Location $ProjectDir
-function U([int[]]$codes) { -join ($codes | ForEach-Object { [char]$_ }) }
-$env:CAT = U 0x8D85,0x4F11,0x95F2
-$env:WEEK_ANCHOR = "YYYY-MM-DD"
-$env:FORCE_REFRESH = '1'
-node (Join-Path $SkillRoot "scripts\appmagic-weekly.js")
-Remove-Item Env:CAT -ErrorAction SilentlyContinue
-Remove-Item Env:WEEK_ANCHOR -ErrorAction SilentlyContinue
-Remove-Item Env:FORCE_REFRESH -ErrorAction SilentlyContinue
-```
-
-## Fresh All-Category Run
+一次调用即可：node 内部 **A 采全部榜单 → 3 账号并行按品类分片采国别 → 写各品类 JSON**；`ps1` 先逐账号自检登录态（失效弹窗补登），采完再导出 Excel。
 
 ```powershell
 $ProjectDir = Resolve-Path .
@@ -127,27 +111,17 @@ $SkillRoot = Resolve-Path <path-to-this-skill>
 & (Join-Path $SkillRoot "scripts\run_appmagic_weekly.ps1") -ProjectDir $ProjectDir -WeekAnchor "YYYY-MM-DD" -Fresh
 ```
 
-Manual equivalent:
+- `-WeekAnchor` 省略 = 本周一(UTC)。`-Fresh` / `FORCE_REFRESH=1` = 清缓存重拉。
+- 环境变量：`APPMAGIC_ACCOUNTS`(逗号分隔 profile 列表，默认三账号) / `DC_GAP_MS`(每 app 国别间隔，默认 1000) / `DC_COOLDOWN_MS`(撞 429 冷却，默认 120000) / `LIST_ONLY=1`(只出榜单清单、跳过国别)。
+
+Manual equivalent（直接 node，跑全部品类；**不要设 CAT**）:
 
 ```powershell
 Set-Location $ProjectDir
-function U([int[]]$codes) { -join ($codes | ForEach-Object { [char]$_ }) }
-$cats = @(
-  (U 0x8D85,0x4F11,0x95F2),
-  (U 0x4F11,0x95F2),
-  'Launcher',
-  (U 0x6740,0x6BD2,0x8F6F,0x4EF6,0x3001,0x6E05,0x7406),
-  (U 0x6587,0x4EF6,0x6062,0x590D),
-  ('PDF' + (U 0x9605,0x8BFB,0x5668))
-)
-$env:FORCE_REFRESH = '1'
+$env:APPMAGIC_PROJECT_DIR = $ProjectDir
 $env:WEEK_ANCHOR = "YYYY-MM-DD"
-foreach ($cat in $cats) {
-  $env:CAT = $cat
-  node (Join-Path $SkillRoot "scripts\appmagic-weekly.js")
-  if ($LASTEXITCODE -ne 0) { throw "AppMagic scrape failed for $cat" }
-}
-Remove-Item Env:CAT -ErrorAction SilentlyContinue
+$env:FORCE_REFRESH = '1'
+node (Join-Path $SkillRoot "scripts\appmagic-weekly.js")
 Remove-Item Env:WEEK_ANCHOR -ErrorAction SilentlyContinue
 Remove-Item Env:FORCE_REFRESH -ErrorAction SilentlyContinue
 ```
@@ -160,26 +134,7 @@ $SkillRoot = Resolve-Path <path-to-this-skill>
 & (Join-Path $SkillRoot "scripts\run_appmagic_weekly.ps1") -ProjectDir $ProjectDir -ExportOnly
 ```
 
-Manual equivalent:
-
-```powershell
-Set-Location $ProjectDir
-function U([int[]]$codes) { -join ($codes | ForEach-Object { [char]$_ }) }
-$cats = @(
-  (U 0x8D85,0x4F11,0x95F2),
-  (U 0x4F11,0x95F2),
-  'Launcher',
-  (U 0x6740,0x6BD2,0x8F6F,0x4EF6,0x3001,0x6E05,0x7406),
-  (U 0x6587,0x4EF6,0x6062,0x590D),
-  ('PDF' + (U 0x9605,0x8BFB,0x5668))
-)
-foreach ($cat in $cats) {
-  if (Test-Path "output\data\appmagic-$cat-weekly.json") {
-    python (Join-Path $SkillRoot "scripts\appmagic_xlsx.py") $cat
-  }
-}
-python (Join-Path $SkillRoot "scripts\appmagic_xlsx_merged.py")
-```
+`ps1` 内置：对每个有 JSON 的品类调 `appmagic_xlsx.py`，再用 `appmagic_xlsx_merged.py` 合并；均按周锚点定位 `output\folder\AppMagic-<YYYYMMDD>\`。
 
 ## Validation
 

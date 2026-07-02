@@ -20,7 +20,7 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
 - Preserve `.appmagic-userdata`; it stores login state. Do not delete it unless the user explicitly asks and understands re-login is required.
 - If the weekly API returns 401 or only 100 rows, login is missing/expired. Re-establish it with `scripts\appmagic-login.js` (see runbook "Login / Re-login") before retrying; do not delete the profile.
 - For a full fresh rerun, use `FORCE_REFRESH=1` instead of deleting login state.
-- The scraper selects category by environment variable `CAT`; passing the category as a CLI argument does not select it.
+- The scraper runs all categories in one process (path A). Do NOT set `CAT`. Leaderboards use account A; country data (`data-countries`) is split across up to 3 accounts in parallel — one category per account (quota is per-account, ~100/window).
 
 ## Workflow
 
@@ -39,11 +39,11 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
    - Use `FORCE_REFRESH=1` for "clear cache", "fresh", "do not reuse", or date-sensitive reruns.
    - Use `LIST_ONLY=1` only when the user explicitly wants to skip slow country enrichment.
 
-4. Run data collection.
-   - Prefer this skill's `scripts\run_appmagic_weekly.ps1` entrypoint.
-   - For one category manually: set `$env:CAT='<category>'`; then run this skill's `scripts\appmagic-weekly.js`.
-   - For all default categories, iterate the known category labels and set `CAT` for each run.
-   - Do not launch a second Playwright profile while the scraper is running; monitor logs and files instead.
+4. Run data collection (path A: one process runs all categories).
+   - Prefer this skill's `scripts\run_appmagic_weekly.ps1` entrypoint — it self-checks each account's login (re-login popup if expired), runs the scraper, then exports Excel.
+   - The scraper runs **all categories in one process**: account A collects every leaderboard, then up to 3 accounts collect country data **in parallel, one category per account** (no overlap, dynamic dequeue). **Do NOT set `CAT`** — single-category mode is gone.
+   - Manual: `node scripts\appmagic-weekly.js` (with `WEEK_ANCHOR`/`FORCE_REFRESH` as needed); it iterates all categories itself.
+   - Multi-account: log each account into its own profile (`.appmagic-userdata` / `-b` / `-c`) via `APPMAGIC_USERDATA_DIR`; the scraper auto-discovers every profile that has a token. Tune `DC_GAP_MS` (per-app gap, default 1000) / `DC_COOLDOWN_MS` (429 cooldown, default 120000) / `APPMAGIC_ACCOUNTS`.
 
 5. Export Excel.
    - Run this skill's `scripts\appmagic_xlsx.py <category>` for each completed category JSON.
