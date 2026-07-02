@@ -66,4 +66,16 @@ http.createServer((req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.end(PAGE);
   }
-}).listen(PORT, () => console.log(`AppMagic 进度看板: http://localhost:${PORT}  (Ctrl+C 停止)`));
+}).listen(PORT, () => {
+  console.log(`AppMagic 进度看板: http://localhost:${PORT}  (Ctrl+C 停止)`);
+  // 启动即打开浏览器到最近一次采集（APPMAGIC_NO_OPEN=1 可关闭）
+  if (process.env.APPMAGIC_NO_OPEN !== '1') {
+    const url = `http://localhost:${PORT}`;
+    const cp = require('child_process');
+    try {
+      if (process.platform === 'win32') cp.exec(`start "" "${url}"`);
+      else if (process.platform === 'darwin') cp.exec(`open "${url}"`);
+      else cp.exec(`xdg-open "${url}"`);
+    } catch {}
+  }
+});
