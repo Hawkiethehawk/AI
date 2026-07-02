@@ -57,11 +57,9 @@ try {
       }
       Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
     }
-    foreach ($cat in $Categories) {
-      $env:CAT = $cat
-      node (Join-Path $ScriptDir "appmagic-weekly.js")
-      if ($LASTEXITCODE -ne 0) { throw "AppMagic scrape failed for $cat" }
-    }
+    # 路径A：单次调用，node 一个进程跑全部品类（榜单用 A；国别 3 账号并行领品类）
+    node (Join-Path $ScriptDir "appmagic-weekly.js")
+    if ($LASTEXITCODE -ne 0) { throw "AppMagic scrape failed" }
   }
 
   if (-not $SkipExcel) {

@@ -60,30 +60,30 @@ const OUTPUT_DATA_DIR = OUT_BASE;
 fs.mkdirSync(OUTPUT_DATA_DIR, { recursive: true });
 const TOP_DEPTH = 1000;
 const TOP_DEPTH_DETAIL = parseInt(process.env.TOP_DEPTH_DETAIL || '1000', 10);
-const OUT_JSON = path.resolve(OUTPUT_DATA_DIR, `appmagic-${CATEGORY.label}-weekly.json`);
-// 当天缓存：榜单首页缓存 + 国别采集缓存 + 运行状态
+// 输出/缓存路径按品类（node 一次跑全部品类，路径 A）
+const OUT_JSON_OF = cat => path.resolve(OUTPUT_DATA_DIR, `appmagic-${cat}-weekly.json`);
+const WEEKLY_CACHE_FILE_OF = cat => path.resolve(OUTPUT_DATA_DIR, `appmagic-weekly-cache-${cat}.json`);
 const TODAY = new Date().toISOString().split('T')[0];
 const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
 const CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-enrich-cache.json`);
-const WEEKLY_CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-weekly-cache-${CATEGORY.label}.json`);
 const RUN_STATE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-run-state.json`);
 function loadCache() { if (FORCE_REFRESH) return {}; try { return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8')); } catch { return {}; } }
 function saveCache(c) { fs.writeFileSync(CACHE_FILE, JSON.stringify(c), 'utf-8'); }
-function loadWeeklyCache() {
+function loadWeeklyCache(cat) {
   if (FORCE_REFRESH) return null;
   try {
-    const c = JSON.parse(fs.readFileSync(WEEKLY_CACHE_FILE, 'utf-8'));
+    const c = JSON.parse(fs.readFileSync(WEEKLY_CACHE_FILE_OF(cat), 'utf-8'));
     const cur = WEEKS[0];
-    if (!c || !c[cur] || !(c[cur].rows && c[cur].rows.length)) return null; // 坏缓存(本周空)→视为无效，重拉
+    if (!c || !c[cur] || !(c[cur].rows && c[cur].rows.length)) return null; // 坏缓存(本周空)→重拉
     return c;
   } catch { return null; }
 }
-function saveWeeklyCache(c) { fs.writeFileSync(WEEKLY_CACHE_FILE, JSON.stringify(c), 'utf-8'); }
+function saveWeeklyCache(cat, c) { fs.writeFileSync(WEEKLY_CACHE_FILE_OF(cat), JSON.stringify(c), 'utf-8'); }
 function loadRunState() { try { return JSON.parse(fs.readFileSync(RUN_STATE_FILE, 'utf-8')); } catch { return {}; } }
 function saveRunState(s) { fs.writeFileSync(RUN_STATE_FILE, JSON.stringify(s, null, 2), 'utf-8'); }
-function updateRunState(patch) {
+function updateRunState(cat, patch) {
   const s = loadRunState();
-  s[CATEGORY.label] = { ...(s[CATEGORY.label] || {}), ...patch, updatedAt: new Date().toISOString() };
+  s[cat] = { ...(s[cat] || {}), ...patch, updatedAt: new Date().toISOString() };
   saveRunState(s);
 }
 
@@ -192,7 +192,7 @@ function tagPath(tags = []) {
   return seq.join(' → ');
 }
 
-async function fetchWeek(page, date, token) {
+async function fetchWeek(page, date, tag, token) {
   return await page.evaluate(async ({ date, tag, depth, token }) => {
     const u = `/api/v2/top/united-apps?aggregation=week&topDepth=${depth}&store=5&country=WW&date=${date}&tag=${tag}`;
     const r = await fetch(u, { headers: { Authorization: 'Bearer ' + token } });
@@ -215,7 +215,7 @@ async function fetchWeek(page, date, token) {
       });
     }
     return { date: j.date, rows };
-  }, { date, tag: CATEGORY.tag, depth: TOP_DEPTH, token });
+  }, { date, tag, depth: TOP_DEPTH, token });
 }
 
 async function enrichApp(page, uid, storeIds, skipAppInfo, token) {
@@ -304,98 +304,115 @@ async function collectTokens() {
   return pool;
 }
 
+// ===== 路径 A：一个进程跑全部品类。榜单用 A 账号；国别 3 账号并行领品类（一品类一账号，不重复）=====
 async function main() {
-  updateRunState({ status: 'running', startedMs: RUN_T0, weekly_done: false, enrich_done: false, xlsx_done: false, output: OUT_JSON });
+  const cats = Object.keys(CATS);
+  for (const cat of cats) updateRunState(cat, { status: 'wait' });
   writeProgress();
-  // 采集前收集多账号 token 池（data-countries 撞 429 就切账号）
   const tokenPool = await collectTokens();
-  if (!tokenPool.length) { console.error('无可用账号 token，请先登录（node scripts/appmagic-login.js）'); updateRunState({ status: 'error', error: 'no token' }); process.exit(2); }
+  if (!tokenPool.length) { console.error('无可用账号 token，请先登录（node scripts/appmagic-login.js）'); for (const cat of cats) updateRunState(cat, { status: 'error', error: 'no token' }); process.exit(2); }
   console.log(`账号 token 池：${tokenPool.length} 个 [${tokenPool.map(t => t.dir).join(', ')}]`);
   const DC_COOLDOWN = parseInt(process.env.DC_COOLDOWN_MS || '120000', 10);
-  let tokenRR = 0;
-  const pickToken = () => { const now = Date.now(); for (let k = 0; k < tokenPool.length; k++) { const t = tokenPool[(tokenRR++) % tokenPool.length]; if (t.cooldownUntil <= now) return t; } return null; };
+  const DC_GAP = parseInt(process.env.DC_GAP_MS || '1000', 10); // 国别采集每个 app 间隔（任务1：默认 1s）
+  const leaderTok = (tokenPool.find(t => t.dir === '.appmagic-userdata') || tokenPool[0]).token; // 榜单固定用 A
+
   const ctx = await chromium.launchPersistentContext(USER_DATA_DIR, {
     headless: true, args: ['--disable-blink-features=AutomationControlled'],
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
     viewport: { width: 1920, height: 1080 },
   });
-  const page = ctx.pages()[0] || await ctx.newPage();
-  await page.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  const cache = loadCache();
+  const perCat = {};
+
+  // ===== 阶段1：榜单(A) + 组装 records/focus（串行，量小）=====
+  const leadPage = ctx.pages()[0] || await ctx.newPage();
+  await leadPage.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await sleepRandom(3000, 6000);
+  for (const cat of cats) {
+    updateRunState(cat, { status: 'weekly', startedMs: Date.now() }); writeProgress();
+    const built = await buildCategory(leadPage, cat, CATS[cat], leaderTok);
+    perCat[cat] = built;
+    let hits = 0;
+    for (const r of built.focus) {
+      const c = cache[r.uid];
+      if (c) {
+        if (c.rating != null) r.rating = c.rating;
+        if (c.reviews != null) r.reviews = c.reviews;
+        if (c.contentRating) r.contentRating = c.contentRating;
+        if (c.release) r.release = c.release;
+        if (c.country) { r.country = c.country; hits++; }
+      }
+    }
+    updateRunState(cat, { curRows: built.curRows.length, focus_count: built.focus.length }); writeProgress();
+    console.log(`  [${cat}] 榜单完成 记录${built.records.length} 重点${built.focus.length} 缓存命中国别${hits}`);
+  }
 
-  // 1) 拉 6 周（当天内优先复用首页榜单缓存）
-  let weekData = loadWeeklyCache();
-  // 预加载回退 tags（空 tags 产品用品类 tag 链补全）
-  const fb = fallbackTags(CATEGORY.tag);
+  // ===== 阶段2：国别采集，3 账号并行领品类（一品类只由一个账号采）=====
+  const LIST_ONLY = process.env.LIST_ONLY === '1';
+  if (!LIST_ONLY) {
+    const queue = cats.filter(cat => perCat[cat].focus.some(r => !r.country));
+    const workerAccs = tokenPool.slice(0, 3);
+    console.log(`\n国别采集：${queue.length} 个品类待采，${workerAccs.length} 账号并行（间隔 ${DC_GAP}ms）`);
+    await Promise.all(workerAccs.map(acc => enrichWorker(ctx, acc, queue, perCat, cache, DC_COOLDOWN, DC_GAP)));
+  }
 
+  // ===== 阶段3：潜力新品标记 + 写各品类 JSON =====
+  for (const cat of cats) {
+    const { records, focus } = perCat[cat];
+    for (const r of focus) { if (r._pendingNotable && r.country && r.country.mature >= 25) { r._focus = true; r._focusReasons.push('潜力新品'); } delete r._pendingNotable; }
+    fs.writeFileSync(OUT_JSON_OF(cat), JSON.stringify({ category: { label: cat, tag: CATS[cat] }, weeks: WEEKS, generatedAt: new Date().toISOString(), marketDef: { mature: MATURE_LIST, emerging: EMERGING_LIST }, records, focus }, null, 2), 'utf-8');
+    const pending = focus.filter(r => !r.country);
+    const started = loadRunState()[cat]?.startedMs || RUN_T0;
+    updateRunState(cat, { status: 'done', enrich_done: true, enrich_pending: pending.map(r => `#${r.rank}`), durationMs: Date.now() - started });
+    console.log(`📁 ${OUT_JSON_OF(cat)} | 记录${records.length} 重点${focus.length} 缺国别${pending.length}`);
+  }
+  writeProgress();
+  await ctx.close();
+}
+
+// 采一个品类的榜单 6 周 + 组装 records/focus（榜单用 leaderTok=A）
+async function buildCategory(page, cat, tag, leaderTok) {
+  const fb = fallbackTags(tag);
+  let weekData = loadWeeklyCache(cat);
   if (weekData && Object.keys(weekData).length) {
-    console.log(`♻️ 复用当天首页缓存: ${WEEKLY_CACHE_FILE}`);
-    updateRunState({ weekly_done: true, weekly_rows: Object.fromEntries(Object.entries(weekData).map(([k,v]) => [k, (v.rows||[]).length])) });
+    console.log(`  ♻️ [${cat}] 复用榜单缓存`);
   } else {
-    weekData = {};
-    let anyErr = false;
+    weekData = {}; let anyErr = false;
     for (const d of WEEKS) {
-      const w = await fetchWeek(page, d, (pickToken() || tokenPool[0]).token);
-      if (w.err) { const hint = w.err === 429 ? ' (限流)' : (w.err === 400 && /max limit/i.test(w.body || '') ? ' (未认证/topDepth 超限)' : (w.err === 401 ? ' (登录失效)' : '')); console.log(`  ⚠️ ${d} 失败 ${w.err}${hint} ${w.body || ''}`); weekData[d] = { rows: [] }; anyErr = true; }
-      else { console.log(`  ✅ ${d} -> ${w.rows.length} 行 (#1 ${w.rows[0]?.name})`); weekData[d] = w; }
-      await sleepRandom(2000, 5000);
+      let w = await fetchWeek(page, d, tag, leaderTok);
+      for (let att = 0; att < 2 && w.err; att++) { await sleep(2000); w = await fetchWeek(page, d, tag, leaderTok); } // 榜单偶发失败重试
+      if (w.err) { const hint = w.err === 429 ? ' (限流)' : (w.err === 400 && /max limit/i.test(w.body || '') ? ' (未认证/topDepth 超限)' : (w.err === 401 ? ' (登录失效)' : '')); console.log(`  ⚠️ [${cat}] ${d} 失败 ${w.err}${hint} ${w.body || ''}`); weekData[d] = { rows: [] }; anyErr = true; }
+      else { console.log(`  ✅ [${cat}] ${d} -> ${w.rows.length} 行`); weekData[d] = w; }
+      await sleepRandom(1000, 2500);
     }
-    // 严格：任一周失败或本周为空则不写缓存（避免脏缓存被下次复用），本次仍用内存数据继续产出
     const curEmpty = !(weekData[WEEKS[0]].rows && weekData[WEEKS[0]].rows.length);
-    if (anyErr || curEmpty) {
-      console.log('  ⚠️ 有周抓取失败或本周为空，跳过写当天缓存（下次重拉）');
-    } else {
-      saveWeeklyCache(weekData);
-    }
-    updateRunState({ weekly_done: true, weekly_rows: Object.fromEntries(Object.entries(weekData).map(([k,v]) => [k, (v.rows||[]).length])) });
+    if (anyErr || curEmpty) console.log(`  ⚠️ [${cat}] 有失败/空周，不写缓存`);
+    else saveWeeklyCache(cat, weekData);
   }
-
-  // 对空 tags 产品回退品类 tag 路径
-  for (const d of WEEKS) {
-    for (const row of (weekData[d]?.rows || [])) {
-      if (!row.tags || row.tags.length === 0) row.tags = fb;
-    }
-  }
+  for (const d of WEEKS) for (const row of (weekData[d]?.rows || [])) if (!row.tags || row.tags.length === 0) row.tags = fb;
 
   const cur = WEEKS[0], prev = WEEKS[1];
   const curRows = weekData[cur].rows;
-  updateRunState({ status: 'weekly', curRows: curRows.length }); writeProgress();
-  const rankMaps = {}; // date -> uid->rank
-  for (const d of WEEKS) { rankMaps[d] = new Map(weekData[d].rows.map(r => [r.uid, r.rank])); }
-
-  // 2) 组装本周记录
+  const rankMaps = {};
+  for (const d of WEEKS) rankMaps[d] = new Map(weekData[d].rows.map(r => [r.uid, r.rank]));
   const records = curRows.map(r => {
     const prevRank = rankMaps[prev].get(r.uid) ?? null;
     const lastWeek = prevRank != null ? prevRank : (r.diff != null ? r.rank + r.diff : null);
     const isNew = prevRank == null && (r.diff == null);
-    const change = lastWeek != null ? (lastWeek - r.rank) : null; // 正=上升
+    const change = lastWeek != null ? (lastWeek - r.rank) : null;
     const relPct = (lastWeek && lastWeek > 0 && change != null) ? Math.abs(change) / lastWeek : null;
-    // 排名轨迹 + Top50 稳定性（按 WEEKS 新→旧）
     const history = WEEKS.map(d => rankMaps[d].get(r.uid) ?? null);
     const inTop50 = history.map(h => h != null && h <= 50);
     let streak50 = 0; for (const b of inTop50) { if (b) streak50++; else break; }
     const weeksOnBoard = history.filter(h => h != null).length;
     return { ...r, url: buildAppUrl(r.name, r.storeIds), lastWeek, isNew, change, relPct, history, streak50, weeksOnBoard };
   });
-
-  // 已知大厂（用于判断"发行商陌生"）
   const BIG_PUBS = ['voodoo','saygames','supercent','azur','miniclip','rollic','kwalee','homa','habby','lion studios','crazylabs','good job games','bytedance','tencent','outfit7','zynga','playgendary','ketchapp','sybo','gameloft','tap2play','unico','poki','yso','abi global','mattel','popcore','geisha','bestplay','freeplay','aiby'];
-  const isBig = p => BIG_PUBS.some(b => (p||'').toLowerCase().includes(b));
-
-  // 3) 重点集（按本周排名分档，只看排名上升幅度；外加新品）
-  // 前5:↑≥3 | 6-10:↑≥5 | 11-50:↑≥10 | 51-100:↑≥20 | 101-200:↑≥30 | >200:不选
-  const riseThreshold = (rank) => {
-    if (rank <= 5) return 3;
-    if (rank <= 10) return 5;
-    if (rank <= 50) return 10;
-    if (rank <= 100) return 20;
-    if (rank <= 200) return 30;
-    return Infinity;
-  };
+  const isBig = p => BIG_PUBS.some(b => (p || '').toLowerCase().includes(b));
+  const riseThreshold = (rank) => { if (rank <= 5) return 3; if (rank <= 10) return 5; if (rank <= 50) return 10; if (rank <= 100) return 20; if (rank <= 200) return 30; return Infinity; };
   const focus = records.filter(r => {
     const thr = riseThreshold(r.rank);
-    const riser = r.change != null && r.change >= thr;          // 只升，达到分档阈值
-    // 首次进前100：本周≤100 且此前各周（history[1..]）从未 ≤100
+    const riser = r.change != null && r.change >= thr;
     const priorTop100 = r.history.slice(1).some(h => h != null && h <= 100);
     const firstInTop100 = r.rank <= 100 && !priorTop100;
     r._flags = [];
@@ -403,124 +420,61 @@ async function main() {
     if (riser) r._flags.push(`↑${r.change}（档≥${thr}）`);
     if (firstInTop100 && !isBig(r.publisher)) r._flags.push('发行商陌生');
     r._firstInTop100 = firstInTop100;
-
-    // 备注候选（不论是否重点关注，都按统一格式输出）
     const reasons = [];
-    if (r.change != null && r.change > 0 && r.rank > 0) {
-      const notePct = (r.change / r.rank) * 100;
-      reasons.push(`排名上升${r.change}名（+${notePct.toFixed(0)}%）`);
-    }
-    // 重点关注标记
-    // 维度1：排名变化突出 — 前10标记绝对值↑≥5，10-200标记((上周-本周)/本周)>50%
-    if (r.rank <= 10 && r.change != null && r.change >= 5) {
-      r._focus = true;
-    } else if (r.rank > 10 && r.rank <= 200 && r.change != null && r.rank > 0) {
-      const focusPct = r.change / r.rank;
-      if (focusPct > 0.5) r._focus = true;
-    }
-    // 维度2：潜力新品候选 — 首次进Top50-100 + 发行商陌生（成熟市场占比等 enrich 后判定）
-    if (r.rank > 50 && r.rank <= 100 && firstInTop100 && !isBig(r.publisher)) {
-      r._pendingNotable = true;
-    }
+    if (r.change != null && r.change > 0 && r.rank > 0) { const notePct = (r.change / r.rank) * 100; reasons.push(`排名上升${r.change}名（+${notePct.toFixed(0)}%）`); }
+    if (r.rank <= 10 && r.change != null && r.change >= 5) { r._focus = true; }
+    else if (r.rank > 10 && r.rank <= 200 && r.change != null && r.rank > 0) { const focusPct = r.change / r.rank; if (focusPct > 0.5) r._focus = true; }
+    if (r.rank > 50 && r.rank <= 100 && firstInTop100 && !isBig(r.publisher)) { r._pendingNotable = true; }
     r._focusReasons = reasons;
-
     return riser || firstInTop100;
   });
-  console.log(`\n重点集 ${focus.length} 个（共 ${records.length}），开始 enrich…`);
-  updateRunState({ focus_count: focus.length }); writeProgress();
+  return { weekData, records, focus, curRows };
+}
 
-  // 4) enrich 重点集（持久化缓存 + 自适应限速，规避 data-countries 限流）
-  const cache = loadCache();
-  let hits = 0;
-  for (const r of focus) {
-    const c = cache[r.uid];
-    if (c) {
-      if (c.rating != null) r.rating = c.rating;
-      if (c.reviews != null) r.reviews = c.reviews;
-      if (c.contentRating) r.contentRating = c.contentRating;
-      if (c.release) r.release = c.release;
-      if (c.country) { r.country = c.country; hits++; }
+// 国别采集 worker：从品类队列动态领取品类，用本账号(acc)采该品类所有重点 app 的国别
+async function enrichWorker(ctx, acc, queue, perCat, cache, cooldown, gap) {
+  const page = await ctx.newPage();
+  try {
+    await page.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await sleep(2000);
+    while (queue.length) {
+      const cat = queue.shift();
+      if (cat == null) break;
+      const todo = perCat[cat].focus.filter(r => !r.country);
+      console.log(`  [${acc.dir}] 领取品类 ${cat}：待采 ${todo.length}`);
+      updateRunState(cat, { status: 'enrich', enrich_i: 0, enrich_n: todo.length, cur_app: `[${acc.dir}]` }); writeProgress();
+      let i = 0;
+      for (const r of todo) {
+        i++;
+        await enrichOneCat(page, r, acc, cache, cooldown);
+        updateRunState(cat, { enrich_i: i, enrich_n: todo.length, cur_app: `#${r.rank} ${r.name} [${acc.dir}]` }); writeProgress();
+        await sleep(gap);
+      }
+      console.log(`  [${acc.dir}] 品类 ${cat} 采集完成`);
     }
-  }
-  console.log(`\n缓存命中国别 ${hits}/${focus.length}，待补 ${focus.length - hits} 个`);
+  } finally { await page.close().catch(() => {}); }
+}
 
-  // 逐个处理：data-countries 撞 429 就切下一个账号 token；全部账号冷却时才等待
-  async function enrichOneWithWait(r, i, n) {
-    let tries = 0; const maxTries = tokenPool.length * 3 + 3;
-    while (tries++ < maxTries) {
-      let t = pickToken();
-      if (!t) {
-        const soon = Math.min(...tokenPool.map(x => x.cooldownUntil)) - Date.now();
-        const waitMs = Math.max(soon, 1000);
-        console.log(`  [${i}/${n}] #${r.rank} ${r.name} | 全部账号冷却 → 等 ${Math.round(waitMs / 1000)}s`);
-        await sleep(waitMs);
-        continue;
-      }
-      let e = null;
-      try { e = await enrichApp(page, r.uid, r.storeIds, r.rating != null, t.token); } catch (err) { /* 网络异常，换个账号再试 */ }
-      if (e) {
-        if (e.rating != null) r.rating = e.rating;
-        if (e.reviews != null) r.reviews = e.reviews;
-        if (e.contentRating) r.contentRating = e.contentRating;
-        if (e.released) r.release = e.released;
-        if (e.rateLimited) {
-          t.cooldownUntil = Date.now() + DC_COOLDOWN;
-          console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ⚠️ ${t.dir} 限流(429) → 冷却 ${Math.round(DC_COOLDOWN / 1000)}s，切账号`);
-          continue;
-        }
-        const cs = summarizeCountries(e.countries);
-        if (cs) r.country = cs;
-        cache[r.uid] = { rating: r.rating, reviews: r.reviews, contentRating: r.contentRating, release: r.release, country: r.country };
-        saveCache(cache);
-      }
-      if (r.country) {
-        console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ★${r.rating?.toFixed?.(2) || '-'} | ${r.country.dlCount}国 [${t.dir}]`);
-        return true;
-      }
-      if (e && !e.rateLimited) { // 非限流但无国别 → 该 app 确实没有国别数据
-        console.log(`  [${i}/${n}] #${r.rank} ${r.name} | 无国别数据，跳过`);
-        return false;
-      }
-      // e 为 null(网络异常) → 继续换账号重试
+// 采单个 app 国别：固定账号 acc；撞 429 等待冷却后重试（品类归属固定，不切账号）
+async function enrichOneCat(page, r, acc, cache, cooldown) {
+  const MAXA = 6;
+  for (let a = 0; a < MAXA; a++) {
+    let e = null;
+    try { e = await enrichApp(page, r.uid, r.storeIds, r.rating != null, acc.token); } catch { }
+    if (e) {
+      if (e.rating != null) r.rating = e.rating;
+      if (e.reviews != null) r.reviews = e.reviews;
+      if (e.contentRating) r.contentRating = e.contentRating;
+      if (e.released) r.release = e.released;
+      if (e.rateLimited) { console.log(`  [${acc.dir}] #${r.rank} ${r.name} 429 → 等 ${Math.round(cooldown / 1000)}s`); await sleep(cooldown); continue; }
+      const cs = summarizeCountries(e.countries);
+      if (cs) r.country = cs;
+      cache[r.uid] = { rating: r.rating, reviews: r.reviews, contentRating: r.contentRating, release: r.release, country: r.country };
+      saveCache(cache);
     }
-    console.log(`  [${i}/${n}] #${r.rank} ${r.name} | ❌ 重试超限，跳过`);
-    return false;
+    if (r.country) { console.log(`  [${acc.dir}] #${r.rank} ${r.name} | ★${r.rating?.toFixed?.(2) || '-'} | ${r.country.dlCount}国`); return; }
+    if (e && !e.rateLimited) return; // 无国别数据
   }
-
-  // LIST_ONLY=1：只产出清单（榜单+筛选+排序），跳过慢速国别采集
-  const LIST_ONLY = process.env.LIST_ONLY === '1';
-  if (!LIST_ONLY) {
-    const todo = focus.filter(r => !r.country);
-    console.log(`\n开始逐个补国别：${todo.length} 个（成功后随机停 2-5s；缺则固定 120s 退避重试）`);
-    let i = 0;
-    for (const r of todo) {
-      i++;
-      updateRunState({ status: 'enrich', enrich_i: i, enrich_n: todo.length, cur_app: `#${r.rank} ${r.name}` });
-      writeProgress();
-      const ok = await enrichOneWithWait(r, i, todo.length);
-      if (ok) await sleepRandom(2000, 5000);   // 成功后随机 2-5s 间隔再下一个
-    }
-    const pending = focus.filter(r => !r.country);
-    console.log(`\nenrich 完成，仍缺国别: ${pending.length}（${pending.map(r=>'#'+r.rank).join(' ')}）`);
-    updateRunState({ enrich_done: true, focus_count: focus.length, enrich_pending: pending.map(r => `#${r.rank}`) });
-  } else {
-    console.log(`\n[LIST_ONLY] 仅产出清单，跳过国别采集。重点 ${focus.length} 个`);
-  }
-  // 潜力新品/成熟市场标记（需国别，放在 enrich 之后统一处理）
-  for (const r of focus) {
-    if (r._pendingNotable && r.country && r.country.mature >= 25) {
-      r._focus = true;
-      r._focusReasons.push('潜力新品');
-    }
-    delete r._pendingNotable;
-  }
-
-  fs.writeFileSync(OUT_JSON, JSON.stringify({ category: CATEGORY, weeks: WEEKS, generatedAt: new Date().toISOString(),
-    marketDef: { mature: MATURE_LIST, emerging: EMERGING_LIST }, records, focus }, null, 2), 'utf-8');
-  updateRunState({ status: 'done', weekly_done: true, enrich_done: true, xlsx_done: false, output: OUT_JSON, records: records.length, focus: focus.length, durationMs: Date.now() - RUN_T0 });
-  writeProgress();
-  console.log('\n📁', OUT_JSON, '| 全量', records.length, '| 重点', focus.length);
-  await ctx.close();
 }
 // 登录态自检：headless 探测 topDepth=1000 是否 200（能识别未登录/已过期），供 ps1 编排调用
 // 检查单个 profile(由 APPMAGIC_USERDATA_DIR 指定)的登录态；供 ps1 逐账号自检+补登
@@ -539,7 +493,7 @@ async function checkAuth() {
       const tok = (localStorage.getItem('datamagic.token') || '').replace(/^"|"$/g, '');
       if (!tok) return false;
       try { const r = await fetch(`/api/v2/top/united-apps?aggregation=week&topDepth=1000&store=5&country=WW&date=${date}&tag=${tag}`, { headers: { Authorization: 'Bearer ' + tok } }); return r.ok; } catch { return false; }
-    }, { date: WEEKS[0], tag: CATEGORY.tag });
+    }, { date: WEEKS[0], tag: Object.values(CATS)[0] });
     console.log(ok ? `✅ ${label} 登录态有效` : `❌ ${label} 未登录/已过期`);
     await ctx.close();
     process.exit(ok ? 0 : 1);
@@ -553,5 +507,5 @@ if (process.env.CHECK_AUTH === '1') {
   writeProgress();
   console.log('progress.html refreshed:', PROGRESS_HTML);
 } else {
-  main().catch(e => { updateRunState({ status: 'error', error: String(e) }); writeProgress(); console.error('Fatal:', e); process.exit(1); });
+  main().catch(e => { try { for (const c of Object.keys(CATS)) updateRunState(c, { status: 'error', error: String(e) }); } catch {} writeProgress(); console.error('Fatal:', e); process.exit(1); });
 }
