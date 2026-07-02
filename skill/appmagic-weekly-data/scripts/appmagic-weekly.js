@@ -469,7 +469,12 @@ async function enrichOneCat(page, r, acc, cache, cooldown) {
       if (e.reviews != null) r.reviews = e.reviews;
       if (e.contentRating) r.contentRating = e.contentRating;
       if (e.released) r.release = e.released;
-      if (e.rateLimited) { console.log(`  [${acc.dir}] #${r.rank} ${r.name} 429 → 等 ${Math.round(cooldown / 1000)}s`); await sleep(cooldown); continue; }
+      if (e.rateLimited) {
+        console.log(`  [${acc.dir}] #${r.rank} ${r.name} 429 → 等 ${Math.round(cooldown / 1000)}s`);
+        const until = Date.now() + cooldown;
+        while (Date.now() < until) { writeProgress(); await sleep(Math.min(5000, until - Date.now())); } // 冷却期每5s刷看板，避免假死
+        continue;
+      }
       const cs = summarizeCountries(e.countries);
       if (cs) r.country = cs;
       cache[r.uid] = { rating: r.rating, reviews: r.reviews, contentRating: r.contentRating, release: r.release, country: r.country };
