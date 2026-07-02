@@ -68,7 +68,7 @@ const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
 const CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-enrich-cache.json`);
 const RUN_STATE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-run-state.json`);
 function loadCache() { if (FORCE_REFRESH) return {}; try { return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8')); } catch { return {}; } }
-function saveCache(c) { fs.writeFileSync(CACHE_FILE, JSON.stringify(c), 'utf-8'); }
+function saveCache(c) { try { fs.writeFileSync(CACHE_FILE, JSON.stringify(c), 'utf-8'); } catch {} } // 并发写偶发 Windows EBUSY，吞掉；内存 cache 全量，下次写补上
 function loadWeeklyCache(cat) {
   if (FORCE_REFRESH) return null;
   try {
@@ -80,7 +80,7 @@ function loadWeeklyCache(cat) {
 }
 function saveWeeklyCache(cat, c) { fs.writeFileSync(WEEKLY_CACHE_FILE_OF(cat), JSON.stringify(c), 'utf-8'); }
 function loadRunState() { try { return JSON.parse(fs.readFileSync(RUN_STATE_FILE, 'utf-8')); } catch { return {}; } }
-function saveRunState(s) { fs.writeFileSync(RUN_STATE_FILE, JSON.stringify(s, null, 2), 'utf-8'); }
+function saveRunState(s) { try { fs.writeFileSync(RUN_STATE_FILE, JSON.stringify(s, null, 2), 'utf-8'); } catch {} } // 并发写偶发 EBUSY，吞掉
 function updateRunState(cat, patch) {
   const s = loadRunState();
   s[cat] = { ...(s[cat] || {}), ...patch, updatedAt: new Date().toISOString() };
