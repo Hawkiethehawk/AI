@@ -12,12 +12,13 @@ function latestProgressFile() {
   const base = path.resolve(PROJECT_DIR, 'output', 'folder');
   let dirs = [];
   try { dirs = fs.readdirSync(base).filter(d => /^AppMagic-\d+$/.test(d)); } catch { return null; }
-  dirs.sort().reverse(); // 最新周锚点在前
+  // 取最近修改的 progress.json（= 当前正在跑的那一周，而非目录名最大的）
+  let best = null, bestT = -1;
   for (const d of dirs) {
     const p = path.join(base, d, 'appmagic-progress.json');
-    if (fs.existsSync(p)) return p;
+    try { const t = fs.statSync(p).mtimeMs; if (t > bestT) { bestT = t; best = p; } } catch {}
   }
-  return null;
+  return best;
 }
 
 const PAGE = `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>AppMagic 采集进度</title>
