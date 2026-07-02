@@ -1,4 +1,0 @@
-interface:
-  display_name: "IAP Monetization Expert"
-  short_description: "Design paywalls, pricing, funnels, and subscription ops"
-  default_prompt: "Use $iap-monetization-expert to review a mobile app's subscription model and recommend the highest-impact monetization fixes."
