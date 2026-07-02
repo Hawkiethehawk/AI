@@ -65,10 +65,11 @@ const OUT_JSON_OF = cat => path.resolve(OUTPUT_DATA_DIR, `appmagic-${cat}-weekly
 const WEEKLY_CACHE_FILE_OF = cat => path.resolve(OUTPUT_DATA_DIR, `appmagic-weekly-cache-${cat}.json`);
 const TODAY = new Date().toISOString().split('T')[0];
 const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
-const CACHE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-enrich-cache.json`);
+const ENRICH_CACHE_OF = cat => path.resolve(OUTPUT_DATA_DIR, `appmagic-enrich-cache-${cat}.json`);
 const RUN_STATE_FILE = path.resolve(OUTPUT_DATA_DIR, `appmagic-run-state.json`);
-function loadCache() { if (FORCE_REFRESH) return {}; try { return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8')); } catch { return {}; } }
-function saveCache(c) { try { fs.writeFileSync(CACHE_FILE, JSON.stringify(c), 'utf-8'); } catch {} } // 并发写偶发 Windows EBUSY，吞掉；内存 cache 全量，下次写补上
+// 每品类独立国别缓存：{ complete: 该品类是否采完, apps: {uid:{rating,country,...}} }。仅领取该品类的账号 worker 写它 → 无并发写同文件
+function loadCatCache(cat) { if (FORCE_REFRESH) return { complete: false, apps: {} }; try { const c = JSON.parse(fs.readFileSync(ENRICH_CACHE_OF(cat), 'utf-8')); return { complete: !!c.complete, apps: c.apps || {} }; } catch { return { complete: false, apps: {} }; } }
+function saveCatCache(cat, c) { try { fs.writeFileSync(ENRICH_CACHE_OF(cat), JSON.stringify(c), 'utf-8'); } catch {} }
 function loadWeeklyCache(cat) {
   if (FORCE_REFRESH) return null;
   try {
@@ -321,7 +322,10 @@ async function main() {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
     viewport: { width: 1920, height: 1080 },
   });
-  const cache = loadCache();
+  // 各品类 cache 合并供命中 + 记录已完成品类(断点续采：完成的品类整体跳过)
+  const completeCats = new Set();
+  const merged = {};
+  for (const cat of cats) { const cc = loadCatCache(cat); if (cc.complete) completeCats.add(cat); Object.assign(merged, cc.apps); }
   const perCat = {};
 
   // ===== 阶段1：榜单(A) + 组装 records/focus（串行，量小）=====
@@ -334,7 +338,7 @@ async function main() {
     perCat[cat] = built;
     let hits = 0;
     for (const r of built.focus) {
-      const c = cache[r.uid];
+      const c = merged[r.uid];
       if (c) {
         if (c.rating != null) r.rating = c.rating;
         if (c.reviews != null) r.reviews = c.reviews;
@@ -350,10 +354,10 @@ async function main() {
   // ===== 阶段2：国别采集，3 账号并行领品类（一品类只由一个账号采）=====
   const LIST_ONLY = process.env.LIST_ONLY === '1';
   if (!LIST_ONLY) {
-    const queue = cats.filter(cat => perCat[cat].focus.some(r => !r.country));
+    const queue = cats.filter(cat => !completeCats.has(cat) && perCat[cat].focus.some(r => !r.country));
     const workerAccs = tokenPool.slice(0, 3);
-    console.log(`\n国别采集：${queue.length} 个品类待采，${workerAccs.length} 账号并行（间隔 ${DC_GAP}ms）`);
-    await Promise.all(workerAccs.map(acc => enrichWorker(ctx, acc, queue, perCat, cache, DC_COOLDOWN, DC_GAP)));
+    console.log(`\n国别采集：${queue.length} 个品类待采(已完成 ${[...completeCats].join(',') || '无'})，${workerAccs.length} 账号并行（间隔 ${DC_GAP}ms）`);
+    await Promise.all(workerAccs.map(acc => enrichWorker(ctx, acc, queue, perCat, DC_COOLDOWN, DC_GAP)));
   }
 
   // ===== 阶段3：潜力新品标记 + 写各品类 JSON =====
@@ -432,7 +436,7 @@ async function buildCategory(page, cat, tag, leaderTok) {
 }
 
 // 国别采集 worker：从品类队列动态领取品类，用本账号(acc)采该品类所有重点 app 的国别
-async function enrichWorker(ctx, acc, queue, perCat, cache, cooldown, gap) {
+async function enrichWorker(ctx, acc, queue, perCat, cooldown, gap) {
   const page = await ctx.newPage();
   try {
     await page.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -440,16 +444,24 @@ async function enrichWorker(ctx, acc, queue, perCat, cache, cooldown, gap) {
     while (queue.length) {
       const cat = queue.shift();
       if (cat == null) break;
+      const catCache = loadCatCache(cat); // 续采：已采 app 在 apps 里
+      for (const r of perCat[cat].focus) {
+        if (r.country) continue;
+        const c = catCache.apps[r.uid];
+        if (c) { if (c.rating != null) r.rating = c.rating; if (c.reviews != null) r.reviews = c.reviews; if (c.contentRating) r.contentRating = c.contentRating; if (c.release) r.release = c.release; if (c.country) r.country = c.country; }
+      }
       const todo = perCat[cat].focus.filter(r => !r.country);
       console.log(`  [${acc.dir}] 领取品类 ${cat}：待采 ${todo.length}`);
       updateRunState(cat, { status: 'enrich', enrich_i: 0, enrich_n: todo.length, cur_app: `[${acc.dir}]` }); writeProgress();
       let i = 0;
       for (const r of todo) {
         i++;
-        await enrichOneCat(page, r, acc, cache, cooldown);
+        await enrichOneCat(page, r, acc, catCache, cooldown);
+        saveCatCache(cat, catCache); // 仅本 worker 写本品类文件，无并发
         updateRunState(cat, { enrich_i: i, enrich_n: todo.length, cur_app: `#${r.rank} ${r.name} [${acc.dir}]` }); writeProgress();
         await sleep(gap);
       }
+      catCache.complete = true; saveCatCache(cat, catCache); // 完成标识 → 下次整体跳过
       const started = loadRunState()[cat]?.startedMs || RUN_T0;
       updateRunState(cat, { status: 'done', enrich_pending: perCat[cat].focus.filter(x => !x.country).map(x => `#${x.rank}`), durationMs: Date.now() - started });
       writeProgress();
@@ -459,7 +471,7 @@ async function enrichWorker(ctx, acc, queue, perCat, cache, cooldown, gap) {
 }
 
 // 采单个 app 国别：固定账号 acc；撞 429 等待冷却后重试（品类归属固定，不切账号）
-async function enrichOneCat(page, r, acc, cache, cooldown) {
+async function enrichOneCat(page, r, acc, catCache, cooldown) {
   const MAXA = 6;
   for (let a = 0; a < MAXA; a++) {
     let e = null;
@@ -477,8 +489,7 @@ async function enrichOneCat(page, r, acc, cache, cooldown) {
       }
       const cs = summarizeCountries(e.countries);
       if (cs) r.country = cs;
-      cache[r.uid] = { rating: r.rating, reviews: r.reviews, contentRating: r.contentRating, release: r.release, country: r.country };
-      saveCache(cache);
+      catCache.apps[r.uid] = { rating: r.rating, reviews: r.reviews, contentRating: r.contentRating, release: r.release, country: r.country };
     }
     if (r.country) { console.log(`  [${acc.dir}] #${r.rank} ${r.name} | ★${r.rating?.toFixed?.(2) || '-'} | ${r.country.dlCount}国`); return; }
     if (e && !e.rateLimited) return; // 无国别数据
