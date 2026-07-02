@@ -450,6 +450,9 @@ async function enrichWorker(ctx, acc, queue, perCat, cache, cooldown, gap) {
         updateRunState(cat, { enrich_i: i, enrich_n: todo.length, cur_app: `#${r.rank} ${r.name} [${acc.dir}]` }); writeProgress();
         await sleep(gap);
       }
+      const started = loadRunState()[cat]?.startedMs || RUN_T0;
+      updateRunState(cat, { status: 'done', enrich_pending: perCat[cat].focus.filter(x => !x.country).map(x => `#${x.rank}`), durationMs: Date.now() - started });
+      writeProgress();
       console.log(`  [${acc.dir}] 品类 ${cat} 采集完成`);
     }
   } finally { await page.close().catch(() => {}); }
