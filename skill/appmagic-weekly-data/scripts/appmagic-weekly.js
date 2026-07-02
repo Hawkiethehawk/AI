@@ -347,7 +347,11 @@ async function main() {
         if (c.country) { r.country = c.country; hits++; }
       }
     }
-    updateRunState(cat, { curRows: built.curRows.length, focus_count: built.focus.length }); writeProgress();
+    updateRunState(cat, { curRows: built.curRows.length, focus_count: built.focus.length });
+    if (completeCats.has(cat) || built.focus.every(r => r.country)) { // 续采命中/已完成品类：立即标 done，看板即时反映
+      updateRunState(cat, { status: 'done', enrich_pending: built.focus.filter(r => !r.country).map(r => `#${r.rank}`), durationMs: Date.now() - (loadRunState()[cat]?.startedMs || RUN_T0) });
+    }
+    writeProgress();
     console.log(`  [${cat}] 榜单完成 记录${built.records.length} 重点${built.focus.length} 缓存命中国别${hits}`);
   }
 
