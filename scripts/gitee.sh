@@ -11,6 +11,17 @@ TOKEN_FILE="$HOME/.claude/.gitee_token"
 OWNER="configured targetthehawk"; NAME="AI"; BRANCH="master"
 API="https://gitee.com/api/v5"
 
+repo_url(){ printf 'https://gitee.com/%s/%s.git' "$OWNER" "$NAME"; }
+auth_repo_url(){
+  local t
+  t="$(read_token)"
+  if [ -n "$t" ]; then
+    printf 'https://oauth2:%s@gitee.com/%s/%s.git' "$t" "$OWNER" "$NAME"
+  else
+    repo_url
+  fi
+}
+
 read_token(){ [ -f "$TOKEN_FILE" ] && tr -d ' \r\n' < "$TOKEN_FILE"; }
 need_token(){ local t; t="$(read_token)"; [ -n "$t" ] || { echo "未配置 token，先运行: gitee.sh setup <token>" >&2; return 1; }; printf '%s' "$t"; }
 versions(){ for d in "$REPO"/skill/*/; do [ -f "$d/SKILL.md" ] && printf '  %-26s %s\n' "$(basename "$d")" "$(grep -m1 '^version:' "$d/SKILL.md" | awk '{print $2}')"; done; }
@@ -37,7 +48,7 @@ case "$cmd" in
     echo "== 与远程：领先 $ahead / 落后 $behind =="
     ;;
   pull)
-    git -C "$REPO" pull --rebase origin "$BRANCH"
+    git -C "$REPO" pull --rebase "$(auth_repo_url)" "$BRANCH"
     ;;
   push)
     msg="${1:-update}"
@@ -47,7 +58,7 @@ case "$cmd" in
     done
     git -C "$REPO" add -A -- "${add_targets[@]}"   # 同步 skill/脚本/project 真源/archived，不误传根 output/ 等未跟踪目录
     git -C "$REPO" commit -m "$msg" || echo "(无改动可提交)"
-    git -C "$REPO" pull --rebase origin "$BRANCH" && git -C "$REPO" push origin "$BRANCH"
+    git -C "$REPO" pull --rebase "$(auth_repo_url)" "$BRANCH" && git -C "$REPO" push "$(auth_repo_url)" "$BRANCH"
     ;;
   api)
     path="${1:-/user}"; t="$(need_token)" || exit 1
