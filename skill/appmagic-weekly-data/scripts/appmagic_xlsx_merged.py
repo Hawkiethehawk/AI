@@ -16,16 +16,11 @@ from appmagic_xlsx_common import (
     NOTE_FONT,
     build_column_index,
     apply_focus_row,
+    current_monday,
 )
 
 
 PROJECT_DIR = Path(os.environ.get('APPMAGIC_PROJECT_DIR', Path.cwd())).resolve()
-
-
-def current_monday():
-    import datetime
-    d = datetime.datetime.utcnow().date()
-    return (d - datetime.timedelta(days=d.weekday())).isoformat()
 
 
 def u(*codes):
@@ -63,15 +58,13 @@ def main():
     anchor = os.environ.get('WEEK_ANCHOR') or current_monday()
     mon = anchor.replace('-', '')
     out_base = PROJECT_DIR / 'output' / 'folder' / f'AppMagic-{mon}'
-    data_dir = out_base
-    xlsx_dir = out_base
 
     groups = []
     mdef = None
     gen = ''
     anchors = {}
     for cat in ORDER:
-        d = load(cat, data_dir)
+        d = load(cat, out_base)
         if not d:
             continue
         mdef = mdef or d.get('marketDef')
@@ -138,8 +131,8 @@ def main():
 
     ws.freeze_panes = ws.cell(head_row + 1, 4)
     ws.auto_filter.ref = f'A{head_row}:{get_column_letter(len(COLS))}{row - 1}'
-    xlsx_dir.mkdir(parents=True, exist_ok=True)
-    out = xlsx_dir / f'AppMagic-{mon}.xlsx'
+    out_base.mkdir(parents=True, exist_ok=True)
+    out = out_base / f'AppMagic-{mon}.xlsx'
     wb.save(out)
     print('saved', out, '| 品类', len(groups), '| 总行', row - head_row - 1)
 

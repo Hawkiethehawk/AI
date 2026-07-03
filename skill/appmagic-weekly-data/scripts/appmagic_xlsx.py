@@ -16,32 +16,25 @@ from appmagic_xlsx_common import (
     NOTE_FONT,
     build_column_index,
     apply_focus_row,
+    current_monday,
 )
 
 
 PROJECT_DIR = Path(os.environ.get('APPMAGIC_PROJECT_DIR', Path.cwd())).resolve()
 
 
-def current_monday():
-    import datetime
-    d = datetime.datetime.utcnow().date()
-    return (d - datetime.timedelta(days=d.weekday())).isoformat()
-
-
 def main():
     anchor = os.environ.get('WEEK_ANCHOR') or current_monday()
     mon = anchor.replace('-', '')
     out_base = PROJECT_DIR / 'output' / 'folder' / f'AppMagic-{mon}'
-    data_dir = out_base
-    xlsx_dir = out_base
     default_cat = ''.join(chr(x) for x in [0x8D85, 0x4F11, 0x95F2])
     cat = sys.argv[1] if len(sys.argv) > 1 else default_cat
-    src = data_dir / f'appmagic-{cat}-weekly.json'
+    src = out_base / f'appmagic-{cat}-weekly.json'
 
     data = json.load(open(src, encoding='utf-8'))
     weeks = data['weeks']
     mon = (weeks[0] or '').replace('-', '') or mon
-    out = xlsx_dir / f'AppMagic-{cat}-{mon}.xlsx'
+    out = out_base / f'AppMagic-{cat}-{mon}.xlsx'
     focus = sorted(data['focus'], key=lambda r: r['rank'])
     mdef = data.get('marketDef', {'mature': [], 'emerging': []})
     col_map = build_column_index(COLS)
@@ -77,7 +70,7 @@ def main():
 
     ws.freeze_panes = ws.cell(head_row + 1, 3)
     ws.auto_filter.ref = f'A{head_row}:{get_column_letter(len(COLS))}{row - 1}'
-    xlsx_dir.mkdir(parents=True, exist_ok=True)
+    out_base.mkdir(parents=True, exist_ok=True)
     wb.save(out)
     print('saved', out, '| focus', len(focus))
 

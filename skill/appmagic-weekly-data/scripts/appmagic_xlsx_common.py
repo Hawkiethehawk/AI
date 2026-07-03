@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
+import datetime
 import re
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+
+def current_monday():
+    d = datetime.datetime.utcnow().date()
+    return (d - datetime.timedelta(days=d.weekday())).isoformat()
+
 
 HEAD_FILL = PatternFill('solid', fgColor='1F3864')
 HEAD_FONT = Font(bold=True, color='FFFFFF', size=10)

@@ -2,9 +2,9 @@ ai-temp/
 .gitee_token
 *.token
 
-# Playwright 本地认证状态（含 session cookie，不入库）
+# Playwright 本地认证状态（含 session cookie / token 缓存，不入库；多账号 -b/-c 同样覆盖）
 .appmagic-auth.json
-.appmagic-userdata/
+.appmagic-userdata*/
 
 # 依赖与外部克隆仓库，不入库
 node_modules/

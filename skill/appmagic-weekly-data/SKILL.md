@@ -19,28 +19,35 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
 - Use exactly one Chromium/Playwright session against `.appmagic-userdata` at a time. Before diagnostics or reruns, check for existing AppMagic scraper/browser processes.
 - Preserve `.appmagic-userdata`; it stores login state. Do not delete it unless the user explicitly asks and understands re-login is required.
 - If the weekly API returns 401 or only 100 rows, login is missing/expired. Re-establish it with `scripts\appmagic-login.js` (see runbook "Login / Re-login") before retrying; do not delete the profile.
+- Each profile directory caches its token in `appmagic-token.json` (written after a successful API probe). A valid cache skips browser startup during preflight. Safe to delete; it regenerates on the next check.
 - For a full fresh rerun, use `FORCE_REFRESH=1` instead of deleting login state.
 - The scraper runs all categories in one process (path A). Do NOT set `CAT`. Leaderboards use account A; country data (`data-countries`) is split across up to 3 accounts in parallel — one category per account (quota is per-account, ~100/window).
 
 ## Workflow
 
 1. Identify the requested week anchor and categories.
+   - **ALWAYS** verify the real system date and weekday first — Windows: `powershell -Command "(Get-Date).ToString('yyyy-MM-dd dddd')"`; POSIX: `date "+%Y-%m-%d %A"`. Never rely on memory or inference for today's date.
+   - Derive the Monday anchor from the actual system date: `$d.AddDays(-((([int]$d.DayOfWeek)+6)%7))`.
    - If the user says `0622`, use the relevant year from context and confirm as `YYYY-MM-DD` in the response.
-   - If the user asks for "this week" or "last week", calculate the intended Monday anchor and state it explicitly before running.
+   - If the user asks for "this week" or "last week", calculate the intended Monday anchor from the verified system date and state it explicitly before running.
+   - Never pass `-WeekAnchor` manually unless the user explicitly requests a specific date. Let the script auto-calculate.
    - If the year or category set is ambiguous and cannot be safely inferred, ask one concise question.
 
 2. Inspect the current project state.
-   - Read `scripts/appmagic-weekly.js` inside this skill for `WEEK_ANCHOR`, `WEEKS`, `CATS`, `FORCE_REFRESH`, and output paths.
    - Check whether any `appmagic-weekly`, `run_all`, or `.appmagic-userdata` Chromium process is running.
    - If a process is running and the user asked to rerun, stop only the AppMagic job processes needed to free the profile.
+   - Note: `WEEK_ANCHOR`, `CATS`, `FORCE_REFRESH` are runtime env vars, not hardcoded in the js file.
 
 3. Configure the run.
-   - Pass `WEEK_ANCHOR=YYYY-MM-DD` or `-WeekAnchor YYYY-MM-DD` when the requested week anchor differs from the current Monday.
-   - Use `FORCE_REFRESH=1` for "clear cache", "fresh", "do not reuse", or date-sensitive reruns.
-   - Use `LIST_ONLY=1` only when the user explicitly wants to skip slow country enrichment.
+   - Do NOT pass `-WeekAnchor` unless the user explicitly requests a specific non-current-week date. The script auto-calculates the correct Monday anchor.
+   - Only pass `-WeekAnchor YYYY-MM-DD` when user says e.g. "run last week" or "run 0622".
+   - Use `-Fresh` for "clear cache", "fresh", "do not reuse", or date-sensitive reruns.
+   - Use `-ListOnly` only when the user explicitly wants to skip slow country enrichment.
+   - AppMagic API date note: the API echoes back whatever date you pass, not necessarily Monday. Any date within the same week returns identical data. The anchor in output reflects the query date, not necessarily the week's Monday.
 
 4. Run data collection (path A: one process runs all categories).
-   - Prefer this skill's `scripts\run_appmagic_weekly.ps1` entrypoint — it self-checks each account's login (re-login popup if expired), runs the scraper, then exports Excel.
+   - Prefer this skill's `scripts\run_appmagic_weekly.ps1` entrypoint — it self-checks each account's login (re-login popup if expired), starts the localhost dashboard, runs the scraper, then exports Excel.
+   - Live progress is served only at `http://localhost:8787` by `scripts\progress-server.js` (SSE real-time). There is no HTML progress artifact in the output folder.
    - The scraper runs **all categories in one process**: account A collects every leaderboard, then up to 3 accounts collect country data **in parallel, one category per account** (no overlap, dynamic dequeue). **Do NOT set `CAT`** — single-category mode is gone.
    - Manual: `node scripts\appmagic-weekly.js` (with `WEEK_ANCHOR`/`FORCE_REFRESH` as needed); it iterates all categories itself.
    - Multi-account: log each account into its own profile (`.appmagic-userdata` / `-b` / `-c`) via `APPMAGIC_USERDATA_DIR`; the scraper auto-discovers every profile that has a token. Tune `DC_GAP_MS` (per-app gap, default 1000) / `DC_COOLDOWN_MS` (429 cooldown, default 120000) / `APPMAGIC_ACCOUNTS`.

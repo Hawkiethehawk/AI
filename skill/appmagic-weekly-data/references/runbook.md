@@ -4,7 +4,7 @@ This runbook keeps executable snippets ASCII-safe. Build non-ASCII category name
 
 ## Prerequisites
 
-- Install Node.js dependencies under the skill root because the scripts resolve modules upward from their own folder:
+- Install Node.js dependencies from the skill root (npm may hoist the package into the nearest parent directory that has a `package.json`; either location works because the scripts resolve modules upward from their own folder, and `run_appmagic_weekly.ps1` checks the dependency via actual `require.resolve`):
 
   ```powershell
   Set-Location $SkillRoot
@@ -37,7 +37,21 @@ This runbook keeps executable snippets ASCII-safe. Build non-ASCII category name
 - Weekly output folder: `output\folder\AppMagic-<YYYYMMDD>\`
 - JSON output: `output\folder\AppMagic-<YYYYMMDD>\appmagic-<CAT>-weekly.json`
 - Progress JSON: `output\folder\AppMagic-<YYYYMMDD>\appmagic-progress.json`
-- Local dashboard: `http://localhost:8787`
+- Local dashboard: `http://localhost:8787` (the only dashboard; the old self-refreshing `appmagic-progress.html` is fully retired)
+
+## Dashboard
+
+`scripts\progress-server.js` serves the live dashboard on localhost. The PowerShell entrypoint starts it automatically; manual start:
+
+```powershell
+node (Join-Path $SkillRoot "scripts\progress-server.js")
+```
+
+- `APPMAGIC_PORT` changes the port (default 8787); `APPMAGIC_NO_OPEN=1` skips auto-opening the browser.
+- Real-time: the server polls the newest `AppMagic-<YYYYMMDD>` folder every second and pushes updates over SSE (`/api/stream`); the page falls back to 3s polling if SSE drops.
+- Endpoints: `/` (full-screen UI), `/api/stream` (SSE), `/api/snapshot`, `/api/progress`, `/api/results` (per-category digest: focus apps, risers, market split), `/api/open-output` (opens the current run folder in the local file manager; path resolved server-side only), `/api/health`.
+- While a run is in progress the focus panel is populated live from the weekly/enrich cache files (same selection logic as the scraper), so focus apps appear right after each leaderboard lands — no need to wait for country enrichment.
+- The dashboard is read-only: it consumes `appmagic-progress.json` and the final `appmagic-<CAT>-weekly.json` files; the scraper does not need to be aware of it.
 
 ## Default Categories
 
@@ -80,7 +94,17 @@ foreach ($p in '.appmagic-userdata','.appmagic-userdata-b','.appmagic-userdata-c
 Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
 ```
 
-`run_appmagic_weekly.ps1` still performs preflight auth checks, but `appmagic-weekly.js` now also probes token validity internally before scraping so direct `node` runs fail fast instead of quietly producing empty data.
+Auth check (all profiles in one pass; prints `OK <dir>` / `FAIL <dir>` per account, exit 0 only when all pass):
+
+```powershell
+$env:CHECK_AUTH = "1"
+node (Join-Path $SkillRoot "scripts\appmagic-weekly.js")
+Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
+```
+
+Token caching: each profile directory holds an `appmagic-token.json` cache written after any successful probe. A cached token that passes the (cheap, `topDepth=10`) API probe skips browser startup entirely, so the common preflight cost is one browser launch instead of one per account. The cache is safe to delete; it regenerates. `APPMAGIC_USERDATA_DIR=<dir>` limits `CHECK_AUTH` to a single profile (used by the ps1 re-login loop).
+
+`run_appmagic_weekly.ps1` runs this single-pass check before scraping and opens a login window only for accounts that report `FAIL`. `appmagic-weekly.js` also probes token validity internally before scraping, so direct `node` runs fail fast instead of quietly producing empty data. Leaderboard requests do not retry on 401/403 (auth errors are not transient).
 
 ## Run
 
@@ -148,6 +172,10 @@ Report only:
 API weekly date anchor: YYYY-MM-DD
 API end date/range: not provided by the response
 ```
+
+## Output record fields
+
+Each record in `appmagic-<CAT>-weekly.json` carries, besides the raw API fields: `url` (store link, Google Play preferred), `lastWeek`, `isNew` (absent from previous week's board), `change`, `relPct` (change / lastWeek), `history` (6-week rank trail, current first), `streak50`, `weeksOnBoard`. Focus records add `_focus` (Excel "重点关注" flag), `_focusReasons`, `_firstInTop100`, and enrichment fields (`rating`, `reviews`, `contentRating`, `country` with `usjpPct`/`mature`/`emerging`/`market`).
 
 ## Troubleshooting
 
