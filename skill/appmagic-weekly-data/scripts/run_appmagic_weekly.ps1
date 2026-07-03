@@ -12,18 +12,73 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectDir = (Resolve-Path $ProjectDir).Path
 
-# 统一计算周锚点并传给 js/py，保证三者归档目录一致：output/AppMagic-<YYYYMMDD>/
+function U([int[]]$codes) {
+  -join ($codes | ForEach-Object { [char]$_ })
+}
+
+function Get-NodeCommand {
+  $cmd = Get-Command node -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
+  throw "node.exe not found in PATH"
+}
+
+function Get-FreePort([int]$StartPort = 8787) {
+  for ($port = $StartPort; $port -lt ($StartPort + 30); $port++) {
+    $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $conn) { return $port }
+  }
+  throw "No free dashboard port found from $StartPort"
+}
+
+function Find-AppMagicDashboardPort([int]$StartPort = 8787) {
+  for ($port = $StartPort; $port -lt ($StartPort + 30); $port++) {
+    try {
+      $r = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:$port/api/health" -TimeoutSec 2
+      if ($r.StatusCode -eq 200 -and $r.Content -match '"ok"\s*:\s*true') {
+        return $port
+      }
+    } catch {}
+  }
+  return $null
+}
+
+function Ensure-AppMagicDashboard([string]$ProjectDir, [string]$ScriptDir) {
+  $serverScript = Join-Path $ScriptDir "progress-server.js"
+  $existingPort = Find-AppMagicDashboardPort 8787
+  if ($existingPort) {
+    Write-Host "[dashboard] reusing http://localhost:$existingPort"
+    return $existingPort
+  }
+
+  $port = Get-FreePort 8787
+  $node = Get-NodeCommand
+  $ps = @"
+$env:APPMAGIC_PROJECT_DIR = '$($ProjectDir.Replace("'", "''"))'
+$env:APPMAGIC_PORT = '$port'
+$env:APPMAGIC_NO_OPEN = '1'
+& '$($node.Replace("'", "''"))' '$($serverScript.Replace("'", "''"))'
+"@
+  $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($ps))
+  $logDir = Join-Path $ProjectDir "output\logs"
+  New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+  $stdout = Join-Path $logDir "appmagic-dashboard.out.log"
+  $stderr = Join-Path $logDir "appmagic-dashboard.err.log"
+  $cmdLine = 'start "" /min powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand "{0}" 1>>"{1}" 2>>"{2}"' -f $encoded, $stdout, $stderr
+  & cmd.exe /d /c $cmdLine | Out-Null
+
+  Start-Sleep -Milliseconds 900
+  Write-Host "[dashboard] started http://localhost:$port"
+  return $port
+}
+
 if (-not $WeekAnchor) {
   $d = (Get-Date).ToUniversalTime().Date
   $WeekAnchor = $d.AddDays(-((([int]$d.DayOfWeek) + 6) % 7)).ToString('yyyy-MM-dd')
 }
+
 $env:WEEK_ANCHOR = $WeekAnchor
 $Mon = $WeekAnchor.Replace('-', '')
 $OutBase = Join-Path $ProjectDir ("output\folder\AppMagic-{0}" -f $Mon)
-
-function U([int[]]$codes) {
-  -join ($codes | ForEach-Object { [char]$_ })
-}
 
 if (-not $Categories -or $Categories.Count -eq 0) {
   $Categories = @(
@@ -41,23 +96,34 @@ if ($WeekAnchor) { $env:WEEK_ANCHOR = $WeekAnchor }
 if ($Fresh) { $env:FORCE_REFRESH = "1" }
 if ($ListOnly) { $env:LIST_ONLY = "1" }
 
+$dashboardPort = Ensure-AppMagicDashboard -ProjectDir $ProjectDir -ScriptDir $ScriptDir
+Write-Host "[dashboard] live view http://localhost:$dashboardPort"
+
 try {
   if (-not $ExportOnly) {
-    # ensure ALL configured accounts are logged in (data-countries quota is per-account; multi-account extends it)
     $accounts = @('.appmagic-userdata', '.appmagic-userdata-b', '.appmagic-userdata-c')
     if ($env:APPMAGIC_ACCOUNTS) { $accounts = $env:APPMAGIC_ACCOUNTS -split ',' }
     foreach ($acc in $accounts) {
       $env:APPMAGIC_USERDATA_DIR = $acc
-      $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $ok = ($LASTEXITCODE -eq 0); Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
+      $env:CHECK_AUTH = "1"
+      node (Join-Path $ScriptDir "appmagic-weekly.js")
+      $ok = ($LASTEXITCODE -eq 0)
+      Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
       if (-not $ok) {
         Write-Host "  [auth] account $acc invalid - opening login window, please complete login..."
         node (Join-Path $ScriptDir "appmagic-login.js")
-        $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $ok = ($LASTEXITCODE -eq 0); Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
-        if (-not $ok) { Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue; throw "account $acc login not completed, aborted." }
+        $env:CHECK_AUTH = "1"
+        node (Join-Path $ScriptDir "appmagic-weekly.js")
+        $ok = ($LASTEXITCODE -eq 0)
+        Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
+        if (-not $ok) {
+          Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
+          throw "account $acc login not completed, aborted."
+        }
       }
       Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
     }
-    # 路径A：单次调用，node 一个进程跑全部品类（榜单用 A；国别 3 账号并行领品类）
+
     node (Join-Path $ScriptDir "appmagic-weekly.js")
     if ($LASTEXITCODE -ne 0) { throw "AppMagic scrape failed" }
   }
