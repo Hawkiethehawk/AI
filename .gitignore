@@ -1,0 +1,21 @@
+# Local Codex runtime state, credentials, sessions, logs, caches.
+.codex/
+
+# Local agent installs and locks.
+.agents/
+
+# AppMagic browser profiles and account/session data.
+.appmagic-userdata/
+.appmagic-userdata-c/
+.appmagic-userdata-d/
+
+# Generated exports and migration logs.
+output/
+migration-logs/
+
+# Common local noise.
+*.log
+*.tmp
+*.bak
+Thumbs.db
+desktop.ini
