@@ -12,7 +12,7 @@ metadata:
 
 # gitee-sync — 私有仓库连接 & skill 同步
 
-涉及 gitee 的所有操作都通过封装脚本 `scripts/gitee.sh`（仓库根 `E:\LLM-Sandbox\Claude`）完成。
+涉及 gitee 的所有操作都通过封装脚本 `scripts/gitee.sh`（优先使用本地真源仓库根 `E:\LLM-Sandbox\AI`）完成。
 **token 只需提交一次、自动保存复用**；统一走脚本，避免零散手写 git/curl 把 token 暴露到对话或命令历史。
 
 ## 这个仓库（已知背景，直接用）

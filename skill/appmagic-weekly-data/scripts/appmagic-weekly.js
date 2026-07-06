@@ -29,6 +29,13 @@ function currentMondayAnchor() {
 function buildWeekAnchors(anchor, count = 6) {
   return Array.from({ length: count }, (_, i) => addDays(anchor, -7 * i));
 }
+function isFirstInTop100Trajectory(rank, history) {
+  return rank <= 100
+    && Array.isArray(history)
+    && history.length >= 4
+    && history.slice(-3).every(h => h == null)
+    && history.slice(1).every(h => h == null || h > 100);
+}
 
 const CAT_HYPERCASUAL = u(0x8D85, 0x4F11, 0x95F2);
 const CAT_CASUAL = u(0x4F11, 0x95F2);
@@ -558,10 +565,17 @@ function summarizeCountries(countries) {
   const pct = n => (n ? n.toFixed(1) : '0') + '%';
   let mature = 0;
   let emerging = 0;
+  let matureRev = 0;
+  let emergingRev = 0;
   let usjpPct = 0;
   for (const c of clean) {
-    if (MATURE.has(c.c)) mature += c.dlp;
-    else if (EMERGING.has(c.c)) emerging += c.dlp;
+    if (MATURE.has(c.c)) {
+      mature += c.dlp;
+      matureRev += c.revp;
+    } else if (EMERGING.has(c.c)) {
+      emerging += c.dlp;
+      emergingRev += c.revp;
+    }
     if (c.c === 'US' || c.c === 'JP') usjpPct += c.dlp;
   }
   const dlList = byDl.map(c => `${c.c} ${pct(c.dlp)}`).join(' / ');
@@ -569,7 +583,7 @@ function summarizeCountries(countries) {
   const market = mature >= emerging
     ? `偏成熟(成熟${pct(mature)}/新兴${pct(emerging)})`
     : `偏新兴(新兴${pct(emerging)}/成熟${pct(mature)})`;
-  return { dlList, revList, dlCount: byDl.length, revCount: byRev.length, usjpPct, mature, emerging, market };
+  return { dlList, revList, dlCount: byDl.length, revCount: byRev.length, usjpPct, mature, emerging, matureRev, emergingRev, market };
 }
 
 async function buildCategory(page, cat, tag, leaderTok) {
@@ -652,13 +666,22 @@ async function buildCategory(page, cat, tag, leaderTok) {
   const focus = [];
   for (const r of records) {
     const riser = r.change != null && r.change >= riseThreshold(r.rank);
-    const priorTop100 = r.history.slice(1).some(h => h != null && h <= 100);
-    const firstInTop100 = r.rank <= 100 && !priorTop100;
+    const firstInTop100 = isFirstInTop100Trajectory(r.rank, r.history);
+    const limitedRankHistory = r.weeksOnBoard <= 3;
     if (!riser && !firstInTop100) continue;
 
     const reasons = [];
+    if (firstInTop100) {
+      reasons.push(u(0x9996, 0x6B21, 0x8FDB, 0x5165) + 'Top100');
+    }
     if (r.change != null && r.change > 0 && r.rank > 0) {
-      reasons.push(`排名上升${r.change}名（+${((r.change / r.rank) * 100).toFixed(0)}%）`);
+      reasons.push(
+        u(0x6392, 0x540D, 0x4E0A, 0x5347)
+        + `${r.change}`
+        + u(0x540D, 0xFF08)
+        + `+${((r.change / r.rank) * 100).toFixed(0)}%`
+        + u(0xFF09)
+      );
     }
     // _focus（Excel“重点关注”列）：头部大幅上升，或中腰部升幅超过当前名次的 50%
     if (r.rank <= 10 && r.change != null && r.change >= 5) {
@@ -666,8 +689,8 @@ async function buildCategory(page, cat, tag, leaderTok) {
     } else if (r.rank > 10 && r.rank <= 200 && r.change != null && r.rank > 0 && r.change / r.rank > 0.5) {
       r._focus = true;
     }
-    // 非大厂新进 50-100 名的，待国别数据回来后再判定是否“潜力新品”
-    if (r.rank > 50 && r.rank <= 100 && firstInTop100 && !isBig(r.publisher)) {
+    // 非大厂新进 50-100 名且最多只有 3 周排名记录的，待国别数据回来后再判定是否“潜力新品”
+    if (firstInTop100 && limitedRankHistory && !isBig(r.publisher)) {
       r._pendingNotable = true;
     }
     r._firstInTop100 = firstInTop100;
@@ -947,9 +970,9 @@ async function main() {
   for (const cat of cats) {
     const { records, focus } = perCat[cat];
     for (const r of focus) {
-      if (r._pendingNotable && r.country && r.country.mature >= 25) {
+      if (r._pendingNotable && r.country && (r.country.mature >= 25 || r.country.matureRev >= 25)) {
         r._focus = true;
-        r._focusReasons.push('潜力新品');
+        r._focusReasons.push(u(0x6F5C, 0x529B, 0x65B0, 0x54C1));
       }
       delete r._pendingNotable;
     }

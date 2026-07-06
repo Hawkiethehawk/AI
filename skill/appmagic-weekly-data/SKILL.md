@@ -21,6 +21,7 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
 - Treat `date` from `/api/v2/top/united-apps?aggregation=week...` as the API week anchor only.
 - Do not infer or output an end date such as `anchor + 6 days` unless the API response itself contains an explicit end/range field.
 - Do not mix DOM confirmation into API output. If the scrape path is API-only, keep reporting API-only evidence.
+- Judge "first entered Top 100" from the displayed 6-week rank trajectory, not only from current rank or `diff`. The displayed trajectory is oldest-to-newest; an app can be tagged as first entered Top 100 only when the trajectory starts with three blanks: `· -> · -> · ->`, the current rank is `<= 100`, and none of the weeks before the current week were already `<= 100`. In code, `history` is stored newest-to-oldest, so this means `history.slice(-3)` must all be `null`, and `history.slice(1)` must not contain any value `<= 100`.
 - Use exactly one Chromium/Playwright session per profile directory at a time. Before diagnostics or reruns, check for existing AppMagic scraper/browser processes against any `.appmagic-userdata*` profile.
 - Preserve `.appmagic-userdata`; it stores login state. Do not delete it unless the user explicitly asks and understands re-login is required.
 - If the weekly API returns 401 or only 100 rows, login is missing/expired. Re-establish it with `scripts\appmagic-login.js` (see runbook "Login / Re-login") before retrying; do not delete the profile.

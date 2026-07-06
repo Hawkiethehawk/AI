@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gitee.sh — 私有仓库 configured targetthehawk/AI 的连接 & 同步助手（配套 gitee-sync skill）
+# gitee.sh — 私有仓库 configured targetthehawk/AI 的连接 & 同步助手（配套 gitee-sync skill，本地真源优先使用 E:\LLM-Sandbox\AI）
 # 一次性 setup token -> 保存到 ~/.claude/.gitee_token（供 REST API 使用）。
 # git push/pull 沿用系统已配的凭证（已免密），本脚本不改动它。
 set -u
@@ -52,11 +52,15 @@ case "$cmd" in
     ;;
   push)
     msg="${1:-update}"
-    add_targets=()
-    for path in skill scripts project archived .gitignore; do
-      [ -e "$REPO/$path" ] && add_targets+=("$path")
-    done
-    git -C "$REPO" add -A -- "${add_targets[@]}"   # 同步 skill/脚本/project 真源/archived，不误传根 output/ 等未跟踪目录
+    if git -C "$REPO" diff --cached --quiet; then
+      add_targets=()
+      for path in skill scripts project archived .gitignore; do
+        [ -e "$REPO/$path" ] && add_targets+=("$path")
+      done
+      git -C "$REPO" add -A -- "${add_targets[@]}"   # 默认同步 skill/脚本/project 真源/archived，不误传根 output/ 等未跟踪目录
+    else
+      echo "(检测到已暂存文件，仅提交当前 staged 变更)"
+    fi
     git -C "$REPO" commit -m "$msg" || echo "(无改动可提交)"
     git -c http.sslBackend=openssl -C "$REPO" pull --rebase "$(auth_repo_url)" "$BRANCH" && git -c http.sslBackend=openssl -C "$REPO" push "$(auth_repo_url)" "$BRANCH"
     ;;

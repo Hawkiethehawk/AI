@@ -93,7 +93,7 @@ def main():
     ws['A2'] = (
         '口径：全球(WW)·周聚合·免费榜·Top1000 | '
         '变化量=正数上升/负数下降/NEW首次出现 | '
-        '重点关注=变化突出(前10绝对↑≥5 / 10-200相对↑>50%)或潜力新品(首进50-100+陌生发行商+成熟市场下载占比≥25%) | '
+        '重点关注=变化突出(前10绝对↑≥5 / 10-200相对↑>50%)或潜力新品(首进前100+最多3周排名记录+陌生发行商+成熟市场下载占比或收入占比任一≥25%) | '
         '数据源 AppMagic API · 生成 ' + gen
     )
     ws['A2'].font = NOTE_FONT
@@ -132,7 +132,7 @@ def main():
     ws.freeze_panes = ws.cell(head_row + 1, 4)
     ws.auto_filter.ref = f'A{head_row}:{get_column_letter(len(COLS))}{row - 1}'
     out_base.mkdir(parents=True, exist_ok=True)
-    out = out_base / f'AppMagic-{mon}.xlsx'
+    out = Path(os.environ.get('APPMAGIC_MERGED_XLSX') or (out_base / f'AppMagic-{mon}.xlsx'))
     wb.save(out)
     print('saved', out, '| 品类', len(groups), '| 总行', row - head_row - 1)
 

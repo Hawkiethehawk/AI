@@ -69,6 +69,13 @@ function dlTop(country, n) {
 
 // 结果摘要缓存：按文件 mtime 失效
 const resultCache = new Map(); // key -> { mtime, digest }
+function isFirstInTop100Trajectory(rank, history) {
+  return rank <= 100
+    && Array.isArray(history)
+    && history.length >= 4
+    && history.slice(-3).every(h => h == null)
+    && history.slice(1).every(h => h == null || h > 100);
+}
 
 function focusEntry(r, country, extra) {
   return {
@@ -102,10 +109,9 @@ function digestCategory(file, runDirName) {
   const records = data.records || [];
   const focus = (data.focus || []).map(r => {
     const history = r.history || [];
-    const priorTop100 = history.slice(1).some(h => h != null && h <= 100);
     return focusEntry(r, r.country, {
       reasons: r._focusReasons || [],
-      firstInTop100: r._firstInTop100 != null ? r._firstInTop100 : (r.rank <= 100 && !priorTop100),
+      firstInTop100: isFirstInTop100Trajectory(r.rank, history),
     });
   });
   const digest = {
@@ -153,8 +159,7 @@ function liveDigest(runDir, cat, runDirName) {
     const lastWeek = prevRank != null ? prevRank : (r.diff != null ? r.rank + r.diff : null);
     const change = lastWeek != null ? lastWeek - r.rank : null;
     const history = weeks.map(d => rankMaps[d].get(r.uid) ?? null);
-    const priorTop100 = history.slice(1).some(h => h != null && h <= 100);
-    const firstInTop100 = r.rank <= 100 && !priorTop100;
+    const firstInTop100 = isFirstInTop100Trajectory(r.rank, history);
     const riser = change != null && change >= riseThreshold(r.rank);
     if (!riser && !firstInTop100) continue;
     let streak50 = 0;
