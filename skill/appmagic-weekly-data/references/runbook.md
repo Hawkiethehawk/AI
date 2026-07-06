@@ -18,7 +18,7 @@ This runbook keeps executable snippets ASCII-safe. Build non-ASCII category name
   pip install openpyxl
   ```
 
-- Keep AppMagic login profiles in the project root: `.appmagic-userdata`, `.appmagic-userdata-b`, `.appmagic-userdata-c`.
+- Keep AppMagic login profiles in the project root: `.appmagic-userdata` plus optional suffixed profiles such as `.appmagic-userdata-c` / `.appmagic-userdata-d`.
 
 - Optional taxonomy dictionary for empty-tag backfill: the scraper checks these locations in order:
   - `APPMAGIC_TAGS_DICT`
@@ -93,6 +93,16 @@ foreach ($p in '.appmagic-userdata','.appmagic-userdata-b','.appmagic-userdata-c
 }
 Remove-Item Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
 ```
+
+Before multi-account collection, identify profile emails and deduplicate the account pool:
+
+```powershell
+$ProjectDir = Resolve-Path .
+& (Join-Path $SkillRoot "scripts\appmagic_profile_emails.ps1") -ProjectDir $ProjectDir
+$env:APPMAGIC_ACCOUNTS = ".appmagic-userdata,.appmagic-userdata-c,.appmagic-userdata-d"
+```
+
+Do not include profiles with duplicate emails. Do not include `UNKNOWN` profiles in a multi-account pool unless the user confirms the email.
 
 Auth check (all profiles in one pass; prints `OK <dir>` / `FAIL <dir>` per account, exit 0 only when all pass):
 

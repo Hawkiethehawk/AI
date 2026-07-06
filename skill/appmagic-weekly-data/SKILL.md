@@ -11,17 +11,47 @@ Prerequisites (install once): Node.js + `@playwright/test` + Chromium, Python + 
 
 This is a portable agent skill: any capable LLM or coding agent can follow it, including Codex, Claude, and other automation agents. The workflow is API-first. The production scraper calls AppMagic API endpoints through the persisted Playwright profile, then writes JSON and Excel files. Do not use DOM text, screenshots, or the date picker to add facts that the API response does not prove.
 
+## Local Defaults
+
+- On this machine, use `E:\LLM-Sandbox\Codex` as the default AppMagic project root unless the user explicitly gives another `ProjectDir`.
+- Keep AppMagic login profiles directly under the project root, using `.appmagic-userdata` and optional suffixed profiles such as `.appmagic-userdata-c` / `.appmagic-userdata-d`.
+
 ## Core Rules
 
 - Treat `date` from `/api/v2/top/united-apps?aggregation=week...` as the API week anchor only.
 - Do not infer or output an end date such as `anchor + 6 days` unless the API response itself contains an explicit end/range field.
 - Do not mix DOM confirmation into API output. If the scrape path is API-only, keep reporting API-only evidence.
-- Use exactly one Chromium/Playwright session against `.appmagic-userdata` at a time. Before diagnostics or reruns, check for existing AppMagic scraper/browser processes.
+- Use exactly one Chromium/Playwright session per profile directory at a time. Before diagnostics or reruns, check for existing AppMagic scraper/browser processes against any `.appmagic-userdata*` profile.
 - Preserve `.appmagic-userdata`; it stores login state. Do not delete it unless the user explicitly asks and understands re-login is required.
 - If the weekly API returns 401 or only 100 rows, login is missing/expired. Re-establish it with `scripts\appmagic-login.js` (see runbook "Login / Re-login") before retrying; do not delete the profile.
 - Each profile directory caches its token in `appmagic-token.json` (written after a successful API probe). A valid cache skips browser startup during preflight. Safe to delete; it regenerates on the next check.
 - For a full fresh rerun, use `FORCE_REFRESH=1` instead of deleting login state.
 - The scraper runs all categories in one process (path A). Do NOT set `CAT`. Leaderboards use account A; country data (`data-countries`) is split across up to 3 accounts in parallel — one category per account (quota is per-account, ~100/window).
+
+## Account / Email Rules
+
+- Before every AppMagic data collection, identify the currently logged-in AppMagic profiles and their emails, then report the profile/email list to the user.
+- The account pool must be email-deduplicated before running. Do not use two profiles with the same email as separate accounts.
+- If an email cannot be identified for a logged-in profile, treat that profile as unverified for deduplication; do not include it in a multi-account pool unless the user confirms the email.
+- If another login is needed, explicitly tell the user which emails are already logged in and ask them not to log in with those emails again.
+- When switching accounts after quota/rate-limit issues, prefer a profile with a unique email that has passed auth check.
+
+### Profile Email Discovery / Dedup
+
+Run this before every collection when more than one profile exists:
+
+```powershell
+$SkillRoot = Resolve-Path <path-to-this-skill>
+$ProjectDir = Resolve-Path .
+& (Join-Path $SkillRoot "scripts\appmagic_profile_emails.ps1") -ProjectDir $ProjectDir
+```
+
+Interpretation:
+
+- `Status=OK` and empty `Duplicate` means the profile can be considered for the account pool.
+- `Duplicate=DUPLICATE` means do not use both profiles. Keep one and skip the duplicate, or ask the user which one to keep.
+- `Status=UNKNOWN` means the profile is logged in or cached in a way that did not expose an email locally; do not include it in a multi-account pool unless the user confirms the email.
+- After deduplication, set `APPMAGIC_ACCOUNTS` explicitly, e.g. `$env:APPMAGIC_ACCOUNTS = ".appmagic-userdata,.appmagic-userdata-c,.appmagic-userdata-d"`.
 
 ## Workflow
 
@@ -29,14 +59,15 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
    - **ALWAYS** verify the real system date and weekday first — Windows: `powershell -Command "(Get-Date).ToString('yyyy-MM-dd dddd')"`; POSIX: `date "+%Y-%m-%d %A"`. Never rely on memory or inference for today's date.
    - Derive the Monday anchor from the actual system date: `$d.AddDays(-((([int]$d.DayOfWeek)+6)%7))`.
    - If the user says `0622`, use the relevant year from context and confirm as `YYYY-MM-DD` in the response.
-   - If the user asks for "this week" or "last week", calculate the intended Monday anchor from the verified system date and state it explicitly before running.
-   - Never pass `-WeekAnchor` manually unless the user explicitly requests a specific date. Let the script auto-calculate.
+   - If the user asks for "this week", calculate the current Monday anchor and state it explicitly; omit `-WeekAnchor` so the entrypoint can auto-calculate the current week.
+   - If the user asks for a non-current week such as "last week", `0629`, or a specific date, calculate/confirm the absolute Monday anchor, then pass `-WeekAnchor YYYY-MM-DD`.
    - If the year or category set is ambiguous and cannot be safely inferred, ask one concise question.
 
 2. Inspect the current project state.
    - Check whether any `appmagic-weekly`, `run_all`, or `.appmagic-userdata` Chromium process is running.
    - If a process is running and the user asked to rerun, stop only the AppMagic job processes needed to free the profile.
    - Note: `WEEK_ANCHOR`, `CATS`, `FORCE_REFRESH` are runtime env vars, not hardcoded in the js file.
+   - Run Profile Email Discovery / Dedup, report the profile/email list, and decide the exact account pool before configuring the run.
 
 3. Configure the run.
    - Do NOT pass `-WeekAnchor` unless the user explicitly requests a specific non-current-week date. The script auto-calculates the correct Monday anchor.
@@ -44,9 +75,11 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
    - Use `-Fresh` for "clear cache", "fresh", "do not reuse", or date-sensitive reruns.
    - Use `-ListOnly` only when the user explicitly wants to skip slow country enrichment.
    - AppMagic API date note: the API echoes back whatever date you pass, not necessarily Monday. Any date within the same week returns identical data. The anchor in output reflects the query date, not necessarily the week's Monday.
+   - If multiple verified profiles exist, set `APPMAGIC_ACCOUNTS` to the deduplicated profile list before running; do not rely blindly on auto-discovery.
 
 4. Run data collection (path A: one process runs all categories).
    - Prefer this skill's `scripts\run_appmagic_weekly.ps1` entrypoint — it self-checks each account's login (re-login popup if expired), starts the localhost dashboard, runs the scraper, then exports Excel.
+   - If using a deduplicated account pool, export `APPMAGIC_ACCOUNTS` in the same shell/session before calling `run_appmagic_weekly.ps1`.
    - Live progress is served only at `http://localhost:8787` by `scripts\progress-server.js` (SSE real-time). There is no HTML progress artifact in the output folder.
    - The scraper runs **all categories in one process**: account A collects every leaderboard, then up to 3 accounts collect country data **in parallel, one category per account** (no overlap, dynamic dequeue). **Do NOT set `CAT`** — single-category mode is gone.
    - Manual: `node scripts\appmagic-weekly.js` (with `WEEK_ANCHOR`/`FORCE_REFRESH` as needed); it iterates all categories itself.
@@ -74,4 +107,6 @@ Final reports should include:
 - Categories completed and skipped.
 - Output workbook paths.
 - Whether caches were reused or bypassed.
+- Profiles/emails used in the account pool.
+- Profiles skipped because of duplicate or unknown email.
 - Any remaining risks, such as API rate limiting, login/profile contention, or interrupted enrich steps.
