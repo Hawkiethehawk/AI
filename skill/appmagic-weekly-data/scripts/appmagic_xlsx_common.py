@@ -86,7 +86,7 @@ def tag_path(tags):
     for x in seq:
         if x and x not in out:
             out.append(x)
-    return ' / '.join(out)
+    return ' / '.join(out[:3])
 
 
 def norm_date(s):
@@ -104,14 +104,12 @@ def stability(r):
     history = r['history']
     count50 = sum(1 for h in history if h is not None and h <= 50)
     onboard = sum(1 for h in history if h is not None)
-    streak = r.get('streak50', 0)
-    if streak >= 4:
-        return f'稳定·连续{streak}周Top50'
-    if count50 >= 4:
-        return f'较稳·{len(history)}周内{count50}周Top50'
-    if streak >= 1:
-        return f'近期{streak}周Top50/在榜{onboard}周'
-    return f'波动·在榜{onboard}周 Top50 {count50}周'
+    parts = []
+    if onboard > 0:
+        parts.append(f'在榜{onboard}周')
+    if count50 > 0:
+        parts.append(f'Top50 {count50}周')
+    return '/'.join(parts)
 
 
 def change_str(r):

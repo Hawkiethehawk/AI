@@ -4,6 +4,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const cp = require('child_process');
 
 const PROJECT_DIR = path.resolve(process.env.APPMAGIC_PROJECT_DIR || process.cwd());
 const PORT = parseInt(process.env.APPMAGIC_PORT || '8787', 10);
@@ -297,6 +298,347 @@ function json(res, code, body) {
   res.end(JSON.stringify(body));
 }
 
+// ---------- Account pool management ----------
+
+const DEFAULT_ACCOUNT_PROFILES = ['.appmagic-userdata', '.appmagic-userdata-b', '.appmagic-userdata-c'];
+const TOKEN_CACHE_NAME = 'appmagic-token.json';
+const accountStatus = new Map(); // profile -> { state, checkedAt, detail, output }
+const loginJobs = new Map(); // profile -> { state, pid, startedAt, finishedAt, exitCode }
+let authCheckAll = null;
+let runJob = null;
+
+function isSafeProfile(profile) {
+  return /^\.appmagic-userdata(?:-[A-Za-z0-9_-]+)?$/.test(profile || '');
+}
+
+function profilePath(profile) {
+  if (!isSafeProfile(profile)) throw new Error('invalid profile');
+  return path.resolve(PROJECT_DIR, profile);
+}
+
+function profileExists(profile) {
+  try { return fs.statSync(profilePath(profile)).isDirectory(); } catch { return false; }
+}
+
+function profileSortValue(profile) {
+  if (profile === '.appmagic-userdata') return 0;
+  const m = /^\.appmagic-userdata-([A-Za-z0-9_-]+)$/.exec(profile);
+  if (!m) return 999;
+  const first = m[1].slice(0, 1).toLowerCase();
+  if (first >= 'b' && first <= 'z') return first.charCodeAt(0) - 'a';
+  return 100 + first.charCodeAt(0);
+}
+
+function accountLabel(profile) {
+  if (profile === '.appmagic-userdata') return 'A';
+  const m = /^\.appmagic-userdata-([A-Za-z0-9_-]+)$/.exec(profile);
+  return m ? m[1].slice(0, 1).toUpperCase() : '?';
+}
+
+function listAccountProfiles() {
+  return DEFAULT_ACCOUNT_PROFILES.slice();
+}
+
+function normalizeEmail(email) {
+  const m = String(email || '').toLowerCase();
+  for (const suffix of ['.com', '.cn', '.net', '.org']) {
+    const idx = m.indexOf(suffix);
+    if (idx >= 0) return m.slice(0, idx + suffix.length);
+  }
+  return m;
+}
+
+function findProfileEmail(profile) {
+  if (!profileExists(profile)) return { email: '', emailStatus: 'MISSING' };
+  const root = profilePath(profile);
+  const counts = new Map();
+  const stack = [root];
+  while (stack.length) {
+    const dir = stack.pop();
+    let items = [];
+    try { items = fs.readdirSync(dir, { withFileTypes: true }); } catch { continue; }
+    for (const item of items) {
+      const file = path.join(dir, item.name);
+      if (item.isDirectory()) {
+        stack.push(file);
+        continue;
+      }
+      if (!item.isFile()) continue;
+      let st;
+      try { st = fs.statSync(file); } catch { continue; }
+      if (st.size > 20 * 1024 * 1024) continue;
+      try {
+        const buf = fs.readFileSync(file);
+        const texts = [buf.toString('utf8'), buf.toString('utf16le')];
+        for (const text of texts) {
+          const matches = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,24}/gi) || [];
+          for (const raw of matches) {
+            const email = normalizeEmail(raw);
+            if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.(com|cn|net|org)$/.test(email)) continue;
+            if (/example|google|gstatic|sentry|schema|appmagic/.test(email)) continue;
+            counts.set(email, (counts.get(email) || 0) + 1);
+          }
+        }
+      } catch {}
+    }
+  }
+  if (!counts.size) return { email: '', emailStatus: 'UNKNOWN' };
+  const best = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0];
+  return { email: best[0], emailStatus: 'OK' };
+}
+
+function readTokenMeta(profile) {
+  try {
+    const file = path.join(profilePath(profile), TOKEN_CACHE_NAME);
+    const raw = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    return { cached: !!raw.token, savedAt: raw.savedAt || '' };
+  } catch {
+    return { cached: false, savedAt: '' };
+  }
+}
+
+function accountRows() {
+  const rows = listAccountProfiles().map(profile => {
+    const exists = profileExists(profile);
+    const email = findProfileEmail(profile);
+    const token = readTokenMeta(profile);
+    const cached = accountStatus.get(profile) || {};
+    const job = loginJobs.get(profile) || {};
+    let state = cached.state || (exists ? (token.cached ? 'cached' : 'unknown') : 'missing');
+    let detail = cached.detail || '';
+    if (job.state === 'login' || job.state === 'checking') {
+      state = job.state;
+      detail = job.state === 'login' ? 'login window open' : 'capturing token';
+    }
+    return {
+      label: accountLabel(profile),
+      profile,
+      exists,
+      email: email.email,
+      emailStatus: email.emailStatus,
+      tokenCached: token.cached,
+      tokenSavedAt: token.savedAt,
+      state,
+      detail,
+      checkedAt: cached.checkedAt || '',
+      loginJob: job.pid ? job : null,
+    };
+  });
+  const emailCounts = new Map();
+  for (const row of rows) {
+    if (row.email) emailCounts.set(row.email, (emailCounts.get(row.email) || 0) + 1);
+  }
+  for (const row of rows) row.duplicate = !!row.email && emailCounts.get(row.email) > 1;
+  return rows;
+}
+
+function parseAuthCheckOutput(output, profiles) {
+  const seen = new Set();
+  const re = /^(OK|FAIL)\s+(.+)$/gm;
+  let m;
+  while ((m = re.exec(output))) {
+    const state = m[1] === 'OK' ? 'ok' : 'fail';
+    const profile = m[2].trim();
+    if (!isSafeProfile(profile)) continue;
+    seen.add(profile);
+    accountStatus.set(profile, {
+      state,
+      checkedAt: new Date().toISOString(),
+      detail: state === 'ok' ? 'auth probe passed' : 'auth probe failed',
+      output: output.slice(-4000),
+    });
+  }
+  for (const profile of profiles) {
+    if (!seen.has(profile) && profileExists(profile)) {
+      accountStatus.set(profile, {
+        state: 'fail',
+        checkedAt: new Date().toISOString(),
+        detail: 'no auth result',
+        output: output.slice(-4000),
+      });
+    }
+  }
+}
+
+function runAuthCheck(profile) {
+  const profiles = profile ? [profile] : listAccountProfiles().filter(profileExists);
+  if (!profile && authCheckAll) return authCheckAll;
+  for (const p of profiles) {
+    if (!profileExists(p)) continue;
+    accountStatus.set(p, { state: 'checking', checkedAt: new Date().toISOString(), detail: 'auth check running' });
+  }
+  const env = { ...process.env, APPMAGIC_PROJECT_DIR: PROJECT_DIR, CHECK_AUTH: '1' };
+  if (profile) env.APPMAGIC_USERDATA_DIR = profile;
+  const script = path.join(__dirname, 'appmagic-weekly.js');
+  const promise = new Promise(resolve => {
+    cp.execFile(process.execPath, [script], {
+      cwd: PROJECT_DIR,
+      env,
+      timeout: 180000,
+      windowsHide: true,
+      maxBuffer: 1024 * 1024,
+    }, (error, stdout, stderr) => {
+      const output = `${stdout || ''}${stderr || ''}`;
+      parseAuthCheckOutput(output, profiles);
+      if (error && !output.match(/^(OK|FAIL)\s+(.+)$/m)) {
+        for (const p of profiles) {
+          if (!profileExists(p)) continue;
+          accountStatus.set(p, {
+            state: 'fail',
+            checkedAt: new Date().toISOString(),
+            detail: error.message || 'auth check failed',
+            output: output.slice(-4000),
+          });
+        }
+      }
+      resolve({ ok: !error, output, accounts: accountRows() });
+    });
+  }).finally(() => {
+    if (!profile) authCheckAll = null;
+  });
+  if (!profile) authCheckAll = promise;
+  return promise;
+}
+
+function startLoginCapture(profile) {
+  if (!isSafeProfile(profile)) return { ok: false, error: 'invalid profile' };
+  const current = loginJobs.get(profile);
+  if (current && (current.state === 'login' || current.state === 'checking')) {
+    return { ok: true, profile, pid: current.pid, state: current.state, alreadyRunning: true };
+  }
+  const env = { ...process.env, APPMAGIC_PROJECT_DIR: PROJECT_DIR, APPMAGIC_USERDATA_DIR: profile };
+  const child = cp.spawn(process.execPath, [path.join(__dirname, 'appmagic-login.js')], {
+    cwd: PROJECT_DIR,
+    env,
+    stdio: 'ignore',
+    windowsHide: false,
+  });
+  const job = { state: 'login', pid: child.pid, startedAt: new Date().toISOString(), finishedAt: '', exitCode: null };
+  loginJobs.set(profile, job);
+  child.on('exit', code => {
+    const next = { ...job, state: 'checking', finishedAt: new Date().toISOString(), exitCode: code };
+    loginJobs.set(profile, next);
+    runAuthCheck(profile).then(() => {
+      const checked = accountStatus.get(profile);
+      loginJobs.set(profile, {
+        ...next,
+        state: checked && checked.state === 'ok' ? 'done' : 'failed',
+        checkedAt: new Date().toISOString(),
+      });
+    });
+  });
+  child.on('error', error => {
+    loginJobs.set(profile, { ...job, state: 'failed', finishedAt: new Date().toISOString(), detail: error.message });
+  });
+  return { ok: true, profile, pid: child.pid, state: 'login' };
+}
+
+function activeRunJob() {
+  if (!runJob) return null;
+  if (runJob.state === 'starting' || runJob.state === 'running') return runJob;
+  return null;
+}
+
+function isFreshProgressActive() {
+  const runDir = latestRunDir();
+  const progress = readProgress(runDir);
+  if (!progress || !progress.updatedAt) return false;
+  const updatedAt = new Date(progress.updatedAt).getTime();
+  if (!Number.isFinite(updatedAt)) return false;
+  const fresh = (Date.now() - updatedAt) < 90 * 1000;
+  return fresh && ((progress.activeCats || 0) > 0 || (progress.currentStage && progress.currentStage !== 'done'));
+}
+
+function runSummary() {
+  return {
+    job: runJob,
+    active: !!activeRunJob() || isFreshProgressActive(),
+    progressActive: isFreshProgressActive(),
+  };
+}
+
+function startCollectionRun(options = {}) {
+  const current = activeRunJob();
+  if (current) {
+    return { ok: false, error: 'collection already running', run: runSummary() };
+  }
+  if (isFreshProgressActive()) {
+    return { ok: false, error: 'progress indicates an active run', run: runSummary() };
+  }
+
+  const opts = {
+    fresh: !!options.fresh,
+    weekAnchor: String(options.weekAnchor || '').trim(),
+    accounts: Array.isArray(options.accounts) ? options.accounts.filter(isSafeProfile) : [],
+    listOnly: !!options.listOnly,
+    skipExcel: !!options.skipExcel,
+  };
+  const psScript = path.join(__dirname, 'run_appmagic_weekly.ps1');
+  const psArgs = [
+    '-NoProfile',
+    '-ExecutionPolicy', 'Bypass',
+    '-File', psScript,
+    '-ProjectDir', PROJECT_DIR,
+  ];
+  if (opts.weekAnchor) psArgs.push('-WeekAnchor', opts.weekAnchor);
+  if (opts.fresh) psArgs.push('-Fresh');
+  if (opts.listOnly) psArgs.push('-ListOnly');
+  if (opts.skipExcel) psArgs.push('-SkipExcel');
+  const env = {
+    ...process.env,
+    APPMAGIC_PROJECT_DIR: PROJECT_DIR,
+    APPMAGIC_PORT: String(PORT),
+    APPMAGIC_NO_OPEN: '1',
+  };
+  if (opts.accounts.length) env.APPMAGIC_ACCOUNTS = opts.accounts.join(',');
+  const child = cp.spawn('powershell', psArgs, {
+    cwd: PROJECT_DIR,
+    env,
+    windowsHide: true,
+    stdio: 'ignore',
+  });
+
+  runJob = {
+    state: 'starting',
+    pid: child.pid,
+    startedAt: new Date().toISOString(),
+    finishedAt: '',
+    exitCode: null,
+    detail: 'launching collection',
+    options: opts,
+  };
+
+  setTimeout(() => {
+    if (runJob && runJob.pid === child.pid && runJob.state === 'starting') {
+      runJob = { ...runJob, state: 'running', detail: 'collection in progress' };
+    }
+  }, 3000);
+
+  child.on('exit', code => {
+    if (!runJob || runJob.pid !== child.pid) return;
+    runJob = {
+      ...runJob,
+      state: code === 0 ? 'done' : 'failed',
+      finishedAt: new Date().toISOString(),
+      exitCode: code,
+      detail: code === 0 ? 'collection finished' : 'collection failed',
+    };
+  });
+
+  child.on('error', error => {
+    if (!runJob || runJob.pid !== child.pid) return;
+    runJob = {
+      ...runJob,
+      state: 'failed',
+      finishedAt: new Date().toISOString(),
+      exitCode: -1,
+      detail: error.message || 'failed to launch collection',
+    };
+  });
+
+  return { ok: true, run: runSummary() };
+}
+
 const PAGE = String.raw`<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -398,8 +740,8 @@ const PAGE = String.raw`<!doctype html>
   .kpi .v.red { color: var(--red); text-shadow: 0 0 14px rgba(255,107,107,0.3); }
 
   /* ── 主区 ─────────────────────────── */
-  .main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 7fr) minmax(19rem, 3fr); gap: 0.7rem; }
-  .col { display: flex; flex-direction: column; gap: 0.7rem; min-height: 0; min-width: 0; }
+  .main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 7fr) minmax(19rem, 3fr); gap: 0.7rem; position: relative; }
+  .col { display: flex; flex-direction: column; gap: 0.7rem; min-height: 0; min-width: 0; position: relative; }
   .panel {
     background: var(--panel); border: 1px solid var(--line); border-radius: 0.85rem;
     box-shadow: var(--shadow); backdrop-filter: blur(14px) saturate(1.25);
@@ -417,12 +759,12 @@ const PAGE = String.raw`<!doctype html>
 
   /* ── 数据表格：表头弱化，行 hover 高亮 ── */
   table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-  th, td { padding: 0.42rem 0.6rem; border-bottom: 1px solid rgba(148,165,210,0.07); text-align: left; white-space: nowrap; }
+  th, td { padding: 0.42rem 0.6rem; border-bottom: 1px solid rgba(148,165,210,0.07); text-align: center; white-space: nowrap; }
   thead th { position: sticky; top: 0; z-index: 1; background: var(--panel-2);
     color: rgba(141,154,184,0.75); font-size: 0.68rem; font-weight: 400; letter-spacing: 0.09em; }
   tbody tr { transition: background 0.15s ease; }
   tbody tr:hover td { background: rgba(0,140,255,0.07); }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
   .muted { color: var(--muted); }
   .sub { color: var(--muted); font-size: 0.75rem; }
   .ellip { max-width: 15rem; overflow: hidden; text-overflow: ellipsis; }
@@ -435,6 +777,54 @@ const PAGE = String.raw`<!doctype html>
   .badge.run  { color: #cfe2ff; background: rgba(0,102,255,0.16); border-color: rgba(77,148,255,0.35); }
   .badge.wait { color: var(--muted); background: rgba(148,165,210,0.08); border-color: var(--line-2); }
   .badge.err  { color: #ffdcdc; background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.3); }
+  .badge.warn { color: #fff1c4; background: rgba(245,197,66,0.12); border-color: rgba(245,197,66,0.28); }
+
+  button.tool {
+    border: 1px solid var(--line-2); border-radius: 0.5rem; color: var(--text);
+    background: rgba(148,165,210,0.08); padding: 0.25rem 0.62rem; font-family: var(--font);
+    font-size: 0.78rem; cursor: pointer; transition: all 0.15s ease;
+  }
+  button.tool:hover:not(:disabled) { border-color: rgba(0,229,255,0.45); color: var(--cyan); }
+  button.tool.primary { background: rgba(0,102,255,0.18); border-color: rgba(77,148,255,0.38); }
+  button.tool:disabled { opacity: 0.48; cursor: not-allowed; }
+.account-table td { vertical-align: middle; }
+.account-name { font-size: 1rem; font-weight: 700; color: var(--cyan); }
+.account-actions { display: inline-flex; gap: 0.35rem; }
+.settings-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; padding: 0.3rem 0.3rem 0.8rem; }
+.field { display: grid; gap: 0.3rem; min-width: 0; }
+.field label { color: var(--muted); font-size: 0.74rem; }
+input[type="date"], input[type="number"] {
+  background: rgba(148,165,210,0.07); border: 1px solid var(--line-2); color: var(--text);
+  border-radius: 0.5rem; padding: 0.32rem 0.6rem; font-size: 0.82rem; outline: none; font-family: var(--font);
+}
+.checks { display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center; }
+.checks label { display: inline-flex; gap: 0.35rem; align-items: center; color: var(--text); font-size: 0.8rem; }
+.overlay {
+  position: fixed; inset: 0; background: rgba(5, 7, 15, 0.62); backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center; z-index: 30; padding: 1.2rem;
+}
+.overlay.open { display: flex; }
+#settingsPanel.modal-panel {
+  width: min(78rem, calc(100vw - 2.4rem)); max-height: calc(100vh - 2.4rem); display: flex;
+  flex-direction: column; background: rgba(16, 20, 34, 0.96);
+}
+.resizer {
+  position: absolute; opacity: 0.36; transition: opacity 0.15s ease; touch-action: none; z-index: 8;
+}
+.resizer:hover, .resizer.dragging { opacity: 1; }
+.resizer.row-split { left: 0; right: 0; cursor: ns-resize; }
+.resizer.col-split { top: 0; bottom: 0; cursor: ew-resize; }
+.resizer.row-split::before {
+  content: ""; position: absolute; left: 0.65rem; right: 0.65rem; top: 50%; height: 2px;
+  transform: translateY(-50%); background: rgba(0,229,255,0.42); border-radius: 999px;
+  box-shadow: 0 0 8px rgba(0,229,255,0.2);
+}
+.resizer.col-split::before {
+  content: ""; position: absolute; top: 0.9rem; bottom: 0.9rem; left: 50%; width: 2px;
+  transform: translateX(-50%); background: rgba(0,229,255,0.42); border-radius: 999px;
+  box-shadow: 0 0 8px rgba(0,229,255,0.2);
+}
+.panel.resizable { position: relative; min-height: 4rem; min-width: 18rem; }
 
   /* 品类进度条：青绿渐变 */
   .mini { height: 0.38rem; width: 6.5rem; border-radius: 999px; background: rgba(148,165,210,0.12); overflow: hidden; display: inline-block; vertical-align: middle; }
@@ -519,6 +909,7 @@ const PAGE = String.raw`<!doctype html>
     .app { height: auto; min-height: 100dvh; }
     .main { grid-template-columns: 1fr; }
     .panel > .body { max-height: 46vh; }
+    .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 640px) {
     .app { padding: 0.7rem; }
@@ -527,6 +918,7 @@ const PAGE = String.raw`<!doctype html>
     .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
     input[type="search"] { width: 7rem; }
     .ellip { max-width: 9rem; }
+    .settings-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -548,6 +940,11 @@ const PAGE = String.raw`<!doctype html>
       <span class="chip ghost">已运行 <b id="elapsed">--</b></span>
       <span class="chip ghost">更新于 <b id="updated">--</b></span>
     </div>
+    <div class="chips">
+      <button class="tool" id="settingsOpen" type="button">设置</button>
+      <button class="tool" id="runStart" type="button">开始采集</button>
+      <button class="tool primary" id="runStartFresh" type="button">全新采集</button>
+    </div>
   </div>
 
   <div class="overall">
@@ -559,7 +956,7 @@ const PAGE = String.raw`<!doctype html>
 
   <div class="main">
     <div class="col">
-      <section class="panel" style="flex:0 0 auto">
+      <section class="panel resizable" data-panel="category-progress" style="flex:0 0 auto">
         <div class="head">
           <h2>品类进度</h2>
           <span class="hint" id="catsHint"></span>
@@ -577,7 +974,7 @@ const PAGE = String.raw`<!doctype html>
         </div>
       </section>
 
-      <section class="panel" style="flex:1" id="focusPanel">
+      <section class="panel resizable" data-panel="focus-apps" style="flex:1" id="focusPanel">
         <div class="head">
           <h2>焦点应用</h2>
           <div class="tabs" id="tabs"></div>
@@ -601,9 +998,9 @@ const PAGE = String.raw`<!doctype html>
     </div>
 
     <div class="col">
-      <section class="panel" style="flex:0 0 auto">
+      <section class="panel resizable" data-panel="risers" style="flex:0 0 auto">
         <div class="head"><h2>本周飙升榜</h2><span class="hint">全品类涨幅前列</span></div>
-        <div class="body" style="max-height:24vh">
+        <div class="body">
           <table>
             <thead><tr><th class="num">#</th><th>应用</th><th>品类</th><th class="num">本周排名</th><th class="num">升幅</th></tr></thead>
             <tbody id="riserRows"></tbody>
@@ -611,31 +1008,75 @@ const PAGE = String.raw`<!doctype html>
         </div>
       </section>
 
-      <section class="panel" style="flex:0 0 auto">
+      <section class="panel resizable" data-panel="market-split" style="flex:0 0 auto">
         <div class="head"><h2>焦点市场分布</h2></div>
         <div class="split" id="splitBar"></div>
         <div class="split-legend" id="splitLegend"></div>
       </section>
 
-      <section class="panel" style="flex:1">
+      <section class="panel resizable" data-panel="events" style="flex:1">
         <div class="head"><h2>事件流</h2><div class="grow"></div>
           <span class="hint"><a href="/api/progress" target="_blank">进度</a> · <a href="/api/results" target="_blank">结果</a> · <a href="/api/health" target="_blank">健康</a></span>
         </div>
         <div class="body timeline" id="events"></div>
       </section>
 
-      <section class="panel" style="flex:0 0 auto">
+      <section class="panel resizable" data-panel="context" style="flex:0 0 auto">
         <div class="head"><h2>运行上下文</h2></div>
         <div class="kv-list" id="ctx"></div>
       </section>
     </div>
   </div>
 </div>
+<div class="overlay" id="settingsOverlay">
+  <section class="panel modal-panel" id="settingsPanel">
+    <div class="head">
+      <h2>设置</h2>
+      <span class="hint" id="accountsHint">本机 profile</span>
+      <div class="grow"></div>
+      <button class="tool" id="accountRefresh" type="button">检测登录态</button>
+      <button class="tool" id="settingsClose" type="button">关闭</button>
+    </div>
+    <div class="body">
+      <div class="settings-grid">
+        <div class="field">
+          <label for="weekAnchorInput">采集周一</label>
+          <input id="weekAnchorInput" type="date">
+        </div>
+        <div class="field">
+          <label>账号池</label>
+          <div class="checks" id="accountChecks">
+            <label><input type="checkbox" value=".appmagic-userdata" checked> A</label>
+            <label><input type="checkbox" value=".appmagic-userdata-b" checked> B</label>
+            <label><input type="checkbox" value=".appmagic-userdata-c" checked> C</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>运行选项</label>
+          <div class="checks">
+            <label><input id="listOnlyInput" type="checkbox"> 仅榜单</label>
+            <label><input id="skipExcelInput" type="checkbox"> 跳过Excel</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>说明</label>
+          <div class="sub">留空日期表示当前周；“开始采集”使用当前设置，“全新采集”会追加 Fresh。</div>
+        </div>
+      </div>
+      <table class="account-table">
+        <thead><tr><th>账号</th><th>Profile</th><th>邮箱</th><th>登录态</th><th>操作</th></tr></thead>
+        <tbody id="accountRows"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
 
 <script>
 (function () {
   var ALL = '__all__';
-  var S = { data: null, tab: ALL, sortBy: 'rank', search: '', es: null, pollTimer: null };
+  var S = { data: null, tab: ALL, sortBy: 'rank', search: '', es: null, pollTimer: null, accounts: { accounts: [], loading: false, error: '' }, run: { active: false, loading: false, job: null } };
+  var SETTINGS_KEY = 'appmagic_dashboard_settings_v1';
+  var PANEL_KEY = 'appmagic_dashboard_panel_sizes_v1';
   // AppMagic 品类页链接（tag id 与 scraper CATS 对应；已实测 ?tag= 参数生效）
   var CAT_TAG = { '超休闲': 126, '休闲': 243572, 'Launcher': 243528, '杀毒软件、清理': 119, '文件恢复': 243477, 'PDF阅读器': 244699 };
   function catUrl(label) {
@@ -645,6 +1086,54 @@ const PAGE = String.raw`<!doctype html>
 
   function esc(v) {
     return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function loadJson(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? Object.assign({}, fallback, JSON.parse(raw)) : Object.assign({}, fallback);
+    } catch (e) {
+      return Object.assign({}, fallback);
+    }
+  }
+  function saveJson(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+  function readSettings() {
+    return loadJson(SETTINGS_KEY, {
+      weekAnchor: '',
+      accounts: ['.appmagic-userdata', '.appmagic-userdata-b', '.appmagic-userdata-c'],
+      listOnly: false,
+      skipExcel: false
+    });
+  }
+  function writeSettings() {
+    var settings = {
+      weekAnchor: document.getElementById('weekAnchorInput') ? document.getElementById('weekAnchorInput').value : '',
+      accounts: Array.prototype.slice.call(document.querySelectorAll('#accountChecks input:checked')).map(function (el) { return el.value; }),
+      listOnly: !!(document.getElementById('listOnlyInput') && document.getElementById('listOnlyInput').checked),
+      skipExcel: !!(document.getElementById('skipExcelInput') && document.getElementById('skipExcelInput').checked)
+    };
+    saveJson(SETTINGS_KEY, settings);
+    return settings;
+  }
+  function applySettings() {
+    var settings = readSettings();
+    var date = document.getElementById('weekAnchorInput');
+    if (date) date.value = settings.weekAnchor || '';
+    Array.prototype.forEach.call(document.querySelectorAll('#accountChecks input'), function (el) {
+      el.checked = settings.accounts.indexOf(el.value) >= 0;
+    });
+    if (document.getElementById('listOnlyInput')) document.getElementById('listOnlyInput').checked = !!settings.listOnly;
+    if (document.getElementById('skipExcelInput')) document.getElementById('skipExcelInput').checked = !!settings.skipExcel;
+  }
+  function openSettings() {
+    var overlay = document.getElementById('settingsOverlay');
+    if (overlay) overlay.classList.add('open');
+  }
+  function closeSettings() {
+    var overlay = document.getElementById('settingsOverlay');
+    if (overlay) overlay.classList.remove('open');
+    writeSettings();
   }
   function num(v) { return (v == null || v === '') ? '--' : Number(v).toLocaleString('en-US'); }
   function dur(ms) {
@@ -818,6 +1307,7 @@ const PAGE = String.raw`<!doctype html>
     renderFocus(r);
     renderRisers(r);
     renderSplit(r);
+    renderAccounts();
     renderRight(p);
   }
 
@@ -918,6 +1408,562 @@ const PAGE = String.raw`<!doctype html>
       '<span class="lg"><span class="sw" style="background:rgba(148,165,210,0.4)"></span>待采集 ' + s.unknown + '</span>';
   }
 
+  function accountState(row) {
+    if (row.duplicate) return { cls: 'warn', text: '邮箱重复' };
+    if (row.state === 'ok') return { cls: 'done', text: '有效' };
+    if (row.state === 'fail') return { cls: 'err', text: '失效' };
+    if (row.state === 'login') return { cls: 'run', text: '登录中' };
+    if (row.state === 'checking') return { cls: 'run', text: '检测中' };
+    if (row.state === 'cached') return { cls: 'warn', text: '有缓存' };
+    if (row.state === 'missing') return { cls: 'wait', text: '未创建' };
+    return { cls: 'wait', text: '未检测' };
+  }
+
+  function renderAccounts() {
+    var box = S.accounts || { accounts: [], loading: false, error: '' };
+    var rows = box.accounts || [];
+    var hint = document.getElementById('accountsHint');
+    if (hint) {
+      var ok = rows.filter(function (r) { return r.state === 'ok'; }).length;
+      hint.textContent = box.error ? box.error : (rows.length ? ('有效 ' + ok + '/' + rows.length) : '本机 profile');
+    }
+    var btn = document.getElementById('accountRefresh');
+    if (btn) {
+      btn.disabled = !!box.loading;
+      btn.textContent = box.loading ? '检测中...' : '检测登录态';
+    }
+    var runBtn = document.getElementById('runStart');
+    var freshBtn = document.getElementById('runStartFresh');
+    if (runBtn) {
+      var run = S.run || {};
+      var running = !!run.active;
+      runBtn.disabled = !!box.loading || !!run.loading || running;
+      runBtn.textContent = run.loading ? '启动中...' : (running ? '采集中' : '开始采集');
+    }
+    if (freshBtn) {
+      var run2 = S.run || {};
+      var running2 = !!run2.active;
+      freshBtn.disabled = !!box.loading || !!run2.loading || running2;
+      freshBtn.textContent = run2.loading ? '启动中...' : (running2 ? '采集中' : '全新采集');
+    }
+    var html = rows.map(function (row) {
+      var st = accountState(row);
+      var busy = row.state === 'login' || row.state === 'checking' || box.loading;
+      var email = row.email ? esc(row.email) : '<span class="muted">' + esc(row.emailStatus || '--') + '</span>';
+      var token = row.tokenSavedAt ? '<div class="sub">token ' + esc(ftime(row.tokenSavedAt)) + '</div>' : '';
+      var detail = row.detail ? '<div class="sub">' + esc(row.detail) + '</div>' : token;
+      return '<tr>' +
+        '<td><span class="account-name">' + esc(row.label) + '</span></td>' +
+        '<td><span class="ellip">' + esc(row.profile) + '</span>' + (row.exists ? '' : '<div class="sub">点击登录可创建</div>') + '</td>' +
+        '<td class="wrap">' + email + '</td>' +
+        '<td><span class="badge ' + st.cls + '">' + st.text + '</span>' + detail + '</td>' +
+        '<td><span class="account-actions">' +
+          '<button class="tool primary" type="button" data-login="' + esc(row.profile) + '"' + (busy ? ' disabled' : '') + '>捕捉</button>' +
+        '</span></td>' +
+      '</tr>';
+    }).join('');
+    document.getElementById('accountRows').innerHTML = html || '<tr><td colspan="5"><div class="empty">未发现账号 profile</div></td></tr>';
+  }
+
+  function loadRun() {
+    return fetch('/api/run', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { S.run = Object.assign({ active: false, loading: false, job: null }, j); renderAccounts(); return j; })
+      .catch(function () {});
+  }
+
+  function loadAccounts() {
+    return fetch('/api/accounts', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { S.accounts = Object.assign({ loading: false, error: '' }, j); renderAccounts(); return j; })
+      .catch(function () { S.accounts.error = '账号池读取失败'; S.accounts.loading = false; renderAccounts(); });
+  }
+
+  function checkAccounts() {
+    S.accounts.loading = true;
+    S.accounts.error = '';
+    renderAccounts();
+    fetch('/api/accounts/check', { method: 'POST', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { S.accounts = Object.assign({ loading: false, error: '' }, j); renderAccounts(); })
+      .catch(function () { S.accounts.loading = false; S.accounts.error = '登录态检测失败'; renderAccounts(); });
+  }
+
+  function loginAccount(profile) {
+    S.accounts.loading = true;
+    renderAccounts();
+    fetch('/api/accounts/login?profile=' + encodeURIComponent(profile), { method: 'POST', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) S.accounts.error = j.error || '无法启动登录捕捉';
+        S.accounts.loading = false;
+        renderAccounts();
+        loadAccounts();
+        pollAccountsWhileBusy();
+      })
+      .catch(function () { S.accounts.loading = false; S.accounts.error = '无法启动登录捕捉'; renderAccounts(); });
+  }
+
+  function pollAccountsWhileBusy() {
+    setTimeout(function () {
+      loadAccounts().then(function (j) {
+        var busy = (j.accounts || []).some(function (row) { return row.state === 'login' || row.state === 'checking'; });
+        if (busy) pollAccountsWhileBusy();
+      });
+    }, 3000);
+  }
+
+  function buildRunQuery(fresh) {
+    var settings = writeSettings();
+    var params = new URLSearchParams();
+    if (fresh) params.set('fresh', '1');
+    if (settings.weekAnchor) params.set('weekAnchor', settings.weekAnchor);
+    if (settings.listOnly) params.set('listOnly', '1');
+    if (settings.skipExcel) params.set('skipExcel', '1');
+    (settings.accounts || []).forEach(function (acc) { params.append('account', acc); });
+    return params.toString();
+  }
+
+  function startRun(fresh) {
+    S.run.loading = true;
+    renderAccounts();
+    fetch('/api/run/start?' + buildRunQuery(!!fresh), { method: 'POST', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        S.run = Object.assign({ loading: false }, j.run || {}, { loading: false });
+        renderAccounts();
+        fetchOnce();
+        loadRun();
+        pollRunWhileBusy();
+      })
+      .catch(function () {
+        S.run.loading = false;
+        renderAccounts();
+      });
+  }
+
+  function pollRunWhileBusy() {
+    setTimeout(function () {
+      loadRun().then(function (j) {
+        fetchOnce();
+        if (j && j.active) pollRunWhileBusy();
+      });
+    }, 3000);
+  }
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function initResizablePanels() {
+    var DEFAULT_LAYOUT = {
+      colSplit: 0.68,
+      leftRows: [0.34, 0.66],
+      rightRows: [0.18, 0.12, 0.52, 0.18],
+      rightVariableSplit: 0.18 / (0.18 + 0.52)
+    };
+    var RIGHT_SPLIT_MIN = 0.2;
+    var RIGHT_SPLIT_MAX = 0.82;
+    var main = document.querySelector('.main');
+    var cols = document.querySelectorAll('.main > .col');
+    var leftCol = cols[0];
+    var rightCol = cols[1];
+    var leftPanels = [
+      document.querySelector('[data-panel="category-progress"]'),
+      document.querySelector('[data-panel="focus-apps"]')
+    ];
+    var rightPanels = [
+      document.querySelector('[data-panel="risers"]'),
+      document.querySelector('[data-panel="market-split"]'),
+      document.querySelector('[data-panel="events"]'),
+      document.querySelector('[data-panel="context"]')
+    ];
+    var state = sanitizeState(loadJson(PANEL_KEY, DEFAULT_LAYOUT));
+    var handles = {};
+
+    function finiteNumber(v) {
+      return typeof v === 'number' && isFinite(v);
+    }
+
+    function cssPx(el, prop, fallback) {
+      if (!el) return fallback;
+      var n = parseFloat(window.getComputedStyle(el)[prop]);
+      return isFinite(n) ? n : fallback;
+    }
+
+    function normalizeRatios(arr, count, fallback) {
+      var source = Array.isArray(arr) && arr.length === count ? arr : fallback;
+      var clean = source.map(function (v, i) {
+        v = Number(v);
+        return isFinite(v) && v > 0 ? v : fallback[i];
+      });
+      var sum = clean.reduce(function (a, b) { return a + b; }, 0) || 1;
+      return clean.map(function (v) { return v / sum; });
+    }
+
+    function sanitizeState(raw) {
+      var rightRows = normalizeRatios(raw && raw.rightRows, rightPanels.length, DEFAULT_LAYOUT.rightRows);
+      var variableBase = rightRows[0] + rightRows[2];
+      var variableSplit = finiteNumber(raw && raw.rightVariableSplit)
+        ? raw.rightVariableSplit
+        : (variableBase ? rightRows[0] / variableBase : DEFAULT_LAYOUT.rightVariableSplit);
+      return {
+        colSplit: finiteNumber(raw && raw.colSplit) ? clamp(raw.colSplit, 0.2, 0.8) : DEFAULT_LAYOUT.colSplit,
+        leftRows: normalizeRatios(raw && raw.leftRows, leftPanels.length, DEFAULT_LAYOUT.leftRows),
+        rightRows: rightRows,
+        rightVariableSplit: clamp(variableSplit, RIGHT_SPLIT_MIN, RIGHT_SPLIT_MAX)
+      };
+    }
+
+    function mainGap() {
+      return cssPx(main, 'columnGap', 11.2);
+    }
+
+    function rowGap(col) {
+      return cssPx(col, 'rowGap', 11.2);
+    }
+
+    function isStackedLayout() {
+      return window.matchMedia('(max-width: 1180px)').matches;
+    }
+
+    function minColumnWidth(total) {
+      return Math.min(320, Math.max(220, Math.floor(total / 2) - 1));
+    }
+
+    function minPanelSize(total, count) {
+      var cap = Math.max(24, Math.floor(total / Math.max(1, count)) - 2);
+      return Math.min(64, cap);
+    }
+
+    function minVariablePanelSize(total) {
+      return Math.min(120, Math.max(72, Math.floor(total / 4)));
+    }
+
+    function preferredLockedHeight(panel, fallback, min, max) {
+      var head = panel ? panel.querySelector('.head') : null;
+      var body = panel ? (panel.querySelector('.body') || panel.querySelector('.kv-list') || panel.querySelector('.split-legend')) : null;
+      var content = (head ? head.offsetHeight : 0) + (body ? body.scrollHeight : 0) + 2;
+      var needed = content > 20 ? Math.max(fallback, content) : fallback;
+      return clamp(Math.round(needed), min, max);
+    }
+
+    function categoryProgressMaxHeight(total) {
+      var panel = leftPanels[0];
+      var head = panel ? panel.querySelector('.head') : null;
+      var body = panel ? panel.querySelector('.body') : null;
+      var thead = body ? body.querySelector('thead') : null;
+      var rows = body ? Array.prototype.slice.call(body.querySelectorAll('tbody tr')) : [];
+      var measuredRows = rows
+        .map(function (row) { return row.offsetHeight; })
+        .filter(function (h) { return h > 0; })
+        .slice(0, 6);
+      var rowHeight = measuredRows.length
+        ? measuredRows.reduce(function (a, b) { return a + b; }, 0) / measuredRows.length
+        : 36;
+      var rowCount = rows.length ? Math.min(6, rows.length) : 6;
+      var bodyPad = body ? cssPx(body, 'paddingTop', 0) + cssPx(body, 'paddingBottom', 8) : 8;
+      var content = (head ? head.offsetHeight : 48) + bodyPad + (thead ? thead.offsetHeight : 34) + rowHeight * rowCount + 8;
+      var minFocus = Math.max(220, minPanelSize(total, 2));
+      return clamp(Math.round(content), 180, Math.max(180, total - minFocus));
+    }
+
+    function clearLayoutStyles() {
+      main.style.gridTemplateColumns = '';
+      [leftCol, rightCol].forEach(function (col) {
+        if (!col) return;
+        col.style.flex = '';
+        col.style.width = '';
+      });
+      leftPanels.concat(rightPanels).forEach(function (panel) {
+        if (!panel) return;
+        panel.style.flex = '';
+        panel.style.height = '';
+        panel.style.width = '';
+      });
+      positionHandles(true);
+    }
+
+    function applyColumnRows(col, panels, ratios) {
+      if (!col) return;
+      var gap = rowGap(col);
+      var total = Math.max(0, col.clientHeight - gap * (panels.length - 1));
+      var normalized = normalizeRatios(ratios, panels.length, panels === leftPanels ? DEFAULT_LAYOUT.leftRows : DEFAULT_LAYOUT.rightRows);
+      if (panels === leftPanels && panels.length === 2) {
+        var minTop = minPanelSize(total, 2);
+        var maxTop = Math.max(minTop, Math.min(categoryProgressMaxHeight(total), total - minTop));
+        var top = clamp(Math.round(total * normalized[0]), minTop, maxTop);
+        var bottom = Math.max(0, total - top);
+        state.leftRows = total ? [top / total, bottom / total] : DEFAULT_LAYOUT.leftRows.slice();
+        panels[0].style.flex = '0 0 auto';
+        panels[0].style.height = top + 'px';
+        panels[0].style.width = '';
+        panels[1].style.flex = '0 0 auto';
+        panels[1].style.height = bottom + 'px';
+        panels[1].style.width = '';
+        return;
+      }
+      panels.forEach(function (panel, i) {
+        if (!panel) return;
+        panel.style.flex = '0 0 auto';
+        panel.style.height = Math.max(0, Math.round(total * normalized[i])) + 'px';
+        panel.style.width = '';
+      });
+    }
+
+    function fixedRightHeights(total) {
+      var marketBase = clamp(Math.round(total * DEFAULT_LAYOUT.rightRows[1]), 96, 124);
+      var contextBase = clamp(Math.round(total * 0.14), 132, 180);
+      var market = preferredLockedHeight(rightPanels[1], marketBase, 96, 132);
+      var context = preferredLockedHeight(rightPanels[3], contextBase, 120, 210);
+      var minVariable = minVariablePanelSize(total);
+      var maxFixed = Math.max(0, total - minVariable * 2);
+      if (market + context > maxFixed) {
+        var scale = maxFixed / Math.max(1, market + context);
+        market = Math.max(64, Math.floor(market * scale));
+        context = Math.max(120, Math.floor(context * scale));
+      }
+      return { market: market, context: context };
+    }
+
+    function rightMetrics() {
+      var gap = rowGap(rightCol);
+      var total = Math.max(0, rightCol.clientHeight - gap * (rightPanels.length - 1));
+      var fixed = fixedRightHeights(total);
+      var variable = Math.max(0, total - fixed.market - fixed.context);
+      var minVariable = Math.min(minVariablePanelSize(variable), Math.max(0, Math.floor(variable / 2) - 1));
+      var split = clamp(state.rightVariableSplit, RIGHT_SPLIT_MIN, RIGHT_SPLIT_MAX);
+      var risers = variable ? clamp(Math.round(variable * split), minVariable, variable - minVariable) : 0;
+      var events = Math.max(0, variable - risers);
+      return {
+        total: total,
+        gap: gap,
+        fixed: fixed,
+        variable: variable,
+        minVariable: minVariable,
+        sizes: [risers, fixed.market, events, fixed.context]
+      };
+    }
+
+    function applyRightRows() {
+      if (!rightCol) return;
+      var metrics = rightMetrics();
+      rightPanels.forEach(function (panel, i) {
+        if (!panel) return;
+        panel.style.flex = '0 0 auto';
+        panel.style.height = Math.max(0, Math.round(metrics.sizes[i])) + 'px';
+        panel.style.width = '';
+      });
+      if (metrics.variable) state.rightVariableSplit = clamp(metrics.sizes[0] / metrics.variable, RIGHT_SPLIT_MIN, RIGHT_SPLIT_MAX);
+      state.rightRows = metrics.total
+        ? metrics.sizes.map(function (v) { return v / metrics.total; })
+        : DEFAULT_LAYOUT.rightRows.slice();
+    }
+
+    function setHandleBox(handle, box, hidden) {
+      if (!handle) return;
+      handle.style.display = hidden ? 'none' : 'block';
+      if (hidden) return;
+      handle.style.left = Math.round(box.left) + 'px';
+      handle.style.top = Math.round(box.top) + 'px';
+      handle.style.width = Math.max(4, Math.round(box.width)) + 'px';
+      handle.style.height = Math.max(4, Math.round(box.height)) + 'px';
+    }
+
+    function positionHandles(hidden) {
+      var hide = hidden || isStackedLayout();
+      if (hide) {
+        Object.keys(handles).forEach(function (key) { setHandleBox(handles[key], {}, true); });
+        return;
+      }
+      var gap = mainGap();
+      setHandleBox(handles.column, {
+        left: leftCol.offsetLeft + leftCol.offsetWidth,
+        top: 0,
+        width: gap,
+        height: main.clientHeight
+      }, false);
+      var leftGap = rowGap(leftCol);
+      setHandleBox(handles.leftRows, {
+        left: 0,
+        top: leftPanels[0].offsetTop + leftPanels[0].offsetHeight,
+        width: leftCol.clientWidth,
+        height: leftGap
+      }, false);
+      var rightGap = rowGap(rightCol);
+      setHandleBox(handles.rightTop, {
+        left: 0,
+        top: rightPanels[0].offsetTop + rightPanels[0].offsetHeight,
+        width: rightCol.clientWidth,
+        height: rightGap
+      }, false);
+      setHandleBox(handles.rightMiddle, {
+        left: 0,
+        top: rightPanels[1].offsetTop + rightPanels[1].offsetHeight,
+        width: rightCol.clientWidth,
+        height: rightGap
+      }, false);
+    }
+
+    function applyLayout() {
+      if (!main || !leftCol || !rightCol) return;
+      if (isStackedLayout()) {
+        clearLayoutStyles();
+        return;
+      }
+      var gap = mainGap();
+      var totalW = Math.max(0, main.clientWidth - gap);
+      var minW = minColumnWidth(totalW);
+      var leftW = clamp(Math.round(totalW * state.colSplit), minW, totalW - minW);
+      var rightW = Math.max(320, totalW - leftW);
+      rightW = totalW - leftW;
+      state.colSplit = totalW ? leftW / totalW : state.colSplit;
+      main.style.gridTemplateColumns = leftW + 'px ' + rightW + 'px';
+      leftCol.style.flex = '0 0 auto';
+      rightCol.style.flex = '0 0 auto';
+      leftCol.style.width = '';
+      rightCol.style.width = '';
+      applyColumnRows(leftCol, leftPanels, state.leftRows);
+      applyRightRows();
+      positionHandles(false);
+    }
+
+    function saveState() {
+      saveJson(PANEL_KEY, state);
+    }
+
+    function columnDragStart() {
+      var total = leftCol.getBoundingClientRect().width + rightCol.getBoundingClientRect().width;
+      return {
+        left: leftCol.getBoundingClientRect().width,
+        total: total,
+        min: minColumnWidth(total)
+      };
+    }
+
+    function resizeColumns(start, dx) {
+      if (!start || !start.total) return;
+      var nextLeft = clamp(start.left + dx, start.min, start.total - start.min);
+      state.colSplit = nextLeft / start.total;
+      applyLayout();
+    }
+
+    function rowDragStart(which) {
+      var col = which === 'leftRows' ? leftCol : rightCol;
+      var panels = which === 'leftRows' ? leftPanels : rightPanels;
+      var fallback = which === 'leftRows' ? DEFAULT_LAYOUT.leftRows : DEFAULT_LAYOUT.rightRows;
+      var ratios = normalizeRatios(state[which], panels.length, fallback);
+      var gap = rowGap(col);
+      var total = Math.max(0, col.clientHeight - gap * (panels.length - 1));
+      return {
+        sizes: ratios.map(function (r) { return r * total; }),
+        total: total,
+        min: minPanelSize(total, panels.length)
+      };
+    }
+
+    function resizeRows(which, index, start, dy) {
+      if (!start || !start.total) return;
+      var sizes = start.sizes.slice();
+      var sumPair = start.sizes[index] + start.sizes[index + 1];
+      var min = Math.min(start.min, Math.max(0, Math.floor(sumPair / 2) - 1));
+      var maxA = sumPair - min;
+      if (which === 'leftRows' && index === 0) {
+        maxA = Math.min(maxA, categoryProgressMaxHeight(start.total));
+      }
+      var a = clamp(start.sizes[index] + dy, min, maxA);
+      var b = sumPair - a;
+      sizes[index] = a;
+      sizes[index + 1] = b;
+      var next = sizes.map(function (v) { return v / start.total; });
+      if (which === 'leftRows') state.leftRows = next;
+      else state.rightRows = next;
+      applyLayout();
+    }
+
+    function rightVariableDragStart() {
+      var metrics = rightMetrics();
+      return {
+        risers: metrics.sizes[0],
+        variable: metrics.variable,
+        min: metrics.minVariable
+      };
+    }
+
+    function resizeRightVariable(start, dy, mode) {
+      if (!start || !start.variable) return;
+      var delta = mode === 'bottom' ? -dy : dy;
+      var nextRisers = clamp(start.risers + delta, start.min, start.variable - start.min);
+      state.rightVariableSplit = clamp(nextRisers / start.variable, RIGHT_SPLIT_MIN, RIGHT_SPLIT_MAX);
+      applyLayout();
+    }
+
+    var layoutPending = false;
+    function scheduleLayout() {
+      if (layoutPending) return;
+      layoutPending = true;
+      window.requestAnimationFrame(function () {
+        layoutPending = false;
+        applyLayout();
+      });
+    }
+
+    function addHandle(parent, className, onStart, onMove) {
+      if (!parent) return null;
+      var handle = document.createElement('div');
+      handle.className = className;
+      parent.appendChild(handle);
+      handle.addEventListener('pointerdown', function (ev) {
+        ev.preventDefault();
+        if (isStackedLayout()) return;
+        var startX = ev.clientX;
+        var startY = ev.clientY;
+        var start = onStart();
+        handle.classList.add('dragging');
+        handle.setPointerCapture(ev.pointerId);
+        function move(e2) {
+          onMove(start, e2.clientX - startX, e2.clientY - startY);
+        }
+        function up(e3) {
+          try { handle.releasePointerCapture(e3.pointerId); } catch (e) {}
+          handle.classList.remove('dragging');
+          handle.removeEventListener('pointermove', move);
+          handle.removeEventListener('pointerup', up);
+          handle.removeEventListener('pointercancel', up);
+          saveState();
+        }
+        handle.addEventListener('pointermove', move);
+        handle.addEventListener('pointerup', up);
+        handle.addEventListener('pointercancel', up);
+      });
+      return handle;
+    }
+
+    handles.column = addHandle(main, 'resizer col-split', columnDragStart, function (start, dx) {
+      resizeColumns(start, dx);
+    });
+    handles.leftRows = addHandle(leftCol, 'resizer row-split', function () {
+      return rowDragStart('leftRows');
+    }, function (start, dx, dy) {
+      resizeRows('leftRows', 0, start, dy);
+    });
+    handles.rightTop = addHandle(rightCol, 'resizer row-split', rightVariableDragStart, function (start, dx, dy) {
+      resizeRightVariable(start, dy, 'top');
+    });
+    handles.rightMiddle = addHandle(rightCol, 'resizer row-split', rightVariableDragStart, function (start, dx, dy) {
+      resizeRightVariable(start, dy, 'middle');
+    });
+    applyLayout();
+    window.addEventListener('resize', scheduleLayout);
+    window.appmagicRelayoutPanels = scheduleLayout;
+    if (window.ResizeObserver) {
+      var layoutObserver = new ResizeObserver(function () {
+        scheduleLayout();
+      });
+      layoutObserver.observe(main);
+    }
+  }
+
   function renderRight(p) {
     var events = (p && p.events || []).slice().reverse().map(function (e, i) {
       var extra = [];
@@ -947,6 +1993,7 @@ const PAGE = String.raw`<!doctype html>
         fetch('/api/open-output', { method: 'POST' }).catch(function () {});
       });
     }
+    if (window.appmagicRelayoutPanels) window.appmagicRelayoutPanels();
   }
 
   document.getElementById('tabs').addEventListener('click', function (e) {
@@ -957,6 +2004,22 @@ const PAGE = String.raw`<!doctype html>
   });
   document.getElementById('sortBy').addEventListener('change', function (e) { S.sortBy = e.target.value; render(); });
   document.getElementById('search').addEventListener('input', function (e) { S.search = e.target.value.trim(); render(); });
+  document.getElementById('settingsOpen').addEventListener('click', function () { openSettings(); });
+  document.getElementById('settingsClose').addEventListener('click', function () { closeSettings(); });
+  document.getElementById('settingsOverlay').addEventListener('click', function (e) {
+    if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+  });
+  document.getElementById('runStart').addEventListener('click', function () { startRun(false); });
+  document.getElementById('runStartFresh').addEventListener('click', function () { startRun(true); });
+  document.getElementById('accountRefresh').addEventListener('click', function () { checkAccounts(); });
+  document.getElementById('accountRows').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-login]');
+    if (!t) return;
+    loginAccount(t.getAttribute('data-login'));
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#accountChecks input, #weekAnchorInput, #listOnlyInput, #skipExcelInput'), function (el) {
+    el.addEventListener('change', function () { writeSettings(); });
+  });
 
   function setConn(ok, text) {
     var chip = document.getElementById('connChip');
@@ -990,6 +2053,10 @@ const PAGE = String.raw`<!doctype html>
       .catch(function () {});
   }
 
+  applySettings();
+  initResizablePanels();
+  loadAccounts();
+  loadRun();
   fetchOnce();
   startSSE();
 })();
@@ -998,7 +2065,8 @@ const PAGE = String.raw`<!doctype html>
 </html>`;
 
 const server = http.createServer((req, res) => {
-  const url = req.url || '/';
+  const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const url = parsedUrl.pathname;
 
   if (url.startsWith('/api/stream')) {
     res.writeHead(200, {
@@ -1021,6 +2089,48 @@ const server = http.createServer((req, res) => {
   }
 
   if (url.startsWith('/api/results')) return json(res, 200, readResults(latestRunDir()));
+
+  if (url === '/api/accounts') {
+    return json(res, 200, {
+      ok: true,
+      projectDir: PROJECT_DIR,
+      accounts: accountRows(),
+      checking: !!authCheckAll,
+    });
+  }
+
+  if (url === '/api/accounts/check') {
+    if ((req.method || 'GET').toUpperCase() !== 'POST') return json(res, 405, { ok: false, error: 'method not allowed' });
+    runAuthCheck().then(result => json(res, 200, {
+      ok: true,
+      accounts: accountRows(),
+      output: result.output ? result.output.slice(-4000) : '',
+    })).catch(error => json(res, 500, { ok: false, error: error.message || String(error), accounts: accountRows() }));
+    return;
+  }
+
+  if (url === '/api/accounts/login') {
+    if ((req.method || 'GET').toUpperCase() !== 'POST') return json(res, 405, { ok: false, error: 'method not allowed' });
+    const profile = parsedUrl.searchParams.get('profile') || '';
+    const result = startLoginCapture(profile);
+    return json(res, result.ok ? 200 : 400, { ...result, accounts: accountRows() });
+  }
+
+  if (url === '/api/run') {
+    return json(res, 200, runSummary());
+  }
+
+  if (url === '/api/run/start') {
+    if ((req.method || 'GET').toUpperCase() !== 'POST') return json(res, 405, { ok: false, error: 'method not allowed' });
+    const result = startCollectionRun({
+      fresh: parsedUrl.searchParams.get('fresh') === '1',
+      weekAnchor: parsedUrl.searchParams.get('weekAnchor') || '',
+      listOnly: parsedUrl.searchParams.get('listOnly') === '1',
+      skipExcel: parsedUrl.searchParams.get('skipExcel') === '1',
+      accounts: parsedUrl.searchParams.getAll('account'),
+    });
+    return json(res, result.ok ? 200 : 409, result);
+  }
 
   // 在本机文件管理器中打开当前运行的输出目录（目录由服务端自行解析，不接受任何外部路径）
   if (url.startsWith('/api/open-output')) {

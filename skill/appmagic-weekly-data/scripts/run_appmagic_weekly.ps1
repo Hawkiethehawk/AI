@@ -70,9 +70,11 @@ try {
     Write-Host $checkOut
     $failedAccounts = [regex]::Matches($checkOut, 'FAIL (\S+)') | ForEach-Object { $_.Groups[1].Value }
     foreach ($acc in $failedAccounts) {
-      Write-Host "  [auth] account $acc invalid - opening login window, please complete login..."
+      Write-Host "  [auth] account $acc invalid - refreshing login..."
       $env:APPMAGIC_USERDATA_DIR = $acc
+      Write-Host "  [auth] opening login window, please complete login..."
       node (Join-Path $ScriptDir "appmagic-login.js")
+      if ($LASTEXITCODE -ne 0) { throw "account $acc login refresh failed." }
       $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $ok = ($LASTEXITCODE -eq 0)
       Remove-Item Env:CHECK_AUTH, Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
       if (-not $ok) { throw "account $acc login not completed, aborted." }
