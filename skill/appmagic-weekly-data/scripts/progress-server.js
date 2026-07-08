@@ -24,15 +24,29 @@ function listRunDirs() {
   }
 }
 
+function isDashboardStateFile(file) {
+  return file === 'appmagic-progress.json'
+    || file === 'appmagic-run-state.json'
+    || /^appmagic-(weekly-cache|enrich-cache)-.+\.json$/.test(file)
+    || /^appmagic-(?!weekly-cache|enrich-cache).+-weekly\.json$/.test(file);
+}
+
+function dashboardFileMtime(dir) {
+  let best = -1;
+  let files = [];
+  try { files = fs.readdirSync(dir); } catch { return best; }
+  for (const file of files) {
+    if (!isDashboardStateFile(file)) continue;
+    try { best = Math.max(best, fs.statSync(path.join(dir, file)).mtimeMs); } catch {}
+  }
+  return best;
+}
+
 function latestRunDir() {
   let best = null;
   let bestTime = -1;
   for (const dir of listRunDirs()) {
-    let t = -1;
-    try { t = fs.statSync(path.join(dir, 'appmagic-progress.json')).mtimeMs; } catch {}
-    if (t < 0) {
-      try { t = fs.statSync(dir).mtimeMs; } catch { continue; }
-    }
+    const t = dashboardFileMtime(dir);
     if (t > bestTime) { bestTime = t; best = dir; }
   }
   return best;
@@ -108,6 +122,7 @@ function digestCategory(file, runDirName) {
   const data = readJsonSafe(file);
   if (!data || !data.category) return null;
   const records = data.records || [];
+  if (!records.length) return null;
   const focus = (data.focus || []).map(r => {
     const history = r.history || [];
     return focusEntry(r, r.country, {
@@ -150,6 +165,7 @@ function liveDigest(runDir, cat, runDirName) {
   const rankMaps = {};
   for (const d of weeks) rankMaps[d] = new Map(((wc[d] || {}).rows || []).map(r => [r.uid, r.rank]));
   const curRows = (wc[weeks[0]] || {}).rows || [];
+  if (!curRows.length) return null;
   const enrichApps = (readJsonSafe(enFile) || {}).apps || {};
   const riseThreshold = rank => (rank <= 5 ? 3 : rank <= 10 ? 5 : rank <= 50 ? 10 : rank <= 100 ? 20 : rank <= 200 ? 30 : Infinity);
 
@@ -214,7 +230,10 @@ function readResults(runDir) {
   const cats = [...new Set([...Object.keys(finalOf), ...cacheCats])];
 
   const categories = cats
-    .map(cat => (finalOf[cat] ? digestCategory(finalOf[cat], runDirName) : liveDigest(runDir, cat, runDirName)))
+    .map(cat => {
+      const finalDigest = finalOf[cat] ? digestCategory(finalOf[cat], runDirName) : null;
+      return finalDigest || liveDigest(runDir, cat, runDirName);
+    })
     .filter(Boolean);
 
   const risers = [];
@@ -300,12 +319,16 @@ function json(res, code, body) {
 
 // ---------- Account pool management ----------
 
-const DEFAULT_ACCOUNT_PROFILES = ['.appmagic-userdata', '.appmagic-userdata-b', '.appmagic-userdata-c'];
+const MAX_ACCOUNT_PROFILES = 10;
+const DEFAULT_ACCOUNT_PROFILES = ['.appmagic-userdata'].concat(
+  Array.from({ length: MAX_ACCOUNT_PROFILES - 1 }, (_, i) => `.appmagic-userdata-${String.fromCharCode(98 + i)}`)
+);
 const TOKEN_CACHE_NAME = 'appmagic-token.json';
 const accountStatus = new Map(); // profile -> { state, checkedAt, detail, output }
 const loginJobs = new Map(); // profile -> { state, pid, startedAt, finishedAt, exitCode }
 let authCheckAll = null;
 let runJob = null;
+let runChild = null;
 
 function isSafeProfile(profile) {
   return /^\.appmagic-userdata(?:-[A-Za-z0-9_-]+)?$/.test(profile || '');
@@ -335,8 +358,26 @@ function accountLabel(profile) {
   return m ? m[1].slice(0, 1).toUpperCase() : '?';
 }
 
+function profileSlotName(index) {
+  if (index === 0) return '.appmagic-userdata';
+  return `.appmagic-userdata-${String.fromCharCode(97 + index)}`;
+}
+
+function profileSlotIndex(profile) {
+  return DEFAULT_ACCOUNT_PROFILES.indexOf(profile);
+}
+
 function listAccountProfiles() {
-  return DEFAULT_ACCOUNT_PROFILES.slice();
+  let discovered = [];
+  try {
+    discovered = fs.readdirSync(PROJECT_DIR).filter(name => {
+      if (!isSafeProfile(name)) return false;
+      try { return fs.statSync(profilePath(name)).isDirectory(); } catch { return false; }
+    });
+  } catch {}
+  const all = [...new Set([...DEFAULT_ACCOUNT_PROFILES, ...discovered, ...accountStatus.keys(), ...loginJobs.keys()])];
+  all.sort((a, b) => profileSortValue(a) - profileSortValue(b) || a.localeCompare(b));
+  return all.slice(0, MAX_ACCOUNT_PROFILES);
 }
 
 function normalizeEmail(email) {
@@ -428,8 +469,75 @@ function accountRows() {
   for (const row of rows) {
     if (row.email) emailCounts.set(row.email, (emailCounts.get(row.email) || 0) + 1);
   }
-  for (const row of rows) row.duplicate = !!row.email && emailCounts.get(row.email) > 1;
+  for (const row of rows) {
+    row.duplicate = !!row.email && emailCounts.get(row.email) > 1;
+    row.canDeleteDuplicate = row.exists && row.duplicate && profileSlotIndex(row.profile) > 0;
+  }
   return rows;
+}
+
+function compactAuthError(message) {
+  const s = String(message || '').replace(/\s+/g, ' ').trim();
+  if (!s) return 'auth check failed';
+  if (/ERR_TIMED_OUT|Timeout|timed out/i.test(s)) return '检测超时：网络或 AppMagic 无响应';
+  if (/ERR_NAME_NOT_RESOLVED|ENOTFOUND/i.test(s)) return '检测失败：域名解析失败';
+  if (/ECONNRESET|ECONNREFUSED|network/i.test(s)) return '检测失败：网络连接异常';
+  if (/401|403|unauthorized|forbidden/i.test(s)) return '检测失败：登录态失效';
+  return s.length > 160 ? s.slice(0, 157) + '...' : s;
+}
+
+function syncProfileMapKeys(map, moves, deletedProfile) {
+  if (deletedProfile) map.delete(deletedProfile);
+  for (const [from, to] of Object.entries(moves)) {
+    if (!map.has(from)) continue;
+    map.set(to, map.get(from));
+    map.delete(from);
+  }
+  const existing = new Set(DEFAULT_ACCOUNT_PROFILES.filter(profileExists));
+  for (const key of Array.from(map.keys())) {
+    if (profileSlotIndex(key) >= 0 && !existing.has(key)) map.delete(key);
+  }
+}
+
+function deleteDuplicateProfile(profile) {
+  if (!isSafeProfile(profile)) return { ok: false, error: 'invalid profile', accounts: accountRows() };
+  const slot = profileSlotIndex(profile);
+  if (slot <= 0) return { ok: false, error: 'only duplicate secondary profiles can be deleted', accounts: accountRows() };
+  if (activeRunJob() || isFreshProgressActive()) {
+    return { ok: false, error: 'collection is running; stop or wait before deleting profiles', accounts: accountRows() };
+  }
+  const busyLogin = Array.from(loginJobs.values()).some(job => job && (job.state === 'login' || job.state === 'checking'));
+  if (busyLogin || authCheckAll) {
+    return { ok: false, error: 'account login/check is running; wait before deleting profiles', accounts: accountRows() };
+  }
+
+  const rows = accountRows();
+  const row = rows.find(r => r.profile === profile);
+  if (!row || !row.exists) return { ok: false, error: 'profile does not exist', accounts: rows };
+  if (!row.duplicate) return { ok: false, error: 'profile email is not duplicated', accounts: rows };
+
+  const target = profilePath(profile);
+  const projectRoot = path.resolve(PROJECT_DIR) + path.sep;
+  if (!target.startsWith(projectRoot)) return { ok: false, error: 'profile path escaped project', accounts: rows };
+
+  fs.rmSync(target, { recursive: true, force: true });
+
+  const moves = {};
+  const remaining = DEFAULT_ACCOUNT_PROFILES.filter(profileExists);
+  let nextSlot = 0;
+  for (const from of remaining) {
+    const to = profileSlotName(nextSlot++);
+    if (from === to) continue;
+    const fromPath = profilePath(from);
+    const toPath = profilePath(to);
+    if (fs.existsSync(toPath)) throw new Error(`target profile already exists: ${to}`);
+    fs.renameSync(fromPath, toPath);
+    moves[from] = to;
+  }
+
+  syncProfileMapKeys(accountStatus, moves, profile);
+  syncProfileMapKeys(loginJobs, moves, profile);
+  return { ok: true, deleted: profile, moves, accounts: accountRows() };
 }
 
 function parseAuthCheckOutput(output, profiles) {
@@ -460,15 +568,21 @@ function parseAuthCheckOutput(output, profiles) {
   }
 }
 
-function runAuthCheck(profile) {
-  const profiles = profile ? [profile] : listAccountProfiles().filter(profileExists);
-  if (!profile && authCheckAll) return authCheckAll;
+function runAuthCheck(profileOrProfiles) {
+  const explicitProfiles = Array.isArray(profileOrProfiles);
+  const profile = typeof profileOrProfiles === 'string' ? profileOrProfiles : '';
+  const profiles = explicitProfiles
+    ? [...new Set(profileOrProfiles.filter(isSafeProfile))].filter(profileExists).slice(0, MAX_ACCOUNT_PROFILES)
+    : (profile ? [profile] : listAccountProfiles().filter(profileExists));
+  if (!profiles.length) return Promise.resolve({ ok: false, output: 'FAIL (no existing profile selected)', accounts: accountRows() });
+  if (!explicitProfiles && !profile && authCheckAll) return authCheckAll;
   for (const p of profiles) {
     if (!profileExists(p)) continue;
     accountStatus.set(p, { state: 'checking', checkedAt: new Date().toISOString(), detail: 'auth check running' });
   }
   const env = { ...process.env, APPMAGIC_PROJECT_DIR: PROJECT_DIR, CHECK_AUTH: '1' };
   if (profile) env.APPMAGIC_USERDATA_DIR = profile;
+  if (explicitProfiles) env.APPMAGIC_ACCOUNTS = profiles.join(',');
   const script = path.join(__dirname, 'appmagic-weekly.js');
   const promise = new Promise(resolve => {
     cp.execFile(process.execPath, [script], {
@@ -486,7 +600,7 @@ function runAuthCheck(profile) {
           accountStatus.set(p, {
             state: 'fail',
             checkedAt: new Date().toISOString(),
-            detail: error.message || 'auth check failed',
+            detail: compactAuthError(error.message || 'auth check failed'),
             output: output.slice(-4000),
           });
         }
@@ -494,9 +608,9 @@ function runAuthCheck(profile) {
       resolve({ ok: !error, output, accounts: accountRows() });
     });
   }).finally(() => {
-    if (!profile) authCheckAll = null;
+    if (!explicitProfiles && !profile) authCheckAll = null;
   });
-  if (!profile) authCheckAll = promise;
+  if (!explicitProfiles && !profile) authCheckAll = promise;
   return promise;
 }
 
@@ -528,14 +642,14 @@ function startLoginCapture(profile) {
     });
   });
   child.on('error', error => {
-    loginJobs.set(profile, { ...job, state: 'failed', finishedAt: new Date().toISOString(), detail: error.message });
+    loginJobs.set(profile, { ...job, state: 'failed', finishedAt: new Date().toISOString(), detail: compactAuthError(error.message) });
   });
   return { ok: true, profile, pid: child.pid, state: 'login' };
 }
 
 function activeRunJob() {
   if (!runJob) return null;
-  if (runJob.state === 'starting' || runJob.state === 'running') return runJob;
+  if (runJob.state === 'starting' || runJob.state === 'running' || runJob.state === 'stopping') return runJob;
   return null;
 }
 
@@ -546,7 +660,9 @@ function isFreshProgressActive() {
   const updatedAt = new Date(progress.updatedAt).getTime();
   if (!Number.isFinite(updatedAt)) return false;
   const fresh = (Date.now() - updatedAt) < 90 * 1000;
-  return fresh && ((progress.activeCats || 0) > 0 || (progress.currentStage && progress.currentStage !== 'done'));
+  const stage = String(progress.currentStage || '');
+  const terminal = stage === 'done' || stage === 'stopped' || stage === 'failed' || stage === 'error';
+  return fresh && ((progress.activeCats || 0) > 0 || (!!stage && !terminal));
 }
 
 function runSummary() {
@@ -557,7 +673,22 @@ function runSummary() {
   };
 }
 
-function startCollectionRun(options = {}) {
+function validateRunAccounts(profiles) {
+  const rows = accountRows();
+  const byProfile = new Map(rows.map(row => [row.profile, row]));
+  const invalid = [];
+  for (const profile of profiles) {
+    const row = byProfile.get(profile);
+    if (!row || !row.exists) {
+      invalid.push({ profile, state: 'missing' });
+    } else if (row.state !== 'ok') {
+      invalid.push({ profile, label: row.label, state: row.state || 'unknown' });
+    }
+  }
+  return { ok: invalid.length === 0, rows, invalid };
+}
+
+async function startCollectionRun(options = {}) {
   const current = activeRunJob();
   if (current) {
     return { ok: false, error: 'collection already running', run: runSummary() };
@@ -569,10 +700,39 @@ function startCollectionRun(options = {}) {
   const opts = {
     fresh: !!options.fresh,
     weekAnchor: String(options.weekAnchor || '').trim(),
-    accounts: Array.isArray(options.accounts) ? options.accounts.filter(isSafeProfile) : [],
+    accounts: Array.isArray(options.accounts)
+      ? [...new Set(options.accounts.filter(isSafeProfile))]
+          .filter(profileExists)
+          .slice(0, MAX_ACCOUNT_PROFILES)
+      : [],
     listOnly: !!options.listOnly,
     skipExcel: !!options.skipExcel,
   };
+  if (!opts.accounts.length) {
+    return { ok: false, error: 'at least one existing account profile is required', run: runSummary() };
+  }
+
+  await runAuthCheck(opts.accounts);
+  const auth = validateRunAccounts(opts.accounts);
+  if (!auth.ok) {
+    const names = auth.invalid.map(x => x.label || x.profile).join(', ');
+    return {
+      ok: false,
+      error: `登录态检查未通过，未启动采集。请到设置里重新捕捉失效账号：${names || 'unknown'}`,
+      accounts: auth.rows,
+      invalidAccounts: auth.invalid,
+      run: runSummary(),
+    };
+  }
+
+  const afterAuthCurrent = activeRunJob();
+  if (afterAuthCurrent) {
+    return { ok: false, error: 'collection already running', run: runSummary() };
+  }
+  if (isFreshProgressActive()) {
+    return { ok: false, error: 'progress indicates an active run', run: runSummary() };
+  }
+
   const psScript = path.join(__dirname, 'run_appmagic_weekly.ps1');
   const psArgs = [
     '-NoProfile',
@@ -591,6 +751,7 @@ function startCollectionRun(options = {}) {
     APPMAGIC_NO_OPEN: '1',
   };
   if (opts.accounts.length) env.APPMAGIC_ACCOUNTS = opts.accounts.join(',');
+  env.APPMAGIC_MAX_WORKERS = String(Math.max(1, Math.min(MAX_ACCOUNT_PROFILES, opts.accounts.length)));
   const child = cp.spawn('powershell', psArgs, {
     cwd: PROJECT_DIR,
     env,
@@ -616,13 +777,17 @@ function startCollectionRun(options = {}) {
 
   child.on('exit', code => {
     if (!runJob || runJob.pid !== child.pid) return;
+    const stopped = !!runJob.stopRequested;
     runJob = {
       ...runJob,
-      state: code === 0 ? 'done' : 'failed',
+      state: stopped ? 'stopped' : (code === 0 ? 'done' : 'failed'),
       finishedAt: new Date().toISOString(),
       exitCode: code,
-      detail: code === 0 ? 'collection finished' : 'collection failed',
+      detail: stopped ? 'collection stopped' : (code === 0 ? 'collection finished' : 'collection failed'),
     };
+    if (stopped) markLatestProgressStopped();
+    if (runChild && runChild.pid === child.pid) runChild = null;
+    broadcast();
   });
 
   child.on('error', error => {
@@ -634,9 +799,105 @@ function startCollectionRun(options = {}) {
       exitCode: -1,
       detail: error.message || 'failed to launch collection',
     };
+    if (runChild && runChild.pid === child.pid) runChild = null;
+    broadcast();
   });
 
+  runChild = child;
+  return { ok: true, run: runSummary(), accounts: accountRows() };
+}
+
+function markLatestProgressStopped() {
+  const runDir = latestRunDir();
+  const progress = readProgress(runDir);
+  if (!runDir || !progress) return;
+  try {
+    fs.writeFileSync(path.join(runDir, 'appmagic-progress.json'), JSON.stringify({
+      ...progress,
+      activeCats: 0,
+      currentStage: 'stopped',
+      stageLabel: '已停止',
+      updatedAt: new Date().toISOString(),
+    }, null, 2), 'utf-8');
+  } catch {}
+  broadcast();
+}
+
+function forceFinishStoppingRun(pid, detail = 'collection stopped') {
+  if (!runJob || runJob.pid !== pid || runJob.state !== 'stopping') return;
+  runJob = {
+    ...runJob,
+    state: 'stopped',
+    finishedAt: new Date().toISOString(),
+    exitCode: runJob.exitCode == null ? -1 : runJob.exitCode,
+    detail,
+  };
+  if (runChild && runChild.pid === pid) runChild = null;
+  markLatestProgressStopped();
+  broadcast();
+}
+
+function stopCollectionRun() {
+  const current = activeRunJob();
+  if (!current) {
+    if (isFreshProgressActive()) {
+      markLatestProgressStopped();
+      return { ok: true, run: runSummary() };
+    }
+    return { ok: false, error: 'no active collection', run: runSummary() };
+  }
+  runJob = {
+    ...runJob,
+    state: 'stopping',
+    stopRequested: true,
+    detail: 'stopping collection',
+  };
+  const pid = current.pid;
+  markLatestProgressStopped();
+  if (runChild && runChild.pid === pid) {
+    try {
+      if (process.platform === 'win32') {
+        cp.execFile('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true }, () => {});
+      } else {
+        runChild.kill('SIGTERM');
+        setTimeout(() => {
+          try { if (runChild && runChild.pid === pid) runChild.kill('SIGKILL'); } catch {}
+        }, 5000);
+      }
+    } catch (error) {
+      runJob = { ...runJob, state: 'failed', finishedAt: new Date().toISOString(), detail: error.message || 'failed to stop collection' };
+      return { ok: false, error: runJob.detail, run: runSummary() };
+    }
+  } else {
+    forceFinishStoppingRun(pid, 'collection stopped');
+  }
+  setTimeout(() => forceFinishStoppingRun(pid, 'collection stop forced'), 8000);
+  broadcast();
   return { ok: true, run: runSummary() };
+}
+
+function clearCollectionCache() {
+  if (activeRunJob() || isFreshProgressActive()) {
+    return { ok: false, error: 'collection is running; cache can only be cleared when idle', deleted: 0 };
+  }
+  const deleted = [];
+  const base = path.resolve(PROJECT_DIR, 'output', 'folder') + path.sep;
+  for (const dir of listRunDirs()) {
+    let files = [];
+    try { files = fs.readdirSync(dir); } catch { continue; }
+    for (const file of files) {
+      if (!isDashboardStateFile(file)) continue;
+      const target = path.join(dir, file);
+      const resolved = path.resolve(target);
+      if (!resolved.startsWith(base)) continue;
+      fs.rmSync(resolved, { force: true });
+      deleted.push(resolved);
+    }
+  }
+  resultCache.clear();
+  lastSig = '';
+  broadcast();
+  return { ok: true, deleted: deleted.length, files: deleted.slice(-50) };
 }
 
 const PAGE = String.raw`<!doctype html>
@@ -767,7 +1028,7 @@ const PAGE = String.raw`<!doctype html>
   td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
   .muted { color: var(--muted); }
   .sub { color: var(--muted); font-size: 0.75rem; }
-  .ellip { max-width: 15rem; overflow: hidden; text-overflow: ellipsis; }
+  .ellip { display: inline-block; max-width: 15rem; overflow: hidden; text-overflow: ellipsis; vertical-align: top; }
   /* 长文本列自动换行：内容完整显示，杜绝横向滚动 */
   td.wrap { white-space: normal; word-break: break-word; min-width: 6rem; }
 
@@ -786,10 +1047,15 @@ const PAGE = String.raw`<!doctype html>
   }
   button.tool:hover:not(:disabled) { border-color: rgba(0,229,255,0.45); color: var(--cyan); }
   button.tool.primary { background: rgba(0,102,255,0.18); border-color: rgba(77,148,255,0.38); }
+  button.tool.danger { background: rgba(255,107,107,0.11); border-color: rgba(255,107,107,0.32); color: #ffdcdc; }
+  button.tool.danger:hover:not(:disabled) { border-color: rgba(255,107,107,0.55); color: #fff; }
   button.tool:disabled { opacity: 0.48; cursor: not-allowed; }
 .account-table td { vertical-align: middle; }
 .account-name { font-size: 1rem; font-weight: 700; color: var(--cyan); }
 .account-actions { display: inline-flex; gap: 0.35rem; }
+.account-detail { display: block; max-width: min(28rem, 34vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.15rem; }
+.account-toggle { display: inline-flex; align-items: center; justify-content: center; width: 100%; }
+.account-toggle input { width: 1rem; height: 1rem; accent-color: var(--blue); }
 .settings-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; padding: 0.3rem 0.3rem 0.8rem; }
 .field { display: grid; gap: 0.3rem; min-width: 0; }
 .field label { color: var(--muted); font-size: 0.74rem; }
@@ -799,6 +1065,7 @@ input[type="date"], input[type="number"] {
 }
 .checks { display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center; }
 .checks label { display: inline-flex; gap: 0.35rem; align-items: center; color: var(--text); font-size: 0.8rem; }
+.account-bulk { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .overlay {
   position: fixed; inset: 0; background: rgba(5, 7, 15, 0.62); backdrop-filter: blur(8px);
   display: none; align-items: center; justify-content: center; z-index: 30; padding: 1.2rem;
@@ -942,6 +1209,8 @@ input[type="date"], input[type="number"] {
     </div>
     <div class="chips">
       <button class="tool" id="settingsOpen" type="button">设置</button>
+      <button class="tool danger" id="runStop" type="button">停止</button>
+      <button class="tool" id="cacheClear" type="button">清除缓存</button>
       <button class="tool" id="runStart" type="button">开始采集</button>
       <button class="tool primary" id="runStartFresh" type="button">全新采集</button>
     </div>
@@ -1045,10 +1314,9 @@ input[type="date"], input[type="number"] {
         </div>
         <div class="field">
           <label>账号池</label>
-          <div class="checks" id="accountChecks">
-            <label><input type="checkbox" value=".appmagic-userdata" checked> A</label>
-            <label><input type="checkbox" value=".appmagic-userdata-b" checked> B</label>
-            <label><input type="checkbox" value=".appmagic-userdata-c" checked> C</label>
+          <div class="account-bulk">
+            <button class="tool primary" id="accountsEnableAll" type="button">全部启用</button>
+            <button class="tool" id="accountsDisableAll" type="button">全部停用</button>
           </div>
         </div>
         <div class="field">
@@ -1064,7 +1332,7 @@ input[type="date"], input[type="number"] {
         </div>
       </div>
       <table class="account-table">
-        <thead><tr><th>账号</th><th>Profile</th><th>邮箱</th><th>登录态</th><th>操作</th></tr></thead>
+        <thead><tr><th>账号</th><th>启用</th><th>Profile</th><th>邮箱</th><th>登录态</th><th>操作</th></tr></thead>
         <tbody id="accountRows"></tbody>
       </table>
     </div>
@@ -1074,7 +1342,7 @@ input[type="date"], input[type="number"] {
 <script>
 (function () {
   var ALL = '__all__';
-  var S = { data: null, tab: ALL, sortBy: 'rank', search: '', es: null, pollTimer: null, accounts: { accounts: [], loading: false, error: '' }, run: { active: false, loading: false, job: null } };
+  var S = { data: null, tab: ALL, sortBy: 'rank', search: '', es: null, pollTimer: null, cacheClearing: false, accounts: { accounts: [], loading: false, error: '' }, run: { active: false, loading: false, stopping: false, job: null } };
   var SETTINGS_KEY = 'appmagic_dashboard_settings_v1';
   var PANEL_KEY = 'appmagic_dashboard_panel_sizes_v1';
   // AppMagic 品类页链接（tag id 与 scraper CATS 对应；已实测 ?tag= 参数生效）
@@ -1086,6 +1354,10 @@ input[type="date"], input[type="number"] {
 
   function esc(v) {
     return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function clip(v, n) {
+    var s = String(v == null ? '' : v);
+    return s.length > n ? s.slice(0, Math.max(0, n - 1)) + '…' : s;
   }
   function loadJson(key, fallback) {
     try {
@@ -1107,9 +1379,13 @@ input[type="date"], input[type="number"] {
     });
   }
   function writeSettings() {
+    var current = readSettings();
+    var accountInputs = Array.prototype.slice.call(document.querySelectorAll('[data-account-enable]'));
     var settings = {
       weekAnchor: document.getElementById('weekAnchorInput') ? document.getElementById('weekAnchorInput').value : '',
-      accounts: Array.prototype.slice.call(document.querySelectorAll('#accountChecks input:checked')).map(function (el) { return el.value; }),
+      accounts: accountInputs.length
+        ? accountInputs.filter(function (el) { return el.checked; }).map(function (el) { return el.value; })
+        : (current.accounts || []),
       listOnly: !!(document.getElementById('listOnlyInput') && document.getElementById('listOnlyInput').checked),
       skipExcel: !!(document.getElementById('skipExcelInput') && document.getElementById('skipExcelInput').checked)
     };
@@ -1120,11 +1396,34 @@ input[type="date"], input[type="number"] {
     var settings = readSettings();
     var date = document.getElementById('weekAnchorInput');
     if (date) date.value = settings.weekAnchor || '';
-    Array.prototype.forEach.call(document.querySelectorAll('#accountChecks input'), function (el) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-account-enable]'), function (el) {
       el.checked = settings.accounts.indexOf(el.value) >= 0;
     });
     if (document.getElementById('listOnlyInput')) document.getElementById('listOnlyInput').checked = !!settings.listOnly;
     if (document.getElementById('skipExcelInput')) document.getElementById('skipExcelInput').checked = !!settings.skipExcel;
+  }
+  function applyProfileMovesToSettings(deleted, moves, rows) {
+    var settings = readSettings();
+    var existing = {};
+    (rows || []).forEach(function (row) { if (row.exists) existing[row.profile] = true; });
+    var selected = [];
+    (settings.accounts || []).forEach(function (profile) {
+      if (profile === deleted) return;
+      var next = moves && moves[profile] ? moves[profile] : profile;
+      if (existing[next] && selected.indexOf(next) < 0) selected.push(next);
+    });
+    settings.accounts = selected;
+    saveJson(SETTINGS_KEY, settings);
+  }
+  function renderAccountChecks(rows) {
+    var settings = readSettings();
+    var existing = {};
+    (rows || []).forEach(function (row) { if (row.exists) existing[row.profile] = true; });
+    var selected = (settings.accounts || []).filter(function (profile) { return existing[profile]; });
+    if (selected.length !== (settings.accounts || []).length) {
+      settings.accounts = selected;
+      saveJson(SETTINGS_KEY, settings);
+    }
   }
   function openSettings() {
     var overlay = document.getElementById('settingsOverlay');
@@ -1134,6 +1433,7 @@ input[type="date"], input[type="number"] {
     var overlay = document.getElementById('settingsOverlay');
     if (overlay) overlay.classList.remove('open');
     writeSettings();
+    renderAccounts();
   }
   function num(v) { return (v == null || v === '') ? '--' : Number(v).toLocaleString('en-US'); }
   function dur(ms) {
@@ -1238,9 +1538,12 @@ input[type="date"], input[type="number"] {
 
     var runChip = document.getElementById('runChip');
     var runText = document.getElementById('runText');
+    var terminalStage = p && ['done', 'stopped', 'failed', 'error'].indexOf(String(p.currentStage || '')) >= 0;
     if (!p) { runChip.className = 'chip warn'; runText.textContent = '等待运行'; }
+    else if (p.currentStage === 'stopped') { runChip.className = 'chip warn'; runText.textContent = '已停止'; }
+    else if (p.currentStage === 'failed' || p.currentStage === 'error') { runChip.className = 'chip warn'; runText.textContent = '异常'; }
     else if (p.doneCats === p.total && p.total > 0) { runChip.className = 'chip ok'; runText.textContent = '已完成'; }
-    else if ((p.activeCats || 0) > 0 || (p.currentStage && p.currentStage !== 'done')) { runChip.className = 'chip'; runText.textContent = '运行中'; }
+    else if ((p.activeCats || 0) > 0 || (p.currentStage && !terminalStage)) { runChip.className = 'chip'; runText.textContent = '运行中'; }
     else { runChip.className = 'chip warn'; runText.textContent = '排队中'; }
 
     var overall = p ? (p.overall || 0) : 0;
@@ -1418,10 +1721,25 @@ input[type="date"], input[type="number"] {
     if (row.state === 'missing') return { cls: 'wait', text: '未创建' };
     return { cls: 'wait', text: '未检测' };
   }
+  function selectedAuthState(rows) {
+    var checked = (readSettings().accounts || []).slice();
+    var byProfile = {};
+    (rows || []).forEach(function (row) { byProfile[row.profile] = row; });
+    var selected = checked.filter(function (profile) { return byProfile[profile] && byProfile[profile].exists; });
+    var invalid = selected.filter(function (profile) { return byProfile[profile].state !== 'ok'; });
+    return {
+      ready: selected.length > 0 && invalid.length === 0,
+      selected: selected,
+      invalid: invalid,
+      reason: !selected.length ? '至少选择一个已创建账号' : (invalid.length ? '请先检测登录态；选中账号需全部有效' : '')
+    };
+  }
 
   function renderAccounts() {
     var box = S.accounts || { accounts: [], loading: false, error: '' };
     var rows = box.accounts || [];
+    renderAccountChecks(rows);
+    var authReady = selectedAuthState(rows);
     var hint = document.getElementById('accountsHint');
     if (hint) {
       var ok = rows.filter(function (r) { return r.state === 'ok'; }).length;
@@ -1434,41 +1752,80 @@ input[type="date"], input[type="number"] {
     }
     var runBtn = document.getElementById('runStart');
     var freshBtn = document.getElementById('runStartFresh');
+    var stopBtn = document.getElementById('runStop');
+    var clearBtn = document.getElementById('cacheClear');
+    var runningNow = !!(S.run && S.run.active);
+    var stoppingNow = !!(S.run && (S.run.stopping || (S.run.job && S.run.job.state === 'stopping')));
+    if (stopBtn) {
+      stopBtn.disabled = !!box.loading || !!(S.run && S.run.loading) || !runningNow || stoppingNow;
+      stopBtn.textContent = stoppingNow ? '停止中...' : '停止';
+    }
+    if (clearBtn) {
+      clearBtn.disabled = !!box.loading || !!(S.run && S.run.loading) || runningNow || !!S.cacheClearing;
+      clearBtn.textContent = S.cacheClearing ? '清理中...' : '清除缓存';
+    }
     if (runBtn) {
       var run = S.run || {};
       var running = !!run.active;
-      runBtn.disabled = !!box.loading || !!run.loading || running;
-      runBtn.textContent = run.loading ? '启动中...' : (running ? '采集中' : '开始采集');
+      runBtn.disabled = !!box.loading || !!run.loading || running || !authReady.ready;
+      runBtn.title = authReady.ready ? '' : authReady.reason;
+      runBtn.textContent = run.loading ? '启动中...' : (running ? '采集中' : (authReady.ready ? '开始采集' : '先检测登录态'));
     }
     if (freshBtn) {
       var run2 = S.run || {};
       var running2 = !!run2.active;
-      freshBtn.disabled = !!box.loading || !!run2.loading || running2;
-      freshBtn.textContent = run2.loading ? '启动中...' : (running2 ? '采集中' : '全新采集');
+      freshBtn.disabled = !!box.loading || !!run2.loading || running2 || !authReady.ready;
+      freshBtn.title = authReady.ready ? '' : authReady.reason;
+      freshBtn.textContent = run2.loading ? '启动中...' : (running2 ? '采集中' : (authReady.ready ? '全新采集' : '先检测登录态'));
     }
+    var settings = readSettings();
     var html = rows.map(function (row) {
       var st = accountState(row);
       var busy = row.state === 'login' || row.state === 'checking' || box.loading;
       var email = row.email ? esc(row.email) : '<span class="muted">' + esc(row.emailStatus || '--') + '</span>';
       var token = row.tokenSavedAt ? '<div class="sub">token ' + esc(ftime(row.tokenSavedAt)) + '</div>' : '';
-      var detail = row.detail ? '<div class="sub">' + esc(row.detail) + '</div>' : token;
+      var detail = row.detail ? '<div class="sub account-detail" title="' + esc(row.detail) + '">' + esc(clip(row.detail, 88)) + '</div>' : token;
+      var checked = row.exists && (settings.accounts || []).indexOf(row.profile) >= 0;
+      var enableCell = '<label class="account-toggle" title="' + (row.exists ? '启用账号 ' + esc(row.label) : '未创建，不能启用') + '">' +
+        '<input type="checkbox" data-account-enable="' + esc(row.profile) + '" value="' + esc(row.profile) + '"' +
+        (checked ? ' checked' : '') + (row.exists ? '' : ' disabled') + '></label>';
+      var duplicateDelete = row.canDeleteDuplicate
+        ? '<button class="tool danger" type="button" data-delete-profile="' + esc(row.profile) + '"' + (busy ? ' disabled' : '') + '>删除重复</button>'
+        : '';
       return '<tr>' +
         '<td><span class="account-name">' + esc(row.label) + '</span></td>' +
+        '<td>' + enableCell + '</td>' +
         '<td><span class="ellip">' + esc(row.profile) + '</span>' + (row.exists ? '' : '<div class="sub">点击登录可创建</div>') + '</td>' +
         '<td class="wrap">' + email + '</td>' +
         '<td><span class="badge ' + st.cls + '">' + st.text + '</span>' + detail + '</td>' +
         '<td><span class="account-actions">' +
           '<button class="tool primary" type="button" data-login="' + esc(row.profile) + '"' + (busy ? ' disabled' : '') + '>捕捉</button>' +
+          duplicateDelete +
         '</span></td>' +
       '</tr>';
     }).join('');
-    document.getElementById('accountRows').innerHTML = html || '<tr><td colspan="5"><div class="empty">未发现账号 profile</div></td></tr>';
+    document.getElementById('accountRows').innerHTML = html || '<tr><td colspan="6"><div class="empty">未发现账号 profile</div></td></tr>';
+  }
+
+  function setAllAccountsEnabled(enabled) {
+    var rows = (S.accounts && S.accounts.accounts) || [];
+    var settings = readSettings();
+    settings.accounts = enabled
+      ? rows.filter(function (row) { return row.exists; }).map(function (row) { return row.profile; })
+      : [];
+    saveJson(SETTINGS_KEY, settings);
+    renderAccounts();
   }
 
   function loadRun() {
     return fetch('/api/run', { cache: 'no-store' })
       .then(function (r) { return r.json(); })
-      .then(function (j) { S.run = Object.assign({ active: false, loading: false, job: null }, j); renderAccounts(); return j; })
+      .then(function (j) {
+        S.run = Object.assign({ active: false, loading: false, stopping: false, job: null }, j);
+        S.run.stopping = !!(S.run.job && S.run.job.state === 'stopping');
+        renderAccounts();
+        return j;
+      })
       .catch(function () {});
   }
 
@@ -1504,6 +1861,66 @@ input[type="date"], input[type="number"] {
       .catch(function () { S.accounts.loading = false; S.accounts.error = '无法启动登录捕捉'; renderAccounts(); });
   }
 
+  function stopRun() {
+    S.run.stopping = true;
+    renderAccounts();
+    fetch('/api/run/stop', { method: 'POST', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) S.accounts.error = j.error || '停止采集失败';
+        S.run = Object.assign({ loading: false, stopping: false }, j.run || {}, { loading: false });
+        S.run.stopping = !!(S.run.job && S.run.job.state === 'stopping');
+        renderAccounts();
+        fetchOnce();
+        loadRun();
+        pollRunWhileBusy();
+      })
+      .catch(function () { S.run.stopping = false; S.accounts.error = '停止采集失败'; renderAccounts(); });
+  }
+
+  function clearCaches() {
+    if (!window.confirm('清除所有 AppMagic 页面数据和采集状态？账号登录状态不会被删除。')) return;
+    S.cacheClearing = true;
+    S.accounts.error = '';
+    renderAccounts();
+    fetch('/api/cache/clear', { method: 'POST', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        S.cacheClearing = false;
+        if (j.ok) {
+          S.data = { at: new Date().toISOString(), runDir: null, progress: null, results: { categories: [], risers: [], marketSplit: null } };
+          S.run = Object.assign({ active: false, loading: false, stopping: false, job: null }, j.run || {}, { loading: false, stopping: false });
+          S.accounts.error = '已清除页面数据 ' + (j.deleted || 0) + ' 个文件';
+          render();
+        } else {
+          S.accounts.error = j.error || '清除缓存失败';
+        }
+        renderAccounts();
+        fetchOnce();
+      })
+      .catch(function () { S.cacheClearing = false; S.accounts.error = '清除缓存失败'; renderAccounts(); });
+  }
+
+  function deleteDuplicateAccount(profile) {
+    if (!window.confirm('删除重复账号 ' + profile + '？后续账号会自动向前补位。')) return;
+    S.accounts.loading = true;
+    S.accounts.error = '';
+    renderAccounts();
+    fetch('/api/accounts/delete?profile=' + encodeURIComponent(profile), { method: 'POST', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) {
+          S.accounts.error = j.error || '删除重复账号失败';
+        } else {
+          applyProfileMovesToSettings(j.deleted, j.moves || {}, j.accounts || []);
+          S.accounts.error = '';
+        }
+        S.accounts = Object.assign({ loading: false, error: S.accounts.error || '' }, j, { loading: false });
+        renderAccounts();
+      })
+      .catch(function () { S.accounts.loading = false; S.accounts.error = '删除重复账号失败'; renderAccounts(); });
+  }
+
   function pollAccountsWhileBusy() {
     setTimeout(function () {
       loadAccounts().then(function (j) {
@@ -1530,6 +1947,9 @@ input[type="date"], input[type="number"] {
     fetch('/api/run/start?' + buildRunQuery(!!fresh), { method: 'POST', cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .then(function (j) {
+        if (!j.ok) S.accounts.error = j.error || '采集启动失败';
+        else S.accounts.error = '';
+        if (j.accounts) S.accounts = Object.assign({ loading: false, error: S.accounts.error || '' }, S.accounts, { accounts: j.accounts, error: S.accounts.error || '' });
         S.run = Object.assign({ loading: false }, j.run || {}, { loading: false });
         renderAccounts();
         fetchOnce();
@@ -2011,13 +2431,27 @@ input[type="date"], input[type="number"] {
   });
   document.getElementById('runStart').addEventListener('click', function () { startRun(false); });
   document.getElementById('runStartFresh').addEventListener('click', function () { startRun(true); });
+  document.getElementById('runStop').addEventListener('click', function () { stopRun(); });
+  document.getElementById('cacheClear').addEventListener('click', function () { clearCaches(); });
   document.getElementById('accountRefresh').addEventListener('click', function () { checkAccounts(); });
-  document.getElementById('accountRows').addEventListener('click', function (e) {
-    var t = e.target.closest('[data-login]');
-    if (!t) return;
-    loginAccount(t.getAttribute('data-login'));
+  document.getElementById('accountsEnableAll').addEventListener('click', function () { setAllAccountsEnabled(true); });
+  document.getElementById('accountsDisableAll').addEventListener('click', function () { setAllAccountsEnabled(false); });
+  document.getElementById('accountRows').addEventListener('change', function (e) {
+    if (e.target.closest('[data-account-enable]')) {
+      writeSettings();
+      renderAccounts();
+    }
   });
-  Array.prototype.forEach.call(document.querySelectorAll('#accountChecks input, #weekAnchorInput, #listOnlyInput, #skipExcelInput'), function (el) {
+  document.getElementById('accountRows').addEventListener('click', function (e) {
+    var d = e.target.closest('[data-delete-profile]');
+    if (d) {
+      deleteDuplicateAccount(d.getAttribute('data-delete-profile'));
+      return;
+    }
+    var t = e.target.closest('[data-login]');
+    if (t) loginAccount(t.getAttribute('data-login'));
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#weekAnchorInput, #listOnlyInput, #skipExcelInput'), function (el) {
     el.addEventListener('change', function () { writeSettings(); });
   });
 
@@ -2090,6 +2524,23 @@ const server = http.createServer((req, res) => {
 
   if (url.startsWith('/api/results')) return json(res, 200, readResults(latestRunDir()));
 
+  if (url.startsWith('/api/settings')) {
+    return json(res, 200, {
+      projectDir: PROJECT_DIR,
+      port: PORT,
+      maxAccountProfiles: MAX_ACCOUNT_PROFILES,
+      runScript: path.join(__dirname, 'run_appmagic_weekly.ps1'),
+      env: {
+        APPMAGIC_ACCOUNTS: process.env.APPMAGIC_ACCOUNTS || '',
+        APPMAGIC_MAX_WORKERS: process.env.APPMAGIC_MAX_WORKERS || '10',
+        AUTH_CHECK_CONCURRENCY: process.env.AUTH_CHECK_CONCURRENCY || '3',
+        DC_GAP_MS: process.env.DC_GAP_MS || '500',
+        DC_COOLDOWN_MS: process.env.DC_COOLDOWN_MS || '120000',
+        LEADERBOARD_WEEK_CONCURRENCY: process.env.LEADERBOARD_WEEK_CONCURRENCY || '3',
+      },
+    });
+  }
+
   if (url === '/api/accounts') {
     return json(res, 200, {
       ok: true,
@@ -2116,20 +2567,58 @@ const server = http.createServer((req, res) => {
     return json(res, result.ok ? 200 : 400, { ...result, accounts: accountRows() });
   }
 
+  if (url === '/api/accounts/delete') {
+    if ((req.method || 'GET').toUpperCase() !== 'POST') return json(res, 405, { ok: false, error: 'method not allowed' });
+    const profile = parsedUrl.searchParams.get('profile') || '';
+    try {
+      const result = deleteDuplicateProfile(profile);
+      return json(res, result.ok ? 200 : 409, result);
+    } catch (error) {
+      return json(res, 500, {
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+        accounts: accountRows(),
+      });
+    }
+  }
+
   if (url === '/api/run') {
     return json(res, 200, runSummary());
   }
 
   if (url === '/api/run/start') {
     if ((req.method || 'GET').toUpperCase() !== 'POST') return json(res, 405, { ok: false, error: 'method not allowed' });
-    const result = startCollectionRun({
+    startCollectionRun({
       fresh: parsedUrl.searchParams.get('fresh') === '1',
       weekAnchor: parsedUrl.searchParams.get('weekAnchor') || '',
       listOnly: parsedUrl.searchParams.get('listOnly') === '1',
       skipExcel: parsedUrl.searchParams.get('skipExcel') === '1',
       accounts: parsedUrl.searchParams.getAll('account'),
-    });
+    })
+      .then(result => json(res, result.ok ? 200 : 409, result))
+      .catch(error => json(res, 500, {
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+        accounts: accountRows(),
+        run: runSummary(),
+      }));
+    return;
+  }
+
+  if (url === '/api/run/stop') {
+    if ((req.method || 'GET').toUpperCase() !== 'POST') return json(res, 405, { ok: false, error: 'method not allowed' });
+    const result = stopCollectionRun();
     return json(res, result.ok ? 200 : 409, result);
+  }
+
+  if (url === '/api/cache/clear') {
+    if ((req.method || 'GET').toUpperCase() !== 'POST') return json(res, 405, { ok: false, error: 'method not allowed' });
+    try {
+      const result = clearCollectionCache();
+      return json(res, result.ok ? 200 : 409, { ...result, run: runSummary() });
+    } catch (error) {
+      return json(res, 500, { ok: false, error: error && error.message ? error.message : String(error), deleted: 0, run: runSummary() });
+    }
   }
 
   // 在本机文件管理器中打开当前运行的输出目录（目录由服务端自行解析，不接受任何外部路径）

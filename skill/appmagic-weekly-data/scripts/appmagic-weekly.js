@@ -12,6 +12,11 @@ function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 function rand(min, max) { return Math.random() * (max - min) + min; }
 function sleepRandom(minMs, maxMs) { return sleep(rand(minMs, maxMs)); }
 function backoffMs(attempt) { return Math.min(10000, 1500 + attempt * 1500); }
+function clampInt(value, fallback, min, max) {
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
+}
 function u(...codes) { return String.fromCodePoint(...codes); }
 function isoDate(d) { return d.toISOString().slice(0, 10); }
 function addDays(yyyyMmDd, days) {
@@ -66,6 +71,13 @@ const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
 const RUN_STATE_WRITE_INTERVAL_MS = parseInt(process.env.RUN_STATE_WRITE_INTERVAL_MS || '750', 10);
 const PROGRESS_WRITE_INTERVAL_MS = parseInt(process.env.PROGRESS_WRITE_INTERVAL_MS || '750', 10);
 const LIST_ONLY = process.env.LIST_ONLY === '1';
+const MAX_ACCOUNT_PROFILES = 10;
+const MAX_WORKERS = clampInt(process.env.APPMAGIC_MAX_WORKERS || '10', 10, 1, 10);
+const AUTH_CHECK_CONCURRENCY = clampInt(process.env.AUTH_CHECK_CONCURRENCY || '3', 3, 1, MAX_ACCOUNT_PROFILES);
+const AUTH_PROBE_TIMEOUT_MS = clampInt(process.env.AUTH_PROBE_TIMEOUT_MS || '15000', 15000, 3000, 60000);
+const LEADERBOARD_WEEK_CONCURRENCY = clampInt(process.env.LEADERBOARD_WEEK_CONCURRENCY || '3', 3, 1, 6);
+const DC_COOLDOWN = clampInt(process.env.DC_COOLDOWN_MS || '120000', 120000, 1000, 600000);
+const DC_GAP = clampInt(process.env.DC_GAP_MS || '500', 500, 0, 30000);
 
 const OUT_JSON_OF = cat => path.resolve(OUT_BASE, `appmagic-${cat}-weekly.json`);
 const WEEKLY_CACHE_FILE_OF = cat => path.resolve(OUT_BASE, `appmagic-weekly-cache-${cat}.json`);
@@ -113,8 +125,10 @@ function loadWeeklyCache(cat) {
   if (FORCE_REFRESH) return null;
   try {
     const c = JSON.parse(fs.readFileSync(WEEKLY_CACHE_FILE_OF(cat), 'utf-8'));
-    const cur = WEEKS[0];
-    if (!c || !c[cur] || !(c[cur].rows && c[cur].rows.length)) return null;
+    if (!c) return null;
+    for (const d of WEEKS) {
+      if (!c[d] || !(c[d].rows && c[d].rows.length)) return null;
+    }
     return c;
   } catch {
     return null;
@@ -341,6 +355,59 @@ async function fetchWeek(page, date, tag, token) {
   }, { date, tag, depth: TOP_DEPTH, token });
 }
 
+async function fetchWeeksLimited(page, dates, tag, token, concurrency) {
+  return await page.evaluate(async ({ dates, tag, depth, token, concurrency }) => {
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const fetchOne = async date => {
+      const url = `/api/v2/top/united-apps?aggregation=week&topDepth=${depth}&store=5&country=WW&date=${date}&tag=${tag}`;
+      const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+      if (!r.ok) {
+        let body = '';
+        try { body = (await r.text()).slice(0, 160); } catch {}
+        return { err: r.status, body };
+      }
+      const j = await r.json();
+      const rows = [];
+      for (const e of (j.data || [])) {
+        const f = e.top_free;
+        if (!f || !f.application) continue;
+        const a = f.application;
+        rows.push({
+          rank: f.top_free,
+          diff: f.diff,
+          uid: a.united_application_id,
+          name: a.name,
+          publisher: a.publisher?.name || '',
+          hq: a.publisher?.headquarter || '',
+          headcount: a.publisher?.linkedin_headcount,
+          release: a.releaseDate || a.last_release_date || '',
+          storeIds: a.store_ids || [],
+          stores: a.stores || [],
+          tags: (a.tags || []).map(t => ({ id: t.id, name: t.name, type: t.type, parent_ids: t.parent_ids })),
+        });
+      }
+      return { date: j.date, rows };
+    };
+
+    const results = {};
+    let next = 0;
+    async function worker() {
+      while (next < dates.length) {
+        const date = dates[next++];
+        let result = await fetchOne(date);
+        for (let att = 0; att < 2 && result.err && result.err !== 401 && result.err !== 403; att++) {
+          await sleep(2000);
+          result = await fetchOne(date);
+        }
+        results[date] = result;
+      }
+    }
+    const n = Math.max(1, Math.min(concurrency, dates.length));
+    await Promise.all(Array.from({ length: n }, worker));
+    return results;
+  }, { dates, tag, depth: TOP_DEPTH, token, concurrency });
+}
+
 async function probeTopChartToken(page, date, tag, token) {
   return await page.evaluate(async ({ date, tag, token, depth }) => {
     try {
@@ -356,6 +423,39 @@ async function probeTopChartToken(page, date, tag, token) {
       return { ok: false, status: 0, body: String(error) };
     }
   }, { date, tag, token, depth: PROBE_DEPTH });
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function probeTopChartTokenDirect(date, tag, token) {
+  if (typeof fetch !== 'function') {
+    return { ok: false, status: 0, body: 'node fetch unavailable' };
+  }
+  const url = `https://appmagic.rocks/api/v2/top/united-apps?aggregation=week&topDepth=${PROBE_DEPTH}&store=5&country=WW&date=${date}&tag=${tag}`;
+  try {
+    const r = await fetchWithTimeout(url, {
+      headers: {
+        Authorization: 'Bearer ' + token,
+        Accept: 'application/json',
+        'User-Agent': UA,
+      },
+    }, AUTH_PROBE_TIMEOUT_MS);
+    let body = '';
+    if (!r.ok) {
+      try { body = (await r.text()).slice(0, 160); } catch {}
+    }
+    return { ok: r.ok, status: r.status, body };
+  } catch (error) {
+    return { ok: false, status: 0, body: String(error && error.message ? error.message : error).slice(0, 160) };
+  }
 }
 
 // token 缓存：token 数天有效，落盘到各 profile 目录；命中且探针通过则免浏览器启动
@@ -390,8 +490,9 @@ function discoverProfileDirs() {
       dirs = [];
     }
   }
+  dirs = [...new Set(dirs.filter(d => /^\.appmagic-userdata(-.+)?$/.test(d)))];
   dirs.sort((a, b) => (a === '.appmagic-userdata' ? -1 : b === '.appmagic-userdata' ? 1 : a.localeCompare(b)));
-  return dirs;
+  return dirs.slice(0, MAX_ACCOUNT_PROFILES);
 }
 
 async function readTokenFromPage(page) {
@@ -452,6 +553,43 @@ async function buildTokenPool(probePage, leaderDir, dirs = discoverProfileDirs()
     }
   }
   return pool;
+}
+
+async function checkAuthOne(dir) {
+  let token = readTokenCache(dir);
+  let source = 'cache';
+  if (token) {
+    const probe = await probeTopChartTokenDirect(WEEKS[0], CATS[CAT_ORDER[0]], token);
+    if (probe.ok) return { dir, ok: true, source };
+    token = '';
+  }
+
+  source = 'browser';
+  token = await readTokenViaBrowser(dir);
+  if (!token) return { dir, ok: false, source };
+
+  const probe = await probeTopChartTokenDirect(WEEKS[0], CATS[CAT_ORDER[0]], token);
+  if (!probe.ok) {
+    console.warn(`  [auth] account ${dir} probe failed (${probe.status || 'network'})`);
+    return { dir, ok: false, source };
+  }
+
+  writeTokenCache(dir, token);
+  return { dir, ok: true, source };
+}
+
+async function checkAuthPool(dirs) {
+  const results = new Array(dirs.length);
+  let next = 0;
+  async function worker() {
+    while (next < dirs.length) {
+      const idx = next++;
+      results[idx] = await checkAuthOne(dirs[idx]);
+    }
+  }
+  const n = Math.min(AUTH_CHECK_CONCURRENCY, dirs.length);
+  await Promise.all(Array.from({ length: n }, worker));
+  return results;
 }
 
 async function enrichApp(page, uid, storeIds, skipAppInfo, token) {
@@ -592,26 +730,35 @@ async function buildCategory(page, cat, tag, leaderTok) {
   const usedCache = !!(weekData && Object.keys(weekData).length);
   if (!usedCache) {
     weekData = {};
-    let anyErr = false;
+    const failures = [];
+    const emptyDates = [];
+    const fetched = await fetchWeeksLimited(page, WEEKS, tag, leaderTok, LEADERBOARD_WEEK_CONCURRENCY);
     for (const d of WEEKS) {
-      let w = await fetchWeek(page, d, tag, leaderTok);
-      // 401/403 是鉴权问题，重试无意义，直接失败
-      for (let att = 0; att < 2 && w.err && w.err !== 401 && w.err !== 403; att++) {
-        await sleep(2000);
-        w = await fetchWeek(page, d, tag, leaderTok);
-      }
+      const w = fetched[d] || { err: 'missing' };
       if (w.err) {
         weekData[d] = { rows: [] };
-        anyErr = true;
+        failures.push(`${d}:${w.err}`);
         console.log(`  [leaderboard] ${cat} ${d} failed: ${w.err}`);
       } else {
         weekData[d] = w;
         console.log(`  [leaderboard] ${cat} ${d}: ${w.rows.length} rows`);
+        if (!w.rows.length) emptyDates.push(d);
       }
-      await sleepRandom(1000, 2500);
     }
     const curEmpty = !(weekData[WEEKS[0]].rows && weekData[WEEKS[0]].rows.length);
-    if (!anyErr && !curEmpty) saveWeeklyCache(cat, weekData);
+    if (failures.length || curEmpty || emptyDates.length) {
+      const reason = failures.length
+        ? `榜单请求失败：${failures.join(', ')}`
+        : `榜单返回空数据：${emptyDates.join(', ') || WEEKS[0]}`;
+      appendRunEvent('error', `榜单拉取失败：${cat}`, {
+        category: cat,
+        failures,
+        emptyDates,
+        currentRows: (weekData[WEEKS[0]].rows || []).length,
+      }, true);
+      throw new Error(`${cat} ${reason}`);
+    }
+    saveWeeklyCache(cat, weekData);
   } else {
     console.log(`  [leaderboard] cache reused: ${cat}`);
   }
@@ -750,83 +897,62 @@ async function enrichOneCat(page, r, acc, catCache, cooldown) {
   }
 }
 
-async function enrichWorker(ctx, acc, queue, perCat, cooldown, gap) {
+async function enrichWorker(ctx, acc, queue, perCat, catCaches, enrichStats, cooldown, gap) {
   const page = await ctx.newPage();
   try {
     await page.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await sleep(2000);
     while (queue.length) {
-      const cat = queue.shift();
-      if (cat == null) break;
-      const catCache = loadCatCache(cat);
-      for (const r of perCat[cat].focus) {
-        if (r.country) continue;
-        const c = catCache.apps[r.uid];
-        if (!c) continue;
-        if (c.rating != null) r.rating = c.rating;
-        if (c.reviews != null) r.reviews = c.reviews;
-        if (c.contentRating) r.contentRating = c.contentRating;
-        if (c.release) r.release = c.release;
-        if (c.country) r.country = c.country;
-      }
-      const todo = perCat[cat].focus.filter(r => !r.country);
+      const task = queue.shift();
+      if (!task) break;
+      const { cat, r } = task;
+      const catCache = catCaches[cat];
+      const stats = enrichStats[cat];
       updateRunMeta({
         queueRemaining: queue.length,
         workers: readRunMeta(loadRunState()).workers.map(w => w.account === acc.dir
-          ? { ...w, status: 'running', category: cat, current: '', updatedAt: new Date().toISOString() }
+          ? { ...w, status: 'running', category: cat, current: `#${r.rank} ${r.name}`, updatedAt: new Date().toISOString() }
           : w),
       });
-      appendRunEvent('info', `账号 ${acc.dir} 领取品类 ${cat}`, { account: acc.dir, category: cat, todo: todo.length });
-      updateRunState(cat, {
-        status: 'enrich',
-        enrich_i: 0,
-        enrich_n: todo.length,
-        cur_app: `[${acc.dir}]`,
-        account: acc.dir,
-        detail: `国别采集开始（${todo.length} 个焦点应用）`,
-      });
-      writeProgress(true);
-
-      let i = 0;
-      for (const r of todo) {
-        i++;
+      try {
         await enrichOneCat(page, r, acc, catCache, cooldown);
-        saveCatCache(cat, catCache);
-        updateRunMeta({
-          workers: readRunMeta(loadRunState()).workers.map(w => w.account === acc.dir
-            ? { ...w, status: 'running', category: cat, current: `#${r.rank} ${r.name}`, updatedAt: new Date().toISOString() }
-            : w),
-        });
-        updateRunState(cat, {
-          enrich_i: i,
-          enrich_n: todo.length,
-          cur_app: `#${r.rank} ${r.name} [${acc.dir}]`,
+      } catch (error) {
+        appendRunEvent('warn', `账号 ${acc.dir} 单 app 采集异常`, {
           account: acc.dir,
-          detail: `国别采集 ${i}/${todo.length}`,
+          app: r.name,
+          rank: r.rank,
+          error: String(error && error.message ? error.message : error).slice(0, 240),
         });
-        writeProgress();
-        await sleep(gap);
       }
-
-      catCache.complete = true;
       saveCatCache(cat, catCache);
-      const started = loadRunState()[cat]?.startedMs || RUN_T0;
-      updateRunMeta({
-        queueRemaining: queue.length,
-        workers: readRunMeta(loadRunState()).workers.map(w => w.account === acc.dir
-          ? { ...w, status: 'idle', category: '', current: '', updatedAt: new Date().toISOString() }
-          : w),
-      });
+      stats.done++;
+      const pending = perCat[cat].focus.filter(x => !x.country).map(x => `#${x.rank}`);
+      const done = stats.done >= stats.total;
       updateRunState(cat, {
-        status: 'done',
-        enrich_pending: perCat[cat].focus.filter(x => !x.country).map(x => `#${x.rank}`),
-        durationMs: Date.now() - started,
+        status: done ? 'done' : 'enrich',
+        enrich_i: stats.done,
+        enrich_n: stats.total,
+        enrich_pending: pending,
+        cur_app: `#${r.rank} ${r.name} [${acc.dir}]`,
         account: acc.dir,
-        detail: `国别采集完成（${todo.length} 个焦点应用）`,
+        durationMs: done ? Date.now() - (loadRunState()[cat]?.startedMs || RUN_T0) : undefined,
+        detail: done
+          ? `国别采集完成（${stats.total} 个焦点应用，缺国别 ${pending.length}）`
+          : `国别采集 ${stats.done}/${stats.total}`,
       });
-      appendRunEvent('info', `账号 ${acc.dir} 完成品类 ${cat}`, { account: acc.dir, category: cat, remainingQueue: queue.length });
-      writeProgress(true);
+      if (done) {
+        catCache.complete = true;
+        saveCatCache(cat, catCache);
+        appendRunEvent('info', `品类 ${cat} 国别采集完成`, { category: cat, remainingQueue: queue.length });
+      }
+      writeProgress(done);
+      await sleep(gap);
     }
+    updateRunMeta({
+      workers: readRunMeta(loadRunState()).workers.map(w => w.account === acc.dir
+        ? { ...w, status: 'idle', category: '', current: '', updatedAt: new Date().toISOString() }
+        : w),
+    });
   } finally {
     await page.close().catch(() => {});
   }
@@ -897,8 +1023,6 @@ async function main() {
   appendRunEvent('info', '账号池就绪', { accounts: tokenPool.map(t => t.dir) }, true);
   writeProgress(true);
 
-  const DC_COOLDOWN = parseInt(process.env.DC_COOLDOWN_MS || '120000', 10);
-  const DC_GAP = parseInt(process.env.DC_GAP_MS || '1000', 10);
   const leaderTok = leaderAccount.token;
 
   for (const cat of cats) {
@@ -951,8 +1075,25 @@ async function main() {
   }
 
   if (!LIST_ONLY) {
-    const queue = cats.filter(cat => !completeCats.has(cat) && perCat[cat].focus.some(r => !r.country));
-    const workerAccs = tokenPool.slice(0, 3);
+    const catCaches = {};
+    const enrichStats = {};
+    const queue = [];
+    for (const cat of cats) {
+      if (completeCats.has(cat)) continue;
+      catCaches[cat] = loadCatCache(cat);
+      const todo = perCat[cat].focus.filter(r => !r.country);
+      if (!todo.length) continue;
+      enrichStats[cat] = { total: todo.length, done: 0 };
+      for (const r of todo) queue.push({ cat, r });
+      updateRunState(cat, {
+        status: 'enrich',
+        enrich_i: 0,
+        enrich_n: todo.length,
+        account: 'pool',
+        detail: `国别采集排队（${todo.length} 个焦点应用）`,
+      });
+    }
+    const workerAccs = tokenPool.slice(0, Math.min(MAX_WORKERS, tokenPool.length, Math.max(1, queue.length)));
     updateRunMeta({
       currentStage: 'enrich',
       stageLabel: '采集国别数据',
@@ -961,9 +1102,9 @@ async function main() {
       workerAccounts: workerAccs.map(acc => acc.dir),
       workers: workerAccs.map(acc => ({ account: acc.dir, status: 'idle', category: '', current: '', updatedAt: new Date().toISOString() })),
     }, true);
-    appendRunEvent('info', '国别采集队列就绪', { queue: queue.slice(), accounts: workerAccs.map(acc => acc.dir) }, true);
+    appendRunEvent('info', '国别 app 任务队列就绪', { tasks: queue.length, accounts: workerAccs.map(acc => acc.dir), gapMs: DC_GAP }, true);
     writeProgress(true);
-    await Promise.all(workerAccs.map(acc => enrichWorker(ctx, acc, queue, perCat, DC_COOLDOWN, DC_GAP)));
+    await Promise.all(workerAccs.map(acc => enrichWorker(ctx, acc, queue, perCat, catCaches, enrichStats, DC_COOLDOWN, DC_GAP)));
   }
 
   updateRunMeta({ currentStage: 'export', stageLabel: '写出产物文件', queueRemaining: 0 }, true);
@@ -1009,25 +1150,14 @@ async function checkAuth() {
     console.log('FAIL (no .appmagic-userdata profile found)');
     process.exit(1);
   }
-  const leaderDir = dirs[0];
-  const ctx = await chromium.launchPersistentContext(path.resolve(PROJECT_DIR, leaderDir), {
-    headless: true,
-    args: ['--disable-blink-features=AutomationControlled'],
-    userAgent: UA,
-    viewport: { width: 1920, height: 1080 },
-  });
   try {
-    const page = ctx.pages()[0] || await ctx.newPage();
-    await page.goto('https://appmagic.rocks/top-charts/apps', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await sleep(3000);
-    const pool = await buildTokenPool(page, leaderDir, dirs);
-    const ok = new Set(pool.map(p => p.dir));
+    const results = await checkAuthPool(dirs);
+    const ok = new Set(results.filter(r => r && r.ok).map(r => r.dir));
     for (const dir of dirs) console.log(ok.has(dir) ? `OK ${dir}` : `FAIL ${dir}`);
-    await ctx.close();
     process.exit(ok.size === dirs.length ? 0 : 1);
   } catch (error) {
     console.error('checkAuth failed:', error.message);
-    try { await ctx.close(); } catch {}
+    for (const dir of dirs) console.log(`FAIL ${dir}`);
     process.exit(1);
   }
 }

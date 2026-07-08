@@ -41,6 +41,57 @@ $env:APPMAGIC_PROJECT_DIR = $ProjectDir
 if ($Fresh) { $env:FORCE_REFRESH = "1" }
 if ($ListOnly) { $env:LIST_ONLY = "1" }
 
+function Ensure-DashboardServer {
+  param(
+    [string]$ScriptDir,
+    [string]$ProjectDir
+  )
+
+  $portInfo = Get-NetTCPConnection -LocalPort 8787 -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+  $restart = $false
+
+  if ($portInfo) {
+    try {
+      $settings = Invoke-RestMethod -Uri "http://localhost:8787/api/settings" -TimeoutSec 2
+      if ($settings.projectDir -ne $ProjectDir) {
+        $restart = $true
+        Write-Host "  ⚠️  8787 已被其他项目看板占用：$($settings.projectDir)"
+      }
+    } catch {
+      $restart = $true
+      Write-Host "  ⚠️  8787 上的现有服务不可识别，准备重启为当前项目看板"
+    }
+  }
+
+  if ($restart -and $portInfo) {
+    try {
+      Stop-Process -Id $portInfo.OwningProcess -Force -ErrorAction Stop
+      Start-Sleep -Milliseconds 600
+      Write-Host "  ↻ 已停止旧看板进程 pid $($portInfo.OwningProcess)"
+    } catch {
+      throw "无法停止旧看板进程 pid $($portInfo.OwningProcess)"
+    }
+    $portInfo = $null
+  }
+
+  if (-not $portInfo) {
+    $savedProjectDir = $env:APPMAGIC_PROJECT_DIR
+    $savedNoOpen = $env:APPMAGIC_NO_OPEN
+    try {
+      $env:APPMAGIC_PROJECT_DIR = $ProjectDir
+      $env:APPMAGIC_NO_OPEN = "1"
+      $proc = Start-Process -FilePath "node" -ArgumentList ('"' + (Join-Path $ScriptDir "progress-server.js") + '"') `
+        -WindowStyle Hidden -PassThru
+      Start-Sleep -Milliseconds 800
+      Write-Host "  ✅ 进度看板已启动 http://localhost:8787 (pid $($proc.Id))"
+    } finally {
+      if ($null -ne $savedProjectDir) { $env:APPMAGIC_PROJECT_DIR = $savedProjectDir } else { Remove-Item Env:APPMAGIC_PROJECT_DIR -ErrorAction SilentlyContinue }
+      if ($null -ne $savedNoOpen) { $env:APPMAGIC_NO_OPEN = $savedNoOpen } else { Remove-Item Env:APPMAGIC_NO_OPEN -ErrorAction SilentlyContinue }
+    }
+  }
+}
+
 # 依赖检查：以 node 实际解析为准（npm 可能把包装到上层带 package.json 的目录）
 Push-Location $ScriptDir
 node -e "require.resolve('@playwright/test')" 2>$null
@@ -55,29 +106,18 @@ Write-Host "  📅 WeekAnchor: $WeekAnchor  ProjectDir: $ProjectDir"
 
 try {
   if (-not $ExportOnly) {
-    # 启动进度看板服务（后台，已在跑则跳过；env var 由 Start-Process 自动继承）
-    $srvRunning = Get-NetTCPConnection -LocalPort 8787 -ErrorAction SilentlyContinue
-    if (-not $srvRunning) {
-      $proc = Start-Process -FilePath "node" -ArgumentList ('"' + (Join-Path $ScriptDir "progress-server.js") + '"') `
-        -WindowStyle Hidden -PassThru
-      Write-Host "  ✅ 进度看板已启动 http://localhost:8787 (pid $($proc.Id))"
-    }
+    # 启动当前项目的进度看板；若端口已被其他项目占用，则替换为当前项目服务。
+    Ensure-DashboardServer -ScriptDir $ScriptDir -ProjectDir $ProjectDir
 
-    # 采集前一次性自检全部账号（token 缓存命中免浏览器启动）；失败账号弹窗补登后逐个复检
+    # 采集前一次性自检全部账号（token 缓存命中免浏览器启动）；失败则中止，回看板设置重新捕捉。
     $env:CHECK_AUTH = "1"
     $checkOut = node (Join-Path $ScriptDir "appmagic-weekly.js") | Out-String
     Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
     Write-Host $checkOut
-    $failedAccounts = [regex]::Matches($checkOut, 'FAIL (\S+)') | ForEach-Object { $_.Groups[1].Value }
-    foreach ($acc in $failedAccounts) {
-      Write-Host "  [auth] account $acc invalid - refreshing login..."
-      $env:APPMAGIC_USERDATA_DIR = $acc
-      Write-Host "  [auth] opening login window, please complete login..."
-      node (Join-Path $ScriptDir "appmagic-login.js")
-      if ($LASTEXITCODE -ne 0) { throw "account $acc login refresh failed." }
-      $env:CHECK_AUTH = "1"; node (Join-Path $ScriptDir "appmagic-weekly.js"); $ok = ($LASTEXITCODE -eq 0)
-      Remove-Item Env:CHECK_AUTH, Env:APPMAGIC_USERDATA_DIR -ErrorAction SilentlyContinue
-      if (-not $ok) { throw "account $acc login not completed, aborted." }
+    $failedAccounts = @([regex]::Matches($checkOut, 'FAIL (\S+)') | ForEach-Object { $_.Groups[1].Value })
+    if ($failedAccounts.Count -gt 0) {
+      $failedList = ($failedAccounts -join ', ')
+      throw "AppMagic login state invalid for: $failedList. Open dashboard settings and recapture those accounts before running collection."
     }
 
     # 路径A：单次调用，node 一个进程跑全部品类（榜单用 A；国别 3 账号并行领品类）

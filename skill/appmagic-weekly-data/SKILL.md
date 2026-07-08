@@ -27,15 +27,18 @@ This is a portable agent skill: any capable LLM or coding agent can follow it, i
 - If the weekly API returns 401 or only 100 rows, login is missing/expired. Re-establish it with `scripts\appmagic-login.js` (see runbook "Login / Re-login") before retrying; do not delete the profile.
 - Each profile directory caches its token in `appmagic-token.json` (written after a successful API probe). A valid cache skips browser startup during preflight. Safe to delete; it regenerates on the next check.
 - For a full fresh rerun, use `FORCE_REFRESH=1` instead of deleting login state.
-- The scraper runs all categories in one process (path A). Do NOT set `CAT`. Leaderboards use account A; country data (`data-countries`) is split across up to 3 accounts in parallel — one category per account (quota is per-account, ~100/window).
+- The scraper runs all categories in one process (path A). Do NOT set `CAT`. Leaderboards use the selected leader account; country/app enrichment (`data-countries` and app details) uses an app-level global task queue shared by 1-10 selected accounts. The account pool size is controlled by `APPMAGIC_ACCOUNTS`, and worker count is capped by `APPMAGIC_MAX_WORKERS` (default 10, min 1, max 10).
 
 ## Account / Email Rules
 
 - Before every AppMagic data collection, identify the currently logged-in AppMagic profiles and their emails, then report the profile/email list to the user.
 - The account pool must be email-deduplicated before running. Do not use two profiles with the same email as separate accounts.
+- The dashboard account pool can delete duplicate-email secondary profiles. Deleting `.appmagic-userdata-b` compacts later managed profiles forward, e.g. old `-c` becomes `-b` and old `-d` becomes `-c`. Do not delete the primary `.appmagic-userdata` profile from this flow.
 - If an email cannot be identified for a logged-in profile, treat that profile as unverified for deduplication; do not include it in a multi-account pool unless the user confirms the email.
 - If another login is needed, explicitly tell the user which emails are already logged in and ask them not to log in with those emails again.
 - When switching accounts after quota/rate-limit issues, prefer a profile with a unique email that has passed auth check.
+- Login/auth checks use limited concurrency (`AUTH_CHECK_CONCURRENCY`, default 3, min 1, max 10). Reduce it to 1 if AppMagic or the local network is timing out; raise cautiously only when the machine and network are stable.
+- Collection can start only when every selected account has just passed auth check (`state=ok` / dashboard status `有效`). A cached token alone is not enough; prompt the user to run login-state detection first.
 
 ### Profile Email Discovery / Dedup
 
@@ -52,7 +55,7 @@ Interpretation:
 - `Status=OK` and empty `Duplicate` means the profile can be considered for the account pool.
 - `Duplicate=DUPLICATE` means do not use both profiles. Keep one and skip the duplicate, or ask the user which one to keep.
 - `Status=UNKNOWN` means the profile is logged in or cached in a way that did not expose an email locally; do not include it in a multi-account pool unless the user confirms the email.
-- After deduplication, set `APPMAGIC_ACCOUNTS` explicitly, e.g. `$env:APPMAGIC_ACCOUNTS = ".appmagic-userdata,.appmagic-userdata-c,.appmagic-userdata-d"`.
+- After deduplication, set `APPMAGIC_ACCOUNTS` explicitly with 1-10 profiles, e.g. `$env:APPMAGIC_ACCOUNTS = ".appmagic-userdata,.appmagic-userdata-c,.appmagic-userdata-d"`.
 
 ## Workflow
 
@@ -79,12 +82,14 @@ Interpretation:
    - If multiple verified profiles exist, set `APPMAGIC_ACCOUNTS` to the deduplicated profile list before running; do not rely blindly on auto-discovery.
 
 4. Run data collection (path A: one process runs all categories).
-   - Prefer this skill's `scripts\run_appmagic_weekly.ps1` entrypoint — it self-checks each account's login (re-login popup if expired), starts the localhost dashboard, runs the scraper, then exports Excel.
+   - Prefer this skill's `scripts\run_appmagic_weekly.ps1` entrypoint — it self-checks each selected account before scraping; if any login state is invalid, it aborts and the user must recapture that account in dashboard settings.
    - If using a deduplicated account pool, export `APPMAGIC_ACCOUNTS` in the same shell/session before calling `run_appmagic_weekly.ps1`.
    - Live progress is served only at `http://localhost:8787` by `scripts\progress-server.js` (SSE real-time). There is no HTML progress artifact in the output folder.
-   - The scraper runs **all categories in one process**: account A collects every leaderboard, then up to 3 accounts collect country data **in parallel, one category per account** (no overlap, dynamic dequeue). **Do NOT set `CAT`** — single-category mode is gone.
+   - The dashboard can start/stop the collection and clear weekly/enrich cache files while idle. Cache clearing must be disabled during active collection and never deletes login profiles.
+   - The dashboard disables collection start until all selected profiles are `有效`; the server also rejects `/api/run/start` when selected profiles are only `cached`, missing, expired, or untested.
+   - The scraper runs **all categories in one process**: one leader account collects every leaderboard, then 1-10 accounts collect country/app data **in parallel from a global app-level task queue**. **Do NOT set `CAT`** — single-category mode is gone.
    - Manual: `node scripts\appmagic-weekly.js` (with `WEEK_ANCHOR`/`FORCE_REFRESH` as needed); it iterates all categories itself.
-   - Multi-account: log each account into its own profile (`.appmagic-userdata` / `-b` / `-c`) via `APPMAGIC_USERDATA_DIR`; the scraper auto-discovers every profile that has a token. Tune `DC_GAP_MS` (per-app gap, default 1000) / `DC_COOLDOWN_MS` (429 cooldown, default 120000) / `APPMAGIC_ACCOUNTS`.
+   - Multi-account: log each account into its own profile (`.appmagic-userdata` / `-b` / `-c` ... up to 10 profiles) via `APPMAGIC_USERDATA_DIR`; the scraper auto-discovers every profile that has a token. Tune `AUTH_CHECK_CONCURRENCY` (login check concurrency, default 3) / `DC_GAP_MS` (per-app gap, default 500) / `DC_COOLDOWN_MS` (429 cooldown, default 120000) / `LEADERBOARD_WEEK_CONCURRENCY` (default 3) / `APPMAGIC_MAX_WORKERS` (default 10, max 10) / `APPMAGIC_ACCOUNTS`.
 
 5. Export Excel.
    - Run this skill's `scripts\appmagic_xlsx.py <category>` for each completed category JSON.

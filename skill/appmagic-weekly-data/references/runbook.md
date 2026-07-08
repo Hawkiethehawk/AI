@@ -18,7 +18,7 @@ This runbook keeps executable snippets ASCII-safe. Build non-ASCII category name
   pip install openpyxl
   ```
 
-- Keep AppMagic login profiles in the project root: `.appmagic-userdata` plus optional suffixed profiles such as `.appmagic-userdata-c` / `.appmagic-userdata-d`.
+- Keep AppMagic login profiles in the project root: `.appmagic-userdata` plus optional suffixed profiles such as `.appmagic-userdata-b` ... `.appmagic-userdata-j` (1-10 total profiles).
 
 - Optional taxonomy dictionary for empty-tag backfill: the scraper checks these locations in order:
   - `APPMAGIC_TAGS_DICT`
@@ -49,9 +49,10 @@ node (Join-Path $SkillRoot "scripts\progress-server.js")
 
 - `APPMAGIC_PORT` changes the port (default 8787); `APPMAGIC_NO_OPEN=1` skips auto-opening the browser.
 - Real-time: the server polls the newest `AppMagic-<YYYYMMDD>` folder every second and pushes updates over SSE (`/api/stream`); the page falls back to 3s polling if SSE drops.
-- Endpoints: `/` (full-screen UI), `/api/stream` (SSE), `/api/snapshot`, `/api/progress`, `/api/results` (per-category digest: focus apps, risers, market split), `/api/open-output` (opens the current run folder in the local file manager; path resolved server-side only), `/api/health`.
+- Endpoints: `/` (full-screen UI), `/api/stream` (SSE), `/api/snapshot`, `/api/progress`, `/api/results` (per-category digest: focus apps, risers, market split), `/api/run/start`, `/api/run/stop`, `/api/cache/clear`, `/api/accounts/delete`, `/api/open-output` (opens the current run folder in the local file manager; path resolved server-side only), `/api/health`.
 - While a run is in progress the focus panel is populated live from the weekly/enrich cache files (same selection logic as the scraper), so focus apps appear right after each leaderboard lands — no need to wait for country enrichment.
-- The dashboard is read-only: it consumes `appmagic-progress.json` and the final `appmagic-<CAT>-weekly.json` files; the scraper does not need to be aware of it.
+- The dashboard is the local run-control surface. It can start/stop collection, clear weekly/enrich cache files while idle, and delete duplicate-email secondary profiles from the account pool. It never deletes login profiles when clearing cache.
+- Collection start is gated by auth state: every selected profile must show `有效` (`state=ok`) before `开始采集` / `全新采集` is enabled. `有缓存` only means a token file exists and is not sufficient.
 
 ## Default Categories
 
@@ -102,7 +103,7 @@ $ProjectDir = Resolve-Path .
 $env:APPMAGIC_ACCOUNTS = ".appmagic-userdata,.appmagic-userdata-c,.appmagic-userdata-d"
 ```
 
-Do not include profiles with duplicate emails. Do not include `UNKNOWN` profiles in a multi-account pool unless the user confirms the email.
+Do not include profiles with duplicate emails. Do not include `UNKNOWN` profiles in a multi-account pool unless the user confirms the email. The selected pool must contain at least 1 profile and at most 10 profiles. The dashboard can delete a duplicate-email secondary profile and compact later managed slots forward, e.g. deleting `.appmagic-userdata-b` makes old `-c` become `-b` and old `-d` become `-c`.
 
 Auth check (all profiles in one pass; prints `OK <dir>` / `FAIL <dir>` per account, exit 0 only when all pass):
 
@@ -112,9 +113,11 @@ node (Join-Path $SkillRoot "scripts\appmagic-weekly.js")
 Remove-Item Env:CHECK_AUTH -ErrorAction SilentlyContinue
 ```
 
-Token caching: each profile directory holds an `appmagic-token.json` cache written after any successful probe. A cached token that passes the (cheap, `topDepth=10`) API probe skips browser startup entirely, so the common preflight cost is one browser launch instead of one per account. The cache is safe to delete; it regenerates. `APPMAGIC_USERDATA_DIR=<dir>` limits `CHECK_AUTH` to a single profile (used by the ps1 re-login loop).
+Token caching: each profile directory holds an `appmagic-token.json` cache written after any successful probe. A cached token that passes the (cheap, `topDepth=10`) API probe skips browser startup entirely. `CHECK_AUTH=1` checks profiles with limited concurrency (`AUTH_CHECK_CONCURRENCY`, default 3, min 1, max 10); profiles that need a browser token refresh may therefore open multiple headless Chromium contexts at once. Reduce concurrency to 1 if AppMagic or the local network times out. The cache is safe to delete; it regenerates. `APPMAGIC_USERDATA_DIR=<dir>` limits `CHECK_AUTH` to a single profile.
 
-`run_appmagic_weekly.ps1` runs this single-pass check before scraping and opens a login window only for accounts that report `FAIL`. `appmagic-weekly.js` also probes token validity internally before scraping, so direct `node` runs fail fast instead of quietly producing empty data. Leaderboard requests do not retry on 401/403 (auth errors are not transient).
+The dashboard start API runs auth check every time before collection. If any selected profile fails, `/api/run/start` is rejected and no collection process is launched. Recapture invalid accounts in dashboard settings, then start again.
+
+`run_appmagic_weekly.ps1` runs this single-pass check before scraping and aborts if any account reports `FAIL`; it does not open login windows automatically. `appmagic-weekly.js` also probes token validity internally before scraping, so direct `node` runs fail fast instead of quietly producing empty data. Leaderboard requests do not retry on 401/403 (auth errors are not transient).
 
 ## Run
 
@@ -130,9 +133,12 @@ Notes:
 
 - `-WeekAnchor` omitted means current UTC Monday.
 - `-Fresh` or `FORCE_REFRESH=1` clears weekly/enrich cache reuse.
-- `APPMAGIC_ACCOUNTS` overrides the default three profiles.
-- `DC_GAP_MS` controls per-app enrichment spacing.
+- `APPMAGIC_ACCOUNTS` overrides auto-discovery; use 1-10 profiles.
+- `APPMAGIC_MAX_WORKERS` caps parallel enrichment workers; default 10, min 1, max 10.
+- `AUTH_CHECK_CONCURRENCY` controls login/auth check concurrency; default 3, min 1, max 10.
+- `DC_GAP_MS` controls per-app enrichment spacing; default 500.
 - `DC_COOLDOWN_MS` controls 429 cooldown length.
+- `LEADERBOARD_WEEK_CONCURRENCY` controls same-category weekly leaderboard request concurrency; default 3, max 6.
 - `LIST_ONLY=1` skips country enrichment.
 - The PowerShell entrypoint automatically starts the localhost dashboard.
 
@@ -175,6 +181,8 @@ Weekly ranking API:
 ```text
 /api/v2/top/united-apps?aggregation=week&topDepth=1000&store=5&country=WW&date=<anchor>&tag=<tag>
 ```
+
+The leaderboard stage fetches each category's requested weeks with limited concurrency (`LEADERBOARD_WEEK_CONCURRENCY`, default 3). The enrichment stage builds one global app-level task queue from all pending focus apps, then lets selected accounts pull tasks concurrently instead of assigning whole categories to one account.
 
 Report only:
 
