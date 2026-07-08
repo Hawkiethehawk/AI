@@ -5,9 +5,7 @@
 .agents/
 
 # AppMagic browser profiles and account/session data.
-.appmagic-userdata/
-.appmagic-userdata-c/
-.appmagic-userdata-d/
+.appmagic-userdata*/
 
 # Generated exports and migration logs.
 output/
