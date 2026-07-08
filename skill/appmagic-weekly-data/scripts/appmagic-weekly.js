@@ -65,7 +65,7 @@ const WEEK_MON = (WEEKS[0] || '').replace(/-/g, '');
 const OUT_BASE = path.resolve(PROJECT_DIR, 'output', 'folder', `AppMagic-${WEEK_MON}`);
 fs.mkdirSync(OUT_BASE, { recursive: true });
 
-const TOP_DEPTH = clampInt(process.env.TOP_DEPTH || '100', 100, 1, 100);
+const TOP_DEPTH = clampInt(process.env.TOP_DEPTH || '1000', 1000, 1, 1000);
 const PROBE_DEPTH = 10; // token 探针只验证鉴权，小 depth 不浪费配额/流量
 const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
 const RUN_STATE_WRITE_INTERVAL_MS = parseInt(process.env.RUN_STATE_WRITE_INTERVAL_MS || '750', 10);
@@ -435,11 +435,11 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
-async function probeTopChartTokenDirect(date, tag, token) {
+async function probeTopChartTokenDirect(date, tag, token, depth = PROBE_DEPTH) {
   if (typeof fetch !== 'function') {
     return { ok: false, status: 0, body: 'node fetch unavailable' };
   }
-  const url = `https://appmagic.rocks/api/v2/top/united-apps?aggregation=week&topDepth=${PROBE_DEPTH}&store=5&country=WW&date=${date}&tag=${tag}`;
+  const url = `https://appmagic.rocks/api/v2/top/united-apps?aggregation=week&topDepth=${depth}&store=5&country=WW&date=${date}&tag=${tag}`;
   try {
     const r = await fetchWithTimeout(url, {
       headers: {
@@ -1014,12 +1014,49 @@ async function main() {
   }
 
   POOL_SIZE = tokenPool.length;
-  const leaderAccount = tokenPool.find(t => t.dir === leaderDir) || tokenPool[0];
+  const depthProbe = [];
+  for (const acc of tokenPool) {
+    const probe = await probeTopChartTokenDirect(WEEKS[0], CATS[CAT_ORDER[0]], acc.token, TOP_DEPTH);
+    depthProbe.push({
+      account: acc.dir,
+      ok: probe.ok,
+      status: probe.status,
+      body: probe.body || '',
+    });
+  }
+  const depthOk = depthProbe.filter(p => p.ok).map(p => p.account);
+  if (!depthOk.length) {
+    const reason = depthProbe
+      .map(p => `${p.account}:${p.status || 'network'}${p.body ? ` ${p.body}` : ''}`)
+      .join('; ');
+    updateRunMeta({
+      currentStage: 'failed',
+      stageLabel: `榜单深度 ${TOP_DEPTH} 不可用`,
+      topDepth: TOP_DEPTH,
+    }, true);
+    appendRunEvent('error', `榜单深度 ${TOP_DEPTH} 不可用`, {
+      topDepth: TOP_DEPTH,
+      probes: depthProbe,
+    }, true);
+    for (const cat of cats) updateRunState(cat, {
+      status: 'error',
+      error: `榜单深度 ${TOP_DEPTH} 不可用：${reason}`,
+    });
+    writeProgress(true);
+    await ctx.close();
+    console.error(`Leaderboard topDepth=${TOP_DEPTH} unavailable for selected accounts: ${reason}`);
+    process.exit(3);
+  }
+
+  const leaderAccount = tokenPool.find(t => t.dir === leaderDir && depthOk.includes(t.dir))
+    || tokenPool.find(t => depthOk.includes(t.dir))
+    || tokenPool[0];
   updateRunMeta({
     currentStage: 'leaderboard',
     stageLabel: '采集周度榜单',
     tokenDirs: tokenPool.map(t => t.dir),
     leaderboardAccount: leaderAccount.dir,
+    topDepth: TOP_DEPTH,
   }, true);
   appendRunEvent('info', '账号池就绪', { accounts: tokenPool.map(t => t.dir) }, true);
   writeProgress(true);

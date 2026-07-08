@@ -28,7 +28,8 @@ function isDashboardStateFile(file) {
   return file === 'appmagic-progress.json'
     || file === 'appmagic-run-state.json'
     || /^appmagic-(weekly-cache|enrich-cache)-.+\.json$/.test(file)
-    || /^appmagic-(?!weekly-cache|enrich-cache).+-weekly\.json$/.test(file);
+    || /^appmagic-(?!weekly-cache|enrich-cache).+-weekly\.json$/.test(file)
+    || /^AppMagic-(?:.+-)?\d{8}\.xlsx$/.test(file);
 }
 
 function dashboardFileMtime(dir) {
@@ -662,7 +663,8 @@ function isFreshProgressActive() {
   const fresh = (Date.now() - updatedAt) < 90 * 1000;
   const stage = String(progress.currentStage || '');
   const terminal = stage === 'done' || stage === 'stopped' || stage === 'failed' || stage === 'error';
-  return fresh && ((progress.activeCats || 0) > 0 || (!!stage && !terminal));
+  if (!fresh || terminal) return false;
+  return (progress.activeCats || 0) > 0 || !!stage;
 }
 
 function runSummary() {
@@ -2548,7 +2550,7 @@ const server = http.createServer((req, res) => {
         DC_GAP_MS: process.env.DC_GAP_MS || '500',
         DC_COOLDOWN_MS: process.env.DC_COOLDOWN_MS || '120000',
         LEADERBOARD_WEEK_CONCURRENCY: process.env.LEADERBOARD_WEEK_CONCURRENCY || '3',
-        TOP_DEPTH: process.env.TOP_DEPTH || '100',
+        TOP_DEPTH: process.env.TOP_DEPTH || '1000',
       },
     });
   }
