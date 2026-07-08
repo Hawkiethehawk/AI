@@ -23,6 +23,16 @@ from appmagic_xlsx_common import (
 PROJECT_DIR = Path(os.environ.get('APPMAGIC_PROJECT_DIR', Path.cwd())).resolve()
 
 
+def top_depth_label(data):
+    inferred = 100 if data.get('topDepth') is None and len(data.get('records') or []) <= 100 else 1000
+    value = data.get('topDepth') or os.environ.get('TOP_DEPTH') or inferred
+    try:
+        depth = int(value)
+    except (TypeError, ValueError):
+        depth = 1000
+    return f'Top{100 if depth == 100 else 1000}'
+
+
 def main():
     anchor = os.environ.get('WEEK_ANCHOR') or current_monday()
     mon = anchor.replace('-', '')
@@ -46,7 +56,7 @@ def main():
     ws['A1'] = f'AppMagic 周报 · {cat} · {weeks[0]} 当周（免费榜）'
     ws['A1'].font = TITLE_FONT
     ws['A2'] = (
-        '口径：全球(WW)·周聚合·免费榜·Top1000 | '
+        f'口径：全球(WW)·周聚合·免费榜·{top_depth_label(data)} | '
         '变化量=正数上升/负数下降/NEW首次出现 | '
         '重点关注=变化突出(前10绝对↑≥5 / 10-200相对↑>50%)或潜力新品(首进前100+最多3周排名记录+陌生发行商+成熟市场下载占比或收入占比任一≥25%) | '
         '数据源 AppMagic API · 生成 ' + data['generatedAt'][:10]

@@ -374,16 +374,18 @@ function profileSlotIndex(profile) {
 }
 
 function listAccountProfiles() {
-  let discovered = [];
-  try {
-    discovered = fs.readdirSync(PROJECT_DIR).filter(name => {
-      if (!isSafeProfile(name)) return false;
-      try { return fs.statSync(profilePath(name)).isDirectory(); } catch { return false; }
-    });
-  } catch {}
-  const all = [...new Set([...DEFAULT_ACCOUNT_PROFILES, ...discovered, ...accountStatus.keys(), ...loginJobs.keys()])];
-  all.sort((a, b) => profileSortValue(a) - profileSortValue(b) || a.localeCompare(b));
-  return all.slice(0, MAX_ACCOUNT_PROFILES);
+  const visible = [];
+  for (const profile of DEFAULT_ACCOUNT_PROFILES) {
+    const exists = profileExists(profile);
+    if (exists) {
+      visible.push(profile);
+      continue;
+    }
+    visible.push(profile);
+    break;
+  }
+  visible.sort((a, b) => profileSortValue(a) - profileSortValue(b) || a.localeCompare(b));
+  return visible.slice(0, MAX_ACCOUNT_PROFILES);
 }
 
 function normalizeEmail(email) {
@@ -461,6 +463,7 @@ function accountRows() {
       label: accountLabel(profile),
       profile,
       exists,
+      addSlot: !exists,
       email: email.email,
       emailStatus: email.emailStatus,
       tokenCached: token.cached,
@@ -477,7 +480,7 @@ function accountRows() {
   }
   for (const row of rows) {
     row.duplicate = !!row.email && emailCounts.get(row.email) > 1;
-    row.canDeleteDuplicate = row.exists && row.duplicate && profileSlotIndex(row.profile) > 0;
+    row.canDelete = row.exists && profileSlotIndex(row.profile) >= 0;
   }
   return rows;
 }
@@ -505,10 +508,10 @@ function syncProfileMapKeys(map, moves, deletedProfile) {
   }
 }
 
-function deleteDuplicateProfile(profile) {
+function deleteProfile(profile) {
   if (!isSafeProfile(profile)) return { ok: false, error: 'invalid profile', accounts: accountRows() };
   const slot = profileSlotIndex(profile);
-  if (slot <= 0) return { ok: false, error: 'only duplicate secondary profiles can be deleted', accounts: accountRows() };
+  if (slot < 0) return { ok: false, error: 'unsupported profile slot', accounts: accountRows() };
   if (activeRunJob() || isFreshProgressActive()) {
     return { ok: false, error: 'collection is running; stop or wait before deleting profiles', accounts: accountRows() };
   }
@@ -520,7 +523,6 @@ function deleteDuplicateProfile(profile) {
   const rows = accountRows();
   const row = rows.find(r => r.profile === profile);
   if (!row || !row.exists) return { ok: false, error: 'profile does not exist', accounts: rows };
-  if (!row.duplicate) return { ok: false, error: 'profile email is not duplicated', accounts: rows };
 
   const target = profilePath(profile);
   const projectRoot = path.resolve(PROJECT_DIR) + path.sep;
@@ -1029,7 +1031,7 @@ const PAGE = String.raw`<!doctype html>
 
   /* ── 数据表格：表头弱化，行 hover 高亮 ── */
   table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-  th, td { padding: 0.42rem 0.6rem; border-bottom: 1px solid rgba(148,165,210,0.07); text-align: center; white-space: nowrap; }
+  th, td { padding: 0.42rem 0.6rem; border-bottom: 1px solid rgba(148,165,210,0.07); text-align: center; white-space: nowrap; vertical-align: middle; }
   thead th { position: sticky; top: 0; z-index: 1; background: var(--panel-2);
     color: rgba(141,154,184,0.75); font-size: 0.68rem; font-weight: 400; letter-spacing: 0.09em; }
   tbody tr { transition: background 0.15s ease; }
@@ -1040,6 +1042,16 @@ const PAGE = String.raw`<!doctype html>
   .ellip { display: inline-block; max-width: 15rem; overflow: hidden; text-overflow: ellipsis; vertical-align: top; }
   /* 长文本列自动换行：内容完整显示，杜绝横向滚动 */
   td.wrap { white-space: normal; word-break: break-word; min-width: 6rem; }
+  table.category-table { table-layout: fixed; }
+  table.category-table th:nth-child(1) { width: 15%; }
+  table.category-table th:nth-child(2) { width: 9%; }
+  table.category-table th:nth-child(3) { width: 8%; }
+  table.category-table th:nth-child(4) { width: 7%; }
+  table.category-table th:nth-child(5) { width: 18%; }
+  table.category-table th:nth-child(6) { width: 33%; }
+  table.category-table th:nth-child(7) { width: 10%; }
+  .current-app-cell { text-align: left; min-width: 0; }
+  .current-app-cell .ellip { display: block; max-width: 100%; }
 
   .badge { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.1rem 0.58rem;
     font-size: 0.74rem; font-weight: 700; border: 1px solid transparent; }
@@ -1061,17 +1073,20 @@ const PAGE = String.raw`<!doctype html>
   button.tool:disabled { opacity: 0.48; cursor: not-allowed; }
 .account-table td { vertical-align: middle; }
 .account-name { font-size: 1rem; font-weight: 700; color: var(--cyan); }
+.account-name.add { color: var(--muted); font-size: 0.9rem; }
 .account-actions { display: inline-flex; gap: 0.35rem; }
 .account-detail { display: block; max-width: min(28rem, 34vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.15rem; }
 .account-toggle { display: inline-flex; align-items: center; justify-content: center; width: 100%; }
 .account-toggle input { width: 1rem; height: 1rem; accent-color: var(--blue); }
-.settings-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.7rem; padding: 0.3rem 0.3rem 0.8rem; }
+.account-row-add td { background: rgba(148,165,210,0.025); }
+.settings-grid { display: grid; grid-template-columns: 11rem 12rem 12rem; align-items: end; gap: 0.7rem; padding: 0.3rem 0.3rem 0.8rem; }
 .field { display: grid; gap: 0.3rem; min-width: 0; }
 .field label { color: var(--muted); font-size: 0.74rem; }
 input[type="date"], input[type="number"], select {
   background: rgba(148,165,210,0.07); border: 1px solid var(--line-2); color: var(--text);
   border-radius: 0.5rem; padding: 0.32rem 0.6rem; font-size: 0.82rem; outline: none; font-family: var(--font);
 }
+.field input[type="date"], .field select { width: 100%; min-width: 0; }
 .checks { display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center; }
 .checks label { display: inline-flex; gap: 0.35rem; align-items: center; color: var(--text); font-size: 0.8rem; }
 .account-bulk { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
@@ -1242,7 +1257,7 @@ input[type="date"], input[type="number"], select {
           <span class="hint" id="queueHint"></span>
         </div>
         <div class="body">
-          <table>
+          <table class="category-table">
             <thead><tr>
               <th>品类</th><th>状态</th><th class="num">榜单行</th><th class="num">焦点</th>
               <th>国别进度</th><th>当前应用</th><th class="num">耗时</th>
@@ -1294,7 +1309,7 @@ input[type="date"], input[type="number"], select {
 
       <section class="panel resizable" data-panel="events" style="flex:1">
         <div class="head"><h2>事件流</h2><div class="grow"></div>
-          <span class="hint"><a href="/api/progress" target="_blank">进度</a> · <a href="/api/results" target="_blank">结果</a> · <a href="/api/health" target="_blank">健康</a></span>
+          <span class="hint">进度 · 结果 · 健康</span>
         </div>
         <div class="body timeline" id="events"></div>
       </section>
@@ -1329,23 +1344,11 @@ input[type="date"], input[type="number"], select {
           </div>
         </div>
         <div class="field">
-          <label>运行选项</label>
-          <div class="checks">
-            <label><input id="listOnlyInput" type="checkbox"> 仅榜单</label>
-            <label><input id="skipExcelInput" type="checkbox"> 跳过Excel</label>
-          </div>
-        </div>
-        <div class="field">
           <label for="topDepthInput">榜单深度</label>
           <select id="topDepthInput">
             <option value="1000">Top 1000</option>
             <option value="100">Top 100</option>
           </select>
-          <div class="sub">Top 100 只采集前 100 名，跳过 100-200 名及以后。</div>
-        </div>
-        <div class="field">
-          <label>说明</label>
-          <div class="sub">留空日期表示当前周；“开始采集”使用当前设置，“全新采集”会追加 Fresh。</div>
         </div>
       </div>
       <table class="account-table">
@@ -1409,8 +1412,8 @@ input[type="date"], input[type="number"], select {
         ? accountInputs.filter(function (el) { return el.checked; }).map(function (el) { return el.value; })
         : (current.accounts || []),
       accountsTouched: accountInputs.length ? true : !!current.accountsTouched,
-      listOnly: !!(document.getElementById('listOnlyInput') && document.getElementById('listOnlyInput').checked),
-      skipExcel: !!(document.getElementById('skipExcelInput') && document.getElementById('skipExcelInput').checked),
+      listOnly: false,
+      skipExcel: false,
       topDepth: normalizeTopDepth(document.getElementById('topDepthInput') ? document.getElementById('topDepthInput').value : current.topDepth)
     };
     saveJson(SETTINGS_KEY, settings);
@@ -1423,8 +1426,6 @@ input[type="date"], input[type="number"], select {
     Array.prototype.forEach.call(document.querySelectorAll('[data-account-enable]'), function (el) {
       el.checked = settings.accounts.indexOf(el.value) >= 0;
     });
-    if (document.getElementById('listOnlyInput')) document.getElementById('listOnlyInput').checked = !!settings.listOnly;
-    if (document.getElementById('skipExcelInput')) document.getElementById('skipExcelInput').checked = !!settings.skipExcel;
     if (document.getElementById('topDepthInput')) document.getElementById('topDepthInput').value = normalizeTopDepth(settings.topDepth);
   }
   function applyProfileMovesToSettings(deleted, moves, rows) {
@@ -1636,7 +1637,7 @@ input[type="date"], input[type="number"], select {
         '<td class="num">' + num(c.curRows) + '</td>' +
         '<td class="num">' + num(c.focus) + '</td>' +
         '<td><span class="mini"><span style="width:' + (c.pct || 0) + '%"></span></span> <span class="muted">' + esc(c.prog === 'done' ? '完成' : (c.prog || '--')) + '</span></td>' +
-        '<td class="ellip muted">' + esc(c.cur ? zh(c.cur) : '--') + '</td>' +
+        '<td class="current-app-cell"><span class="ellip muted" title="' + esc(c.cur ? zh(c.cur) : '--') + '">' + esc(c.cur ? zh(c.cur) : '--') + '</span></td>' +
         '<td class="num">' + dur(c.dur) + '</td></tr>';
     }).join('');
     if (!rows && r.categories.length) {
@@ -1647,7 +1648,7 @@ input[type="date"], input[type="number"], select {
           : '<b>' + esc(c.category) + '</b>';
         return '<tr><td>' + catName + '</td><td><span class="badge done">已归档</span></td>' +
           '<td class="num">' + num(c.records) + '</td><td class="num">' + num(c.focusCount) + '</td>' +
-          '<td><span class="mini"><span style="width:100%"></span></span></td><td class="muted">' + esc(ftime(c.generatedAt)) + '</td><td>--</td></tr>';
+          '<td><span class="mini"><span style="width:100%"></span></span></td><td class="current-app-cell"><span class="ellip muted">' + esc(ftime(c.generatedAt)) + '</span></td><td>--</td></tr>';
       }).join('');
     }
     document.getElementById('catRows').innerHTML = rows || '<tr><td colspan="7"><div class="empty">暂无品类数据</div></td></tr>';
@@ -1853,21 +1854,26 @@ input[type="date"], input[type="number"], select {
       var token = row.tokenSavedAt ? '<div class="sub">token ' + esc(ftime(row.tokenSavedAt)) + '</div>' : '';
       var detail = row.detail ? '<div class="sub account-detail" title="' + esc(row.detail) + '">' + esc(clip(row.detail, 88)) + '</div>' : token;
       var checked = row.exists && (settings.accounts || []).indexOf(row.profile) >= 0;
-      var enableCell = '<label class="account-toggle" title="' + (row.exists ? '启用账号 ' + esc(row.label) : '未创建，不能启用') + '">' +
-        '<input type="checkbox" data-account-enable="' + esc(row.profile) + '" value="' + esc(row.profile) + '"' +
-        (checked ? ' checked' : '') + (row.exists ? '' : ' disabled') + '></label>';
-      var duplicateDelete = row.canDeleteDuplicate
-        ? '<button class="tool danger" type="button" data-delete-profile="' + esc(row.profile) + '"' + (busy ? ' disabled' : '') + '>删除重复</button>'
+      var enableCell = row.exists
+        ? '<label class="account-toggle" title="启用账号 ' + esc(row.label) + '">' +
+          '<input type="checkbox" data-account-enable="' + esc(row.profile) + '" value="' + esc(row.profile) + '"' +
+          (checked ? ' checked' : '') + '></label>'
+        : '<span class="muted">--</span>';
+      var deleteButton = row.canDelete
+        ? '<button class="tool danger" type="button" data-delete-profile="' + esc(row.profile) + '"' + (busy || runningNow ? ' disabled' : '') + '>删除</button>'
         : '';
-      return '<tr>' +
-        '<td><span class="account-name">' + esc(row.label) + '</span></td>' +
+      var labelText = row.addSlot ? '添加' : row.label;
+      var labelCls = row.addSlot ? 'account-name add' : 'account-name';
+      var loginText = row.addSlot ? '添加' : '捕捉';
+      return '<tr' + (row.addSlot ? ' class="account-row-add"' : '') + '>' +
+        '<td><span class="' + labelCls + '">' + esc(labelText) + '</span></td>' +
         '<td>' + enableCell + '</td>' +
-        '<td><span class="ellip">' + esc(row.profile) + '</span>' + (row.exists ? '' : '<div class="sub">点击登录可创建</div>') + '</td>' +
+        '<td><span class="ellip">' + esc(row.profile) + '</span>' + (row.exists ? '' : '<div class="sub">点击添加可创建</div>') + '</td>' +
         '<td class="wrap">' + email + '</td>' +
         '<td><span class="badge ' + st.cls + '">' + st.text + '</span>' + detail + '</td>' +
         '<td><span class="account-actions">' +
-          '<button class="tool primary" type="button" data-login="' + esc(row.profile) + '"' + (busy ? ' disabled' : '') + '>捕捉</button>' +
-          duplicateDelete +
+          '<button class="tool primary" type="button" data-login="' + esc(row.profile) + '"' + (busy ? ' disabled' : '') + '>' + loginText + '</button>' +
+          deleteButton +
         '</span></td>' +
       '</tr>';
     }).join('');
@@ -1969,8 +1975,8 @@ input[type="date"], input[type="number"], select {
       .catch(function () { S.cacheClearing = false; S.accounts.error = '清除缓存失败'; renderAccounts(); });
   }
 
-  function deleteDuplicateAccount(profile) {
-    if (!window.confirm('删除重复账号 ' + profile + '？后续账号会自动向前补位。')) return;
+  function deleteAccountProfile(profile) {
+    if (!window.confirm('删除账号 ' + profile + ' 的登录态？后续账号会自动向前补位。')) return;
     S.accounts.loading = true;
     S.accounts.error = '';
     renderAccounts();
@@ -1978,7 +1984,7 @@ input[type="date"], input[type="number"], select {
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (!j.ok) {
-          S.accounts.error = j.error || '删除重复账号失败';
+          S.accounts.error = j.error || '删除账号失败';
         } else {
           applyProfileMovesToSettings(j.deleted, j.moves || {}, j.accounts || []);
           S.accounts.error = '';
@@ -1986,7 +1992,7 @@ input[type="date"], input[type="number"], select {
         S.accounts = Object.assign({ loading: false, error: S.accounts.error || '' }, j, { loading: false });
         renderAccounts();
       })
-      .catch(function () { S.accounts.loading = false; S.accounts.error = '删除重复账号失败'; renderAccounts(); });
+      .catch(function () { S.accounts.loading = false; S.accounts.error = '删除账号失败'; renderAccounts(); });
   }
 
   function pollAccountsWhileBusy() {
@@ -2137,26 +2143,6 @@ input[type="date"], input[type="number"], select {
       return clamp(Math.round(needed), min, max);
     }
 
-    function categoryProgressMaxHeight(total) {
-      var panel = leftPanels[0];
-      var head = panel ? panel.querySelector('.head') : null;
-      var body = panel ? panel.querySelector('.body') : null;
-      var thead = body ? body.querySelector('thead') : null;
-      var rows = body ? Array.prototype.slice.call(body.querySelectorAll('tbody tr')) : [];
-      var measuredRows = rows
-        .map(function (row) { return row.offsetHeight; })
-        .filter(function (h) { return h > 0; })
-        .slice(0, 6);
-      var rowHeight = measuredRows.length
-        ? measuredRows.reduce(function (a, b) { return a + b; }, 0) / measuredRows.length
-        : 36;
-      var rowCount = rows.length ? Math.min(6, rows.length) : 6;
-      var bodyPad = body ? cssPx(body, 'paddingTop', 0) + cssPx(body, 'paddingBottom', 8) : 8;
-      var content = (head ? head.offsetHeight : 48) + bodyPad + (thead ? thead.offsetHeight : 34) + rowHeight * rowCount + 8;
-      var minFocus = Math.max(220, minPanelSize(total, 2));
-      return clamp(Math.round(content), 180, Math.max(180, total - minFocus));
-    }
-
     function clearLayoutStyles() {
       main.style.gridTemplateColumns = '';
       [leftCol, rightCol].forEach(function (col) {
@@ -2180,7 +2166,7 @@ input[type="date"], input[type="number"], select {
       var normalized = normalizeRatios(ratios, panels.length, panels === leftPanels ? DEFAULT_LAYOUT.leftRows : DEFAULT_LAYOUT.rightRows);
       if (panels === leftPanels && panels.length === 2) {
         var minTop = minPanelSize(total, 2);
-        var maxTop = Math.max(minTop, Math.min(categoryProgressMaxHeight(total), total - minTop));
+        var maxTop = Math.max(minTop, total - minTop);
         var top = clamp(Math.round(total * normalized[0]), minTop, maxTop);
         var bottom = Math.max(0, total - top);
         state.leftRows = total ? [top / total, bottom / total] : DEFAULT_LAYOUT.leftRows.slice();
@@ -2357,9 +2343,6 @@ input[type="date"], input[type="number"], select {
       var sumPair = start.sizes[index] + start.sizes[index + 1];
       var min = Math.min(start.min, Math.max(0, Math.floor(sumPair / 2) - 1));
       var maxA = sumPair - min;
-      if (which === 'leftRows' && index === 0) {
-        maxA = Math.min(maxA, categoryProgressMaxHeight(start.total));
-      }
       var a = clamp(start.sizes[index] + dy, min, maxA);
       var b = sumPair - a;
       sizes[index] = a;
@@ -2514,13 +2497,13 @@ input[type="date"], input[type="number"], select {
   document.getElementById('accountRows').addEventListener('click', function (e) {
     var d = e.target.closest('[data-delete-profile]');
     if (d) {
-      deleteDuplicateAccount(d.getAttribute('data-delete-profile'));
+      deleteAccountProfile(d.getAttribute('data-delete-profile'));
       return;
     }
     var t = e.target.closest('[data-login]');
     if (t) loginAccount(t.getAttribute('data-login'));
   });
-  Array.prototype.forEach.call(document.querySelectorAll('#weekAnchorInput, #listOnlyInput, #skipExcelInput, #topDepthInput'), function (el) {
+  Array.prototype.forEach.call(document.querySelectorAll('#weekAnchorInput, #topDepthInput'), function (el) {
     el.addEventListener('change', function () { writeSettings(); });
   });
 
@@ -2645,7 +2628,7 @@ const server = http.createServer((req, res) => {
     if ((req.method || 'GET').toUpperCase() !== 'POST') return json(res, 405, { ok: false, error: 'method not allowed' });
     const profile = parsedUrl.searchParams.get('profile') || '';
     try {
-      const result = deleteDuplicateProfile(profile);
+      const result = deleteProfile(profile);
       return json(res, result.ok ? 200 : 409, result);
     } catch (error) {
       return json(res, 500, {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gitee.sh — 私有仓库 configured targetthehawk/AI 的连接 & 同步助手（配套 gitee-sync skill，本地真源优先使用 E:\LLM-Sandbox\AI）
+# gitee.sh — 仓库 configured targetthehawk/AI 的连接 & 同步助手（配套 gitee-sync skill，本地真源使用 E:\LLM-Sandbox\Codex）
 # 一次性 setup token -> 保存到 ~/.claude/.gitee_token（供 REST API 使用）。
 # git push/pull 沿用系统已配的凭证（已免密），本脚本不改动它。
 set -u

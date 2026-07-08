@@ -54,6 +54,17 @@ def load(cat, data_dir):
     d['_mon'] = (d.get('weeks') or [''])[0].replace('-', '')
     return d
 
+
+def normalize_top_depth(data):
+    inferred = 100 if data.get('topDepth') is None and len(data.get('records') or []) <= 100 else 1000
+    value = data.get('topDepth') or os.environ.get('TOP_DEPTH') or inferred
+    try:
+        depth = int(value)
+    except (TypeError, ValueError):
+        depth = 1000
+    return 100 if depth == 100 else 1000
+
+
 def main():
     anchor = os.environ.get('WEEK_ANCHOR') or current_monday()
     mon = anchor.replace('-', '')
@@ -63,6 +74,7 @@ def main():
     mdef = None
     gen = ''
     anchors = {}
+    depths = {}
     for cat in ORDER:
         d = load(cat, out_base)
         if not d:
@@ -70,6 +82,7 @@ def main():
         mdef = mdef or d.get('marketDef')
         gen = gen or d.get('generatedAt', '')[:10]
         anchors[cat] = (d.get('weeks') or [''])[0]
+        depths[cat] = normalize_top_depth(d)
         groups.append((cat, d['_mon'], sorted(d['focus'], key=lambda r: r['rank'])))
 
     distinct = sorted(set(a for a in anchors.values() if a))
@@ -88,10 +101,12 @@ def main():
     ws.title = mon if mon else 'Sheet1'
 
     mix_note = f'  ⚠ 混周合并：{" / ".join(f"{c}={a}" for c, a in anchors.items())}' if mixed else ''
+    distinct_depths = sorted(set(depths.values())) or [1000]
+    depth_label = 'Top' + (str(distinct_depths[0]) if len(distinct_depths) == 1 else '/'.join(str(v) for v in distinct_depths))
     ws['A1'] = f'AppMagic 周报 · 全品类（{"/".join(c for c, _, _ in groups)}）· {mon} 当周（免费榜）{mix_note}'
     ws['A1'].font = TITLE_FONT
     ws['A2'] = (
-        '口径：全球(WW)·周聚合·免费榜·Top1000 | '
+        f'口径：全球(WW)·周聚合·免费榜·{depth_label} | '
         '变化量=正数上升/负数下降/NEW首次出现 | '
         '重点关注=变化突出(前10绝对↑≥5 / 10-200相对↑>50%)或潜力新品(首进前100+最多3周排名记录+陌生发行商+成熟市场下载占比或收入占比任一≥25%) | '
         '数据源 AppMagic API · 生成 ' + gen

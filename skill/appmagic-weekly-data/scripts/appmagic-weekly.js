@@ -295,8 +295,8 @@ function loadTagsDict() {
   if (!dictPath) {
     if (!TAGS_DICT_LOGGED) {
       TAGS_DICT_LOGGED = true;
-      console.warn('[tags] taxonomy dictionary not found; empty-tag products will keep blank tag path');
-      appendRunEvent('warn', '未找到 tags 字典，空 tag 产品的 Tag 路径将留空', { candidates: TAGS_FULL_PATHS.slice() });
+      console.warn('[tags] optional taxonomy dictionary not found; empty-tag products will keep blank tag path');
+      appendRunEvent('info', '未配置可选 tags 字典，空 tag 产品的 Tag 路径将留空', { candidates: TAGS_FULL_PATHS.slice() });
     }
     TAGS_DICT_CACHE = new Map();
     return TAGS_DICT_CACHE;
@@ -1172,6 +1172,7 @@ async function main() {
       category: { label: cat, tag: CATS[cat] },
       weeks: WEEKS,
       generatedAt: new Date().toISOString(),
+      topDepth: TOP_DEPTH,
       marketDef: { mature: MATURE_LIST, emerging: EMERGING_LIST },
       records,
       focus,
