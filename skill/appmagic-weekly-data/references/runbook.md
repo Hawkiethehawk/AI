@@ -136,7 +136,7 @@ Notes:
 - `APPMAGIC_ACCOUNTS` overrides auto-discovery; use 1-10 profiles.
 - `APPMAGIC_MAX_WORKERS` caps parallel enrichment workers; default 10, min 1, max 10.
 - `AUTH_CHECK_CONCURRENCY` controls login/auth check concurrency; default 3, min 1, max 10.
-- `TOP_DEPTH` controls weekly leaderboard depth; default 1000. Before scraping, the scraper probes selected accounts and uses a leader account that is permitted to request the configured depth. If all selected accounts return `max limit 100`, the run aborts instead of silently collecting only Top100.
+- `TOP_DEPTH` controls weekly leaderboard depth; allowed values are `100` and `1000`, default 1000. Top100 mode intentionally collects only ranks 1-100 and ignores rank 101+. Top1000 mode probes selected accounts before scraping and aborts if no selected account is permitted to request that depth.
 - `DC_GAP_MS` controls per-app enrichment spacing; default 500.
 - `DC_COOLDOWN_MS` controls 429 cooldown length.
 - `LEADERBOARD_WEEK_CONCURRENCY` controls same-category weekly leaderboard request concurrency; default 3, max 6.

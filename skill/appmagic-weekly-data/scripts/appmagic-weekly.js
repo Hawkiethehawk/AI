@@ -17,6 +17,10 @@ function clampInt(value, fallback, min, max) {
   if (!Number.isFinite(n)) return fallback;
   return Math.max(min, Math.min(max, n));
 }
+function parseTopDepth(value) {
+  const n = parseInt(value, 10);
+  return n === 100 ? 100 : 1000;
+}
 function u(...codes) { return String.fromCodePoint(...codes); }
 function isoDate(d) { return d.toISOString().slice(0, 10); }
 function addDays(yyyyMmDd, days) {
@@ -65,7 +69,7 @@ const WEEK_MON = (WEEKS[0] || '').replace(/-/g, '');
 const OUT_BASE = path.resolve(PROJECT_DIR, 'output', 'folder', `AppMagic-${WEEK_MON}`);
 fs.mkdirSync(OUT_BASE, { recursive: true });
 
-const TOP_DEPTH = clampInt(process.env.TOP_DEPTH || '1000', 1000, 1, 1000);
+const TOP_DEPTH = parseTopDepth(process.env.TOP_DEPTH || '1000');
 const PROBE_DEPTH = 10; // token 探针只验证鉴权，小 depth 不浪费配额/流量
 const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
 const RUN_STATE_WRITE_INTERVAL_MS = parseInt(process.env.RUN_STATE_WRITE_INTERVAL_MS || '750', 10);
@@ -259,6 +263,7 @@ function writeProgress(force = false) {
     projectDir: PROJECT_DIR,
     forceRefresh: FORCE_REFRESH,
     listOnly: LIST_ONLY,
+    topDepth: meta.topDepth || TOP_DEPTH,
     queueRemaining: meta.queueRemaining || 0,
     queueTotal: meta.queueTotal || 0,
     leaderboardAccount: meta.leaderboardAccount || '',
@@ -1005,6 +1010,11 @@ async function main() {
   const leaderDir = path.basename(USER_DATA_DIR);
   const tokenPool = await buildTokenPool(leadPage, leaderDir);
   if (!tokenPool.length) {
+    updateRunMeta({
+      currentStage: 'failed',
+      stageLabel: '无可用账号 token',
+      topDepth: TOP_DEPTH,
+    }, true);
     appendRunEvent('error', '无可用账号 token，请先登录', {}, true);
     for (const cat of cats) updateRunState(cat, { status: 'error', error: '无可用 token' });
     writeProgress(true);

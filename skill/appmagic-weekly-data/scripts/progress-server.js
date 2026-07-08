@@ -11,6 +11,11 @@ const PORT = parseInt(process.env.APPMAGIC_PORT || '8787', 10);
 const AUTO_OPEN = process.env.APPMAGIC_NO_OPEN !== '1';
 const POLL_MS = 1000;
 
+function parseTopDepth(value) {
+  const n = parseInt(value, 10);
+  return n === 100 ? 100 : 1000;
+}
+
 // ---------- 数据层 ----------
 
 function listRunDirs() {
@@ -450,7 +455,7 @@ function accountRows() {
     let detail = cached.detail || '';
     if (job.state === 'login' || job.state === 'checking') {
       state = job.state;
-      detail = job.state === 'login' ? 'login window open' : 'capturing token';
+      detail = job.state === 'login' ? '正在捕捉登录态' : '正在检测登录态';
     }
     return {
       label: accountLabel(profile),
@@ -579,7 +584,7 @@ function runAuthCheck(profileOrProfiles) {
   if (!explicitProfiles && !profile && authCheckAll) return authCheckAll;
   for (const p of profiles) {
     if (!profileExists(p)) continue;
-    accountStatus.set(p, { state: 'checking', checkedAt: new Date().toISOString(), detail: 'auth check running' });
+    accountStatus.set(p, { state: 'checking', checkedAt: new Date().toISOString(), detail: '正在检测登录态' });
   }
   const env = { ...process.env, APPMAGIC_PROJECT_DIR: PROJECT_DIR, CHECK_AUTH: '1' };
   if (profile) env.APPMAGIC_USERDATA_DIR = profile;
@@ -709,6 +714,7 @@ async function startCollectionRun(options = {}) {
       : [],
     listOnly: !!options.listOnly,
     skipExcel: !!options.skipExcel,
+    topDepth: parseTopDepth(options.topDepth || process.env.TOP_DEPTH || '1000'),
   };
   if (!opts.accounts.length) {
     return { ok: false, error: 'at least one existing account profile is required', run: runSummary() };
@@ -754,6 +760,7 @@ async function startCollectionRun(options = {}) {
   };
   if (opts.accounts.length) env.APPMAGIC_ACCOUNTS = opts.accounts.join(',');
   env.APPMAGIC_MAX_WORKERS = String(Math.max(1, Math.min(MAX_ACCOUNT_PROFILES, opts.accounts.length)));
+  env.TOP_DEPTH = String(opts.topDepth);
   const child = cp.spawn('powershell', psArgs, {
     cwd: PROJECT_DIR,
     env,
@@ -1058,10 +1065,10 @@ const PAGE = String.raw`<!doctype html>
 .account-detail { display: block; max-width: min(28rem, 34vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.15rem; }
 .account-toggle { display: inline-flex; align-items: center; justify-content: center; width: 100%; }
 .account-toggle input { width: 1rem; height: 1rem; accent-color: var(--blue); }
-.settings-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; padding: 0.3rem 0.3rem 0.8rem; }
+.settings-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.7rem; padding: 0.3rem 0.3rem 0.8rem; }
 .field { display: grid; gap: 0.3rem; min-width: 0; }
 .field label { color: var(--muted); font-size: 0.74rem; }
-input[type="date"], input[type="number"] {
+input[type="date"], input[type="number"], select {
   background: rgba(148,165,210,0.07); border: 1px solid var(--line-2); color: var(--text);
   border-radius: 0.5rem; padding: 0.32rem 0.6rem; font-size: 0.82rem; outline: none; font-family: var(--font);
 }
@@ -1238,7 +1245,7 @@ input[type="date"], input[type="number"] {
           <table>
             <thead><tr>
               <th>品类</th><th>状态</th><th class="num">榜单行</th><th class="num">焦点</th>
-              <th>国别进度</th><th>账号</th><th>当前应用</th><th class="num">耗时</th>
+              <th>国别进度</th><th>当前应用</th><th class="num">耗时</th>
             </tr></thead>
             <tbody id="catRows"></tbody>
           </table>
@@ -1329,6 +1336,14 @@ input[type="date"], input[type="number"] {
           </div>
         </div>
         <div class="field">
+          <label for="topDepthInput">榜单深度</label>
+          <select id="topDepthInput">
+            <option value="1000">Top 1000</option>
+            <option value="100">Top 100</option>
+          </select>
+          <div class="sub">Top 100 只采集前 100 名，跳过 100-200 名及以后。</div>
+        </div>
+        <div class="field">
           <label>说明</label>
           <div class="sub">留空日期表示当前周；“开始采集”使用当前设置，“全新采集”会追加 Fresh。</div>
         </div>
@@ -1378,8 +1393,12 @@ input[type="date"], input[type="number"] {
       accounts: ['.appmagic-userdata', '.appmagic-userdata-b', '.appmagic-userdata-c'],
       accountsTouched: false,
       listOnly: false,
-      skipExcel: false
+      skipExcel: false,
+      topDepth: '1000'
     });
+  }
+  function normalizeTopDepth(value) {
+    return String(value) === '100' ? '100' : '1000';
   }
   function writeSettings() {
     var current = readSettings();
@@ -1391,7 +1410,8 @@ input[type="date"], input[type="number"] {
         : (current.accounts || []),
       accountsTouched: accountInputs.length ? true : !!current.accountsTouched,
       listOnly: !!(document.getElementById('listOnlyInput') && document.getElementById('listOnlyInput').checked),
-      skipExcel: !!(document.getElementById('skipExcelInput') && document.getElementById('skipExcelInput').checked)
+      skipExcel: !!(document.getElementById('skipExcelInput') && document.getElementById('skipExcelInput').checked),
+      topDepth: normalizeTopDepth(document.getElementById('topDepthInput') ? document.getElementById('topDepthInput').value : current.topDepth)
     };
     saveJson(SETTINGS_KEY, settings);
     return settings;
@@ -1405,6 +1425,7 @@ input[type="date"], input[type="number"] {
     });
     if (document.getElementById('listOnlyInput')) document.getElementById('listOnlyInput').checked = !!settings.listOnly;
     if (document.getElementById('skipExcelInput')) document.getElementById('skipExcelInput').checked = !!settings.skipExcel;
+    if (document.getElementById('topDepthInput')) document.getElementById('topDepthInput').value = normalizeTopDepth(settings.topDepth);
   }
   function applyProfileMovesToSettings(deleted, moves, rows) {
     var settings = readSettings();
@@ -1577,7 +1598,7 @@ input[type="date"], input[type="number"] {
       kpi('覆盖缺口', p ? num(p.totalFail) : '--', '缺国别数据', p && p.totalFail ? 'yellow' : ''),
       kpi('限流次数', p ? num(p.rateLimited) : '--', '429 冷却事件', p && p.rateLimited ? 'red' : ''),
       kpi('预计剩余', eta, todoApps ? ('国别 ' + doneApps + '/' + todoApps) : ''),
-      kpi('模式', p ? (p.forceRefresh ? '全新' : '缓存') : '--', p && p.listOnly ? '仅榜单' : '完整流程')
+      kpi('模式', p ? (p.forceRefresh ? '全新' : '缓存') : '--', p ? ((p.listOnly ? '仅榜单' : '完整流程') + ' · Top' + (p.topDepth || 1000)) : '')
     ].join('');
 
     var resultByCat = {};
@@ -1596,7 +1617,6 @@ input[type="date"], input[type="number"] {
         '<td class="num">' + num(c.curRows) + '</td>' +
         '<td class="num">' + num(c.focus) + '</td>' +
         '<td><span class="mini"><span style="width:' + (c.pct || 0) + '%"></span></span> <span class="muted">' + esc(c.prog === 'done' ? '完成' : (c.prog || '--')) + '</span></td>' +
-        '<td>' + esc(accShort(c.account) || '--') + '</td>' +
         '<td class="ellip muted">' + esc(c.cur ? zh(c.cur) : '--') + '</td>' +
         '<td class="num">' + dur(c.dur) + '</td></tr>';
     }).join('');
@@ -1608,10 +1628,10 @@ input[type="date"], input[type="number"] {
           : '<b>' + esc(c.category) + '</b>';
         return '<tr><td>' + catName + '</td><td><span class="badge done">已归档</span></td>' +
           '<td class="num">' + num(c.records) + '</td><td class="num">' + num(c.focusCount) + '</td>' +
-          '<td><span class="mini"><span style="width:100%"></span></span></td><td>--</td><td class="muted">' + esc(ftime(c.generatedAt)) + '</td><td>--</td></tr>';
+          '<td><span class="mini"><span style="width:100%"></span></span></td><td class="muted">' + esc(ftime(c.generatedAt)) + '</td><td>--</td></tr>';
       }).join('');
     }
-    document.getElementById('catRows').innerHTML = rows || '<tr><td colspan="8"><div class="empty">暂无品类数据</div></td></tr>';
+    document.getElementById('catRows').innerHTML = rows || '<tr><td colspan="7"><div class="empty">暂无品类数据</div></td></tr>';
     document.getElementById('catsHint').textContent = d.runDir ? ('数据目录 ' + d.runDir) : '';
     document.getElementById('queueHint').textContent = p && p.queueTotal ? ('队列 ' + (p.queueTotal - p.queueRemaining) + '/' + p.queueTotal) : '';
 
@@ -1723,12 +1743,12 @@ input[type="date"], input[type="number"] {
   function accountState(row) {
     if (row.duplicate) return { cls: 'warn', text: '邮箱重复' };
     if (row.state === 'ok') return { cls: 'done', text: '有效' };
-    if (row.state === 'fail') return { cls: 'err', text: '失效' };
+    if (row.state === 'fail') return { cls: 'err', text: '登录态失效' };
     if (row.state === 'login') return { cls: 'run', text: '登录中' };
-    if (row.state === 'checking') return { cls: 'run', text: '检测中' };
-    if (row.state === 'cached') return { cls: 'warn', text: '有缓存' };
+    if (row.state === 'checking') return { cls: 'run', text: '正在检测登录态' };
+    if (row.state === 'cached') return { cls: 'warn', text: '未检测登录态' };
     if (row.state === 'missing') return { cls: 'wait', text: '未创建' };
-    return { cls: 'wait', text: '未检测' };
+    return { cls: 'wait', text: '未检测登录态' };
   }
   function selectedAuthState(rows) {
     var checked = (readSettings().accounts || []).slice();
@@ -1736,11 +1756,30 @@ input[type="date"], input[type="number"] {
     (rows || []).forEach(function (row) { byProfile[row.profile] = row; });
     var selected = checked.filter(function (profile) { return byProfile[profile] && byProfile[profile].exists; });
     var invalid = selected.filter(function (profile) { return byProfile[profile].state !== 'ok'; });
+    var invalidRows = invalid.map(function (profile) { return byProfile[profile] || {}; });
+    var reason = '';
+    var label = '开始采集';
+    if (!selected.length) {
+      reason = '至少选择一个已创建账号';
+    } else if (invalidRows.some(function (row) { return row.state === 'checking'; })) {
+      reason = '正在检测登录态';
+      label = '正在检测登录态';
+    } else if (invalidRows.some(function (row) { return row.state === 'login'; })) {
+      reason = '正在捕捉登录态';
+      label = '正在捕捉登录态';
+    } else if (invalidRows.some(function (row) { return row.state === 'fail'; })) {
+      reason = '登录态失效，请重新捕捉';
+      label = '登录态失效';
+    } else if (invalidRows.length) {
+      reason = '未检测登录态';
+      label = '未检测登录态';
+    }
     return {
       ready: selected.length > 0 && invalid.length === 0,
       selected: selected,
       invalid: invalid,
-      reason: !selected.length ? '至少选择一个已创建账号' : (invalid.length ? '请先检测登录态；选中账号需全部有效' : '')
+      reason: reason,
+      label: label
     };
   }
 
@@ -1757,7 +1796,7 @@ input[type="date"], input[type="number"] {
     var btn = document.getElementById('accountRefresh');
     if (btn) {
       btn.disabled = !!box.loading;
-      btn.textContent = box.loading ? '检测中...' : '检测登录态';
+      btn.textContent = box.loading ? '正在检测登录态' : '检测登录态';
     }
     var runBtn = document.getElementById('runStart');
     var freshBtn = document.getElementById('runStartFresh');
@@ -1778,14 +1817,14 @@ input[type="date"], input[type="number"] {
       var running = !!run.active;
       runBtn.disabled = !!box.loading || !!run.loading || running || !authReady.ready;
       runBtn.title = authReady.ready ? '' : authReady.reason;
-      runBtn.textContent = run.loading ? '启动中...' : (running ? '采集中' : (authReady.ready ? '开始采集' : '先检测登录态'));
+      runBtn.textContent = run.loading ? '启动中...' : (running ? '采集中' : (authReady.ready ? '开始采集' : authReady.label));
     }
     if (freshBtn) {
       var run2 = S.run || {};
       var running2 = !!run2.active;
       freshBtn.disabled = !!box.loading || !!run2.loading || running2 || !authReady.ready;
       freshBtn.title = authReady.ready ? '' : authReady.reason;
-      freshBtn.textContent = run2.loading ? '启动中...' : (running2 ? '采集中' : (authReady.ready ? '全新采集' : '先检测登录态'));
+      freshBtn.textContent = run2.loading ? '启动中...' : (running2 ? '采集中' : (authReady.ready ? '全新采集' : authReady.label));
     }
     var settings = readSettings();
     var html = rows.map(function (row) {
@@ -1947,6 +1986,7 @@ input[type="date"], input[type="number"] {
     if (settings.weekAnchor) params.set('weekAnchor', settings.weekAnchor);
     if (settings.listOnly) params.set('listOnly', '1');
     if (settings.skipExcel) params.set('skipExcel', '1');
+    params.set('topDepth', normalizeTopDepth(settings.topDepth));
     (settings.accounts || []).forEach(function (acc) { params.append('account', acc); });
     return params.toString();
   }
@@ -2461,7 +2501,7 @@ input[type="date"], input[type="number"] {
     var t = e.target.closest('[data-login]');
     if (t) loginAccount(t.getAttribute('data-login'));
   });
-  Array.prototype.forEach.call(document.querySelectorAll('#weekAnchorInput, #listOnlyInput, #skipExcelInput'), function (el) {
+  Array.prototype.forEach.call(document.querySelectorAll('#weekAnchorInput, #listOnlyInput, #skipExcelInput, #topDepthInput'), function (el) {
     el.addEventListener('change', function () { writeSettings(); });
   });
 
@@ -2550,8 +2590,9 @@ const server = http.createServer((req, res) => {
         DC_GAP_MS: process.env.DC_GAP_MS || '500',
         DC_COOLDOWN_MS: process.env.DC_COOLDOWN_MS || '120000',
         LEADERBOARD_WEEK_CONCURRENCY: process.env.LEADERBOARD_WEEK_CONCURRENCY || '3',
-        TOP_DEPTH: process.env.TOP_DEPTH || '1000',
+        TOP_DEPTH: String(parseTopDepth(process.env.TOP_DEPTH || '1000')),
       },
+      topDepthOptions: [100, 1000],
     });
   }
 
@@ -2607,6 +2648,7 @@ const server = http.createServer((req, res) => {
       weekAnchor: parsedUrl.searchParams.get('weekAnchor') || '',
       listOnly: parsedUrl.searchParams.get('listOnly') === '1',
       skipExcel: parsedUrl.searchParams.get('skipExcel') === '1',
+      topDepth: parsedUrl.searchParams.get('topDepth') || '',
       accounts: parsedUrl.searchParams.getAll('account'),
     })
       .then(result => json(res, result.ok ? 200 : 409, result))
