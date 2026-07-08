@@ -1,15 +1,28 @@
 # Local Codex runtime state, credentials, sessions, logs, caches.
 .codex/
-
-# Local agent installs and locks.
 .agents/
 
+# Gitee / local tokens, never commit.
+.gitee_token
+*.token
+
 # AppMagic browser profiles and account/session data.
+.appmagic-auth.json
 .appmagic-userdata*/
 
-# Generated exports and migration logs.
-output/
+# Temporary folders and dependencies.
+ai-temp/
+node_modules/
 migration-logs/
+
+# Output folders that are runtime-only. Keep tracked templates/docs elsewhere under output/.
+output/repos/
+output/logs/
+output/folder/AppMagic-*/
+
+# Local skill private environment files.
+env.local.md
+*.local.md
 
 # Common local noise.
 *.log

@@ -1,0 +1,79 @@
+# -*- coding: utf-8 -*-
+"""Read appmagic-<cat>-weekly.json and export one category workbook."""
+import json
+import os
+import sys
+from pathlib import Path
+
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+
+from appmagic_xlsx_common import (
+    COLS,
+    HEAD_FILL,
+    HEAD_FONT,
+    TITLE_FONT,
+    NOTE_FONT,
+    build_column_index,
+    apply_focus_row,
+    current_monday,
+)
+
+
+PROJECT_DIR = Path(os.environ.get('APPMAGIC_PROJECT_DIR', Path.cwd())).resolve()
+
+
+def main():
+    anchor = os.environ.get('WEEK_ANCHOR') or current_monday()
+    mon = anchor.replace('-', '')
+    out_base = PROJECT_DIR / 'output' / 'folder' / f'AppMagic-{mon}'
+    default_cat = ''.join(chr(x) for x in [0x8D85, 0x4F11, 0x95F2])
+    cat = sys.argv[1] if len(sys.argv) > 1 else default_cat
+    src = out_base / f'appmagic-{cat}-weekly.json'
+
+    data = json.load(open(src, encoding='utf-8'))
+    weeks = data['weeks']
+    mon = (weeks[0] or '').replace('-', '') or mon
+    out = out_base / f'AppMagic-{cat}-{mon}.xlsx'
+    focus = sorted(data['focus'], key=lambda r: r['rank'])
+    mdef = data.get('marketDef', {'mature': [], 'emerging': []})
+    col_map = build_column_index(COLS)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f'{cat}-重点{len(focus)}'
+
+    ws['A1'] = f'AppMagic 周报 · {cat} · {weeks[0]} 当周（免费榜）'
+    ws['A1'].font = TITLE_FONT
+    ws['A2'] = (
+        '口径：全球(WW)·周聚合·免费榜·Top1000 | '
+        '变化量=正数上升/负数下降/NEW首次出现 | '
+        '重点关注=变化突出(前10绝对↑≥5 / 10-200相对↑>50%)或潜力新品(首进前100+最多3周排名记录+陌生发行商+成熟市场下载占比或收入占比任一≥25%) | '
+        '数据源 AppMagic API · 生成 ' + data['generatedAt'][:10]
+    )
+    ws['A2'].font = NOTE_FONT
+    ws['A3'] = '市场定义：成熟市场(高ARPU)= ' + ' '.join(mdef['mature']) + '   ｜   新兴市场= ' + ' '.join(mdef['emerging'])
+    ws['A3'].font = NOTE_FONT
+
+    head_row = 5
+    for name, width, _ in COLS:
+        j = col_map[name]
+        cell = ws.cell(head_row, j, name)
+        cell.fill = HEAD_FILL
+        cell.font = HEAD_FONT
+        ws.column_dimensions[get_column_letter(j)].width = width
+
+    row = head_row + 1
+    for idx, record in enumerate(focus, 1):
+        apply_focus_row(ws, row, idx, record, cat, col_map)
+        row += 1
+
+    ws.freeze_panes = ws.cell(head_row + 1, 3)
+    ws.auto_filter.ref = f'A{head_row}:{get_column_letter(len(COLS))}{row - 1}'
+    out_base.mkdir(parents=True, exist_ok=True)
+    wb.save(out)
+    print('saved', out, '| focus', len(focus))
+
+
+if __name__ == '__main__':
+    main()
