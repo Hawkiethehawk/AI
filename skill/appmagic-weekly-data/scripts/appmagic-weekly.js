@@ -65,7 +65,7 @@ const WEEK_MON = (WEEKS[0] || '').replace(/-/g, '');
 const OUT_BASE = path.resolve(PROJECT_DIR, 'output', 'folder', `AppMagic-${WEEK_MON}`);
 fs.mkdirSync(OUT_BASE, { recursive: true });
 
-const TOP_DEPTH = 1000;
+const TOP_DEPTH = clampInt(process.env.TOP_DEPTH || '100', 100, 1, 100);
 const PROBE_DEPTH = 10; // token 探针只验证鉴权，小 depth 不浪费配额/流量
 const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
 const RUN_STATE_WRITE_INTERVAL_MS = parseInt(process.env.RUN_STATE_WRITE_INTERVAL_MS || '750', 10);
@@ -737,8 +737,9 @@ async function buildCategory(page, cat, tag, leaderTok) {
       const w = fetched[d] || { err: 'missing' };
       if (w.err) {
         weekData[d] = { rows: [] };
-        failures.push(`${d}:${w.err}`);
-        console.log(`  [leaderboard] ${cat} ${d} failed: ${w.err}`);
+        const detail = w.body ? `${w.err} ${String(w.body).slice(0, 120)}` : String(w.err);
+        failures.push(`${d}:${detail}`);
+        console.log(`  [leaderboard] ${cat} ${d} failed: ${detail}`);
       } else {
         weekData[d] = w;
         console.log(`  [leaderboard] ${cat} ${d}: ${w.rows.length} rows`);

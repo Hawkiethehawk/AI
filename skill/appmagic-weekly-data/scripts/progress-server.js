@@ -1374,6 +1374,7 @@ input[type="date"], input[type="number"] {
     return loadJson(SETTINGS_KEY, {
       weekAnchor: '',
       accounts: ['.appmagic-userdata', '.appmagic-userdata-b', '.appmagic-userdata-c'],
+      accountsTouched: false,
       listOnly: false,
       skipExcel: false
     });
@@ -1386,6 +1387,7 @@ input[type="date"], input[type="number"] {
       accounts: accountInputs.length
         ? accountInputs.filter(function (el) { return el.checked; }).map(function (el) { return el.value; })
         : (current.accounts || []),
+      accountsTouched: accountInputs.length ? true : !!current.accountsTouched,
       listOnly: !!(document.getElementById('listOnlyInput') && document.getElementById('listOnlyInput').checked),
       skipExcel: !!(document.getElementById('skipExcelInput') && document.getElementById('skipExcelInput').checked)
     };
@@ -1413,13 +1415,19 @@ input[type="date"], input[type="number"] {
       if (existing[next] && selected.indexOf(next) < 0) selected.push(next);
     });
     settings.accounts = selected;
+    settings.accountsTouched = true;
     saveJson(SETTINGS_KEY, settings);
   }
   function renderAccountChecks(rows) {
+    if (!rows || !rows.length) return;
     var settings = readSettings();
     var existing = {};
     (rows || []).forEach(function (row) { if (row.exists) existing[row.profile] = true; });
+    var usableRows = (rows || []).filter(function (row) { return row.exists; });
     var selected = (settings.accounts || []).filter(function (profile) { return existing[profile]; });
+    if (!selected.length && !settings.accountsTouched && usableRows.length) {
+      selected = usableRows.slice(0, 3).map(function (row) { return row.profile; });
+    }
     if (selected.length !== (settings.accounts || []).length) {
       settings.accounts = selected;
       saveJson(SETTINGS_KEY, settings);
@@ -1566,7 +1574,6 @@ input[type="date"], input[type="number"] {
       kpi('焦点应用', p ? num(p.totalFocus) : '--', '国别覆盖 ' + covPct + '%'),
       kpi('覆盖缺口', p ? num(p.totalFail) : '--', '缺国别数据', p && p.totalFail ? 'yellow' : ''),
       kpi('限流次数', p ? num(p.rateLimited) : '--', '429 冷却事件', p && p.rateLimited ? 'red' : ''),
-      kpi('账号池', p ? num(p.poolSize) : '--', p ? ('工作账号 ' + ((p.workerAccounts || []).length || '--')) : ''),
       kpi('预计剩余', eta, todoApps ? ('国别 ' + doneApps + '/' + todoApps) : ''),
       kpi('模式', p ? (p.forceRefresh ? '全新' : '缓存') : '--', p && p.listOnly ? '仅榜单' : '完整流程')
     ].join('');
@@ -1813,6 +1820,7 @@ input[type="date"], input[type="number"] {
     settings.accounts = enabled
       ? rows.filter(function (row) { return row.exists; }).map(function (row) { return row.profile; })
       : [];
+    settings.accountsTouched = true;
     saveJson(SETTINGS_KEY, settings);
     renderAccounts();
   }
@@ -1836,9 +1844,9 @@ input[type="date"], input[type="number"] {
       .catch(function () { S.accounts.error = '账号池读取失败'; S.accounts.loading = false; renderAccounts(); });
   }
 
-  function checkAccounts() {
+  function checkAccounts(silent) {
     S.accounts.loading = true;
-    S.accounts.error = '';
+    if (!silent) S.accounts.error = '';
     renderAccounts();
     fetch('/api/accounts/check', { method: 'POST', cache: 'no-store' })
       .then(function (r) { return r.json(); })
@@ -2489,8 +2497,11 @@ input[type="date"], input[type="number"] {
 
   applySettings();
   initResizablePanels();
-  loadAccounts();
-  loadRun();
+  loadRun().then(function (run) {
+    loadAccounts().then(function () {
+      if (!(run && run.active)) checkAccounts(true);
+    });
+  });
   fetchOnce();
   startSSE();
 })();
@@ -2537,6 +2548,7 @@ const server = http.createServer((req, res) => {
         DC_GAP_MS: process.env.DC_GAP_MS || '500',
         DC_COOLDOWN_MS: process.env.DC_COOLDOWN_MS || '120000',
         LEADERBOARD_WEEK_CONCURRENCY: process.env.LEADERBOARD_WEEK_CONCURRENCY || '3',
+        TOP_DEPTH: process.env.TOP_DEPTH || '100',
       },
     });
   }

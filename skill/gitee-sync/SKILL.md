@@ -12,13 +12,15 @@ metadata:
 
 # gitee-sync — 私有仓库连接 & skill 同步
 
-涉及 gitee 的所有操作都通过封装脚本 `scripts/gitee.sh`（优先使用本地真源仓库根 `E:\LLM-Sandbox\AI`）完成。
+涉及 gitee 的所有操作优先从 Codex 当前工作仓库 `E:\LLM-Sandbox\Codex` 判断和执行；不要再把 `E:\LLM-Sandbox\Claude` 当作默认仓库根。
+如果具体操作需要 configured targetthehawk/AI 真源仓库的封装脚本 `scripts/gitee.sh`，先在 `E:\LLM-Sandbox\Codex` 查找；若该仓库没有该脚本/远程，再定位或克隆 configured targetthehawk/AI 到显式命名的 Gitee 工作副本（例如 `E:\LLM-Sandbox\Gitee-AI`），并在回复中说明实际使用的仓库路径。
 **token 只需提交一次、自动保存复用**；统一走脚本，避免零散手写 git/curl 把 token 暴露到对话或命令历史。
 
 ## 这个仓库（已知背景，直接用）
 
 - 远程：`https://gitee.com/configured targetthehawk/AI.git`，**公开**仓库（public），默认分支 `master`。
 - 结构：`skill/`（多个 skill，**真源**）、`scripts/`（自检/封装脚本）、`output/`（生成物）。
+- Codex 默认 git 工作仓库是 `E:\LLM-Sandbox\Codex`；除非用户明确指定，不要切到 `E:\LLM-Sandbox\Claude`。
 - **真源约定**：skill 的唯一真源是 `repo/skill/<name>/`，运行时 `~/.claude/skills` 靠自检脚本同步。
   **只改 repo，绝不直接改运行时**（见 [[skill-sync-source-of-truth]]）。
 - 公开仓库：读可匿名但有限流；写操作及稳定调用仍统一带 token。git push/pull 已由系统凭证免密。

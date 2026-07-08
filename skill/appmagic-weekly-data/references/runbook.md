@@ -52,7 +52,7 @@ node (Join-Path $SkillRoot "scripts\progress-server.js")
 - Endpoints: `/` (full-screen UI), `/api/stream` (SSE), `/api/snapshot`, `/api/progress`, `/api/results` (per-category digest: focus apps, risers, market split), `/api/run/start`, `/api/run/stop`, `/api/cache/clear`, `/api/accounts/delete`, `/api/open-output` (opens the current run folder in the local file manager; path resolved server-side only), `/api/health`.
 - While a run is in progress the focus panel is populated live from the weekly/enrich cache files (same selection logic as the scraper), so focus apps appear right after each leaderboard lands — no need to wait for country enrichment.
 - The dashboard is the local run-control surface. It can start/stop collection, clear weekly/enrich cache files while idle, and delete duplicate-email secondary profiles from the account pool. It never deletes login profiles when clearing cache.
-- Collection start is gated by auth state: every selected profile must show `有效` (`state=ok`) before `开始采集` / `全新采集` is enabled. `有缓存` only means a token file exists and is not sufficient.
+- Collection start is gated by auth state: every selected profile must show `有效` (`state=ok`) before `开始采集` / `全新采集` is enabled. `有缓存` only means a token file exists and is not sufficient. The page runs a background auth check after refresh while idle; account state remains in Settings and is not shown as a homepage KPI.
 
 ## Default Categories
 
@@ -136,6 +136,7 @@ Notes:
 - `APPMAGIC_ACCOUNTS` overrides auto-discovery; use 1-10 profiles.
 - `APPMAGIC_MAX_WORKERS` caps parallel enrichment workers; default 10, min 1, max 10.
 - `AUTH_CHECK_CONCURRENCY` controls login/auth check concurrency; default 3, min 1, max 10.
+- `TOP_DEPTH` controls weekly leaderboard depth; default 100 and max 100 because AppMagic currently returns `max limit 100` for larger values.
 - `DC_GAP_MS` controls per-app enrichment spacing; default 500.
 - `DC_COOLDOWN_MS` controls 429 cooldown length.
 - `LEADERBOARD_WEEK_CONCURRENCY` controls same-category weekly leaderboard request concurrency; default 3, max 6.
