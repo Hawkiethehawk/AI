@@ -18,7 +18,7 @@ const CONFIG_FILE = (() => {
 
 // ── 错误消息映射 ──
 const ERROR_MAP = [
-  { pattern: /FAIL\s+(\S+)/, cn: (m) => `账号 ${m[1]} 登录已过期，请运行 appmagic login 重新登录` },
+  { pattern: /FAIL\s+(\S+)/, cn: (m) => `账号 ${m[1]} 登录已过期，请运行 am login 重新登录` },
   { pattern: /榜单深度\s*(\d+)\s*不可用/, cn: (m) => `当前账号没有 Top${m[1]} 权限，请在配置中将 topDepth 改为 100，或更换有权限的账号` },
   { pattern: /No valid account token/, cn: () => '所有账号 token 均已失效，请至少登录一个账号' },
   { pattern: /429/, cn: () => 'API 请求被限流（429），已自动冷却等待。可增大 dcCooldownMs 或减少 maxWorkers' },
