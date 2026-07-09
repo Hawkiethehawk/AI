@@ -272,6 +272,7 @@ function writeProgress(force = false) {
     workerAccounts: meta.workerAccounts || [],
     tokenDirs: meta.tokenDirs || [],
     workers: meta.workers || [],
+    selfCheck: meta.selfCheck || {},
     events: meta.events || [],
     cats,
   };
@@ -295,8 +296,8 @@ function loadTagsDict() {
   if (!dictPath) {
     if (!TAGS_DICT_LOGGED) {
       TAGS_DICT_LOGGED = true;
-      console.warn('[tags] optional taxonomy dictionary not found; empty-tag products will keep blank tag path');
-      appendRunEvent('info', '未配置可选 tags 字典，空 tag 产品的 Tag 路径将留空', { candidates: TAGS_FULL_PATHS.slice() });
+      console.warn('[tags] optional taxonomy dictionary not found; run scripts/appmagic_tags_dict.js to build it');
+      appendRunEvent('info', '未配置可选 tags 字典，空 tag 产品的 Tag 路径将留空；可运行 scripts/appmagic_tags_dict.js 生成', { candidates: TAGS_FULL_PATHS.slice() });
     }
     TAGS_DICT_CACHE = new Map();
     return TAGS_DICT_CACHE;
@@ -327,6 +328,115 @@ function fallbackTags(tagStr) {
     const t = dict.get(id);
     return t ? { id: t.id, name: t.name, type: t.type, parent_ids: t.parent_ids || [] } : null;
   }).filter(Boolean);
+}
+
+function pushLimited(list, value, limit = 12) {
+  if (list.length < limit) list.push(value);
+}
+
+function updateSelfCheckMeta(cat, result, force = false) {
+  const state = loadRunState();
+  const meta = readRunMeta(state);
+  const selfCheck = {
+    ...(meta.selfCheck && typeof meta.selfCheck === 'object' ? meta.selfCheck : {}),
+    [cat]: {
+      at: new Date().toISOString(),
+      ok: !!result.ok,
+      rows: result.rows || 0,
+      focus: result.focus || 0,
+      weeks: result.weeks || 0,
+      issues: result.issues || [],
+      warnings: result.warnings || [],
+    },
+  };
+  state._meta = { ...meta, selfCheck, updatedAt: new Date().toISOString() };
+  saveRunState(state, force);
+}
+
+function selfCheckCategory(cat, tag, built) {
+  const issues = [];
+  const warnings = [];
+  const weekData = built && built.weekData ? built.weekData : {};
+  const expectedMin = TOP_DEPTH === 1000 ? 101 : 1;
+
+  for (const d of WEEKS) {
+    const rows = Array.isArray(weekData[d]?.rows) ? weekData[d].rows : [];
+    if (!rows.length) {
+      pushLimited(issues, `${d} 榜单为空`);
+      continue;
+    }
+    if (TOP_DEPTH === 1000 && rows.length < expectedMin) {
+      pushLimited(issues, `${d} Top1000 模式仅返回 ${rows.length} 行`);
+    }
+    const uidSet = new Set();
+    let missingIdentity = 0;
+    let badRank = 0;
+    let missingTags = 0;
+    for (const row of rows) {
+      if (!row || !row.uid || !row.name) missingIdentity++;
+      if (!row || !Number.isFinite(Number(row.rank)) || Number(row.rank) <= 0) badRank++;
+      if (row && row.uid) uidSet.add(row.uid);
+      if (!row || !Array.isArray(row.tags) || !row.tags.length) missingTags++;
+    }
+    const duplicateRows = rows.length - uidSet.size;
+    if (missingIdentity) pushLimited(issues, `${d} ${missingIdentity} 行缺少 uid/name`);
+    if (badRank) pushLimited(issues, `${d} ${badRank} 行排名无效`);
+    if (duplicateRows) pushLimited(warnings, `${d} ${duplicateRows} 行 uid 重复`);
+    if (missingTags) pushLimited(warnings, `${d} ${missingTags} 行无 tag 路径`);
+  }
+
+  const curRows = Array.isArray(built?.curRows) ? built.curRows : [];
+  const records = Array.isArray(built?.records) ? built.records : [];
+  const focus = Array.isArray(built?.focus) ? built.focus : [];
+  if (!curRows.length) pushLimited(issues, `${WEEKS[0]} 当前榜单为空`);
+  if (records.length !== curRows.length) {
+    pushLimited(issues, `当前榜单行数 ${curRows.length} 与 records ${records.length} 不一致`);
+  }
+  if (!focus.length) pushLimited(warnings, '焦点应用为 0');
+
+  const badHistory = records.filter(r => !Array.isArray(r.history) || r.history.length !== WEEKS.length).length;
+  if (badHistory) pushLimited(issues, `${badHistory} 行 6 周轨迹缺失`);
+
+  const tagIds = tag.split(',').map(Number).filter(Number.isFinite);
+  const tagDict = loadTagsDict();
+  const missingCategoryTags = tagIds.filter(id => !tagDict.has(id));
+  if (tagDict.size && missingCategoryTags.length) {
+    pushLimited(warnings, `品类 tag 字典缺失 ${missingCategoryTags.join(',')}`);
+  } else if (!tagDict.size) {
+    pushLimited(warnings, '未加载 tags 字典，空 tag 产品无法回填 Tag 路径');
+  }
+
+  return {
+    ok: issues.length === 0,
+    rows: curRows.length,
+    focus: focus.length,
+    weeks: WEEKS.length,
+    issues,
+    warnings,
+  };
+}
+
+function assertCategorySelfCheck(cat, tag, built) {
+  const result = selfCheckCategory(cat, tag, built);
+  updateSelfCheckMeta(cat, result, true);
+  if (!result.ok) {
+    appendRunEvent('error', `品类自检失败：${cat}`, {
+      category: cat,
+      rows: result.rows,
+      focus: result.focus,
+      issues: result.issues,
+      warnings: result.warnings,
+    }, true);
+    throw new Error(`${cat} 自检失败：${result.issues.join('; ')}`);
+  }
+  const level = result.warnings.length ? 'warn' : 'info';
+  appendRunEvent(level, `品类自检通过：${cat}`, {
+    category: cat,
+    rows: result.rows,
+    focus: result.focus,
+    warnings: result.warnings,
+  });
+  return result;
 }
 
 async function fetchWeek(page, date, tag, token) {
@@ -983,6 +1093,7 @@ async function main() {
       workerAccounts: [],
       tokenDirs: [],
       workers: [],
+      selfCheck: {},
       events: [],
     },
   }, true);
@@ -1108,11 +1219,13 @@ async function main() {
       cache: built.usedCache ? '榜单缓存' : '全新拉取',
       detail: `榜单 ${built.curRows.length} 行，焦点 ${built.focus.length}，富化缓存命中 ${hits}`,
     });
+    const selfCheck = assertCategorySelfCheck(cat, CATS[cat], built);
     appendRunEvent('info', `榜单就绪：${cat}`, {
       category: cat,
       rows: built.curRows.length,
       focus: built.focus.length,
       usedCache: built.usedCache,
+      selfCheck: selfCheck.ok ? 'ok' : 'failed',
     });
     if (completeCats.has(cat) || built.focus.every(r => r.country)) {
       updateRunState(cat, {

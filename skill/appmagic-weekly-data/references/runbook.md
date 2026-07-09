@@ -25,6 +25,14 @@ This runbook keeps executable snippets ASCII-safe. Build non-ASCII category name
   - `output\folder\appmagic-tags-full.json`
   - `skill\appmagic-weekly-data\references\appmagic-tags-full.json`
 
+  Build or refresh the dictionary from the current AppMagic account pool:
+
+  ```powershell
+  $env:APPMAGIC_PROJECT_DIR = (Resolve-Path .).Path
+  node (Join-Path $SkillRoot "scripts\appmagic_tags_dict.js")
+  Remove-Item Env:APPMAGIC_PROJECT_DIR -ErrorAction SilentlyContinue
+  ```
+
   If none exists, the scraper logs a warning and empty-tag products keep a blank Tag path.
 
 ## Paths
@@ -142,6 +150,7 @@ Notes:
 - `LEADERBOARD_WEEK_CONCURRENCY` controls same-category weekly leaderboard request concurrency; default 3, max 6.
 - `LIST_ONLY=1` skips country enrichment.
 - The PowerShell entrypoint automatically starts the localhost dashboard.
+- After collection starts, the scraper self-checks the six configured categories inside the same process as their leaderboard data becomes available. This check reuses in-memory data and makes no extra API calls. Critical issues such as empty leaderboards, invalid rank rows, or Top1000 mode returning only Top100-scale rows fail the run; non-blocking issues such as missing optional tag backfill are written as warnings.
 
 Manual equivalent:
 
