@@ -3,18 +3,18 @@
 // AppMagic Weekly Data — 统一 CLI 入口
 // 脱离 AI agent，可独立运行和定时调度
 //
-// 用法: node appmagic.js <command> [options]
-//   appmagic setup             安装依赖 + 生成配置
-//   appmagic status            显示登录状态 + 邮箱
-//   appmagic login [profile]   浏览器登录
-//   appmagic check             仅 auth check
-//   appmagic run [--fresh] [--list-only] [--week-anchor YYYY-MM-DD]
-//                              完整采集流程
-//   appmagic export            仅 Excel 导出
-//   appmagic tags update       更新 tag 字典
-//   appmagic dashboard         启动看板
-//   appmagic schedule init     生成调度任务
-//   appmagic config show       显示配置
+// 用法: am <command> [options]
+//   am setup             安装依赖 + 生成配置
+//   am status            显示登录状态 + 邮箱
+//   am login [profile]   浏览器登录
+//   am check             仅 auth check
+//   am run [--fresh] [--list-only] [--week-anchor YYYY-MM-DD]
+//                        完整采集流程
+//   am export            仅 Excel 导出
+//   am tags update       更新 tag 字典
+//   am dashboard         启动看板
+//   am schedule init     生成调度任务
+//   am config show       显示配置
 
 const fs = require('fs');
 const path = require('path');
@@ -167,7 +167,7 @@ async function cmdSetup() {
     console.log(`\n  配置文件已存在: ${cfgPath}`);
   }
 
-  console.log('\n✅ 安装完成。下一步: appmagic login');
+  console.log('\n✅ 安装完成。下一步: am login');
 }
 
 async function cmdStatus() {
@@ -186,7 +186,7 @@ async function cmdStatus() {
       })();
 
   if (!dirs.length) {
-    console.log('未发现 .appmagic-userdata* profile。请先运行: appmagic login');
+    console.log('未发现 .appmagic-userdata* profile。请先运行: am login');
     return;
   }
 
@@ -224,7 +224,7 @@ async function cmdStatus() {
   }
 
   // 去重检测
-  console.log('\n💡 运行 "appmagic check" 验证 token 有效性');
+  console.log('\n💡 运行 "am check" 验证 token 有效性');
 }
 
 async function cmdLogin(profile) {
@@ -279,7 +279,7 @@ async function cmdCheck() {
       const fails = (out.match(/FAIL\s+(\S+)/g) || []).length;
       console.log(`\n结果: ${oks} OK, ${fails} FAIL`);
       if (fails > 0) {
-        console.log('💡 失败账号需要重新登录: appmagic login <profile>');
+        console.log('💡 失败账号需要重新登录: am login <profile>');
       }
       resolve(code);
     });
@@ -342,7 +342,7 @@ async function cmdRun(args) {
       console.error(`❌ 采集启动失败: ${startRes.error}`);
       // 尝试翻译错误
       if (startRes.error.includes('auth') || startRes.error.includes('login')) {
-        console.log('💡 运行 "appmagic check" 查看具体失败账号，然后 "appmagic login" 重新登录');
+        console.log('💡 运行 "am check" 查看具体失败账号，然后 "am login" 重新登录');
       }
       process.exit(1);
     }
@@ -620,7 +620,7 @@ function showHelp() {
   console.log(`
 AppMagic Weekly Data — 独立 CLI
 
-用法: node appmagic.js <command> [options]
+用法: am <command> [options]
 
 命令:
   setup             安装依赖 + 生成默认配置
@@ -678,7 +678,7 @@ async function main() {
       break;
     case 'tags':
       if (args[1] === 'update') await cmdTagsUpdate();
-      else console.log('用法: appmagic tags update');
+      else console.log('用法: am tags update');
       break;
     case 'start':
     case 'dashboard':
@@ -695,11 +695,11 @@ async function main() {
       break;
     case 'config':
       if (args[1] === 'show') await cmdConfigShow();
-      else console.log('用法: appmagic config show');
+      else console.log('用法: am config show');
       break;
     default:
       console.error(`未知命令: ${cmd}`);
-      console.error('运行 "appmagic help" 查看可用命令');
+      console.error('运行 "am help" 查看可用命令');
       process.exit(1);
   }
 }
