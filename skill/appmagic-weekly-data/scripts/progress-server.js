@@ -248,16 +248,19 @@ function readResults(runDir) {
   let unknownN = 0;
   for (const cat of categories) {
     for (const f of cat.focus) {
-      if (f.change != null && f.change > 0) risers.push({ ...f, category: cat.category });
+      if (f.change != null && f.change > 0) {
+        const risePct = f.rank ? f.change / f.rank : 0;
+        risers.push({ ...f, category: cat.category, risePct });
+      }
       if (!f.market) unknownN++;
       else if (f.market.startsWith('偏成熟')) matureN++;
       else emergingN++;
     }
   }
-  risers.sort((a, b) => (b.change || 0) - (a.change || 0));
+  risers.sort((a, b) => (b.risePct || 0) - (a.risePct || 0) || (b.change || 0) - (a.change || 0));
   return {
     categories,
-    risers: risers.slice(0, 15),
+    risers: risers.slice(0, 20),
     marketSplit: { mature: matureN, emerging: emergingN, unknown: unknownN },
   };
 }
@@ -1110,6 +1113,13 @@ const PAGE = String.raw`<!doctype html>
   .panel > .body { flex: 1; min-height: 0; overflow: auto; padding: 0 0.5rem 0.5rem; scrollbar-width: thin; scrollbar-color: rgba(148,165,210,0.3) transparent; }
   .panel > .body::-webkit-scrollbar { width: 8px; height: 8px; }
   .panel > .body::-webkit-scrollbar-thumb { background: rgba(148,165,210,0.22); border-radius: 8px; }
+  .api-links { display: inline-flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
+  .api-link {
+    border: 1px solid rgba(77,148,255,0.3); border-radius: 999px; padding: 0.12rem 0.46rem;
+    background: rgba(0,102,255,0.1); color: #cfe2ff; font: inherit; font-size: 0.72rem; cursor: pointer;
+  }
+  .api-link:hover { border-color: rgba(0,229,255,0.5); color: var(--cyan); }
+  .api-link.on { border-color: rgba(0,229,255,0.65); background: rgba(0,229,255,0.12); color: var(--cyan); }
 
   /* ── 数据表格：表头弱化，行 hover 高亮 ── */
   table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
@@ -1257,8 +1267,16 @@ input[type="date"], input[type="number"], select {
   .event[data-l="error"]::before { background: var(--red); box-shadow: 0 0 8px rgba(255,107,107,0.7); }
   .event .t { color: var(--muted); font-size: 0.7rem; }
   .event .m { line-height: 1.45; color: var(--muted); }
+  .event .d { margin-top: 0.18rem; color: rgba(255, 220, 220, 0.82); font-size: 0.72rem; line-height: 1.35; white-space: normal; word-break: break-word; }
   .event.newest .m { color: var(--text); font-weight: 700; }
   .event.newest::before { background: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,0.8); animation: pulse 1.6s infinite; }
+  .api-pane { padding: 0.2rem 0.35rem 0.4rem; color: var(--muted); font-size: 0.78rem; }
+  .api-pane .api-title { margin: 0 0 0.45rem; color: var(--text); font-weight: 700; }
+  .api-pre {
+    margin: 0; padding: 0.65rem; border: 1px solid var(--line); border-radius: 0.55rem;
+    background: rgba(5, 8, 18, 0.34); color: #d6dcff; white-space: pre-wrap; word-break: break-word;
+    font-family: Consolas, 'SFMono-Regular', monospace; font-size: 0.72rem; line-height: 1.45;
+  }
 
   .split { display: flex; height: 0.55rem; border-radius: 999px; overflow: hidden; margin: 0.4rem 0.7rem 0.15rem; }
   .split .m { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
@@ -1377,7 +1395,7 @@ input[type="date"], input[type="number"], select {
         <div class="head"><h2>本周飙升榜</h2><span class="hint">全品类涨幅前列</span></div>
         <div class="body">
           <table>
-            <thead><tr><th class="num">#</th><th>应用</th><th>品类</th><th class="num">本周排名</th><th class="num">升幅</th></tr></thead>
+            <thead><tr><th class="num">#</th><th>应用</th><th>品类</th><th class="num">本周排名</th><th class="num">上升位次</th><th class="num">升幅</th></tr></thead>
             <tbody id="riserRows"></tbody>
           </table>
         </div>
@@ -1391,7 +1409,11 @@ input[type="date"], input[type="number"], select {
 
       <section class="panel resizable" data-panel="events" style="flex:1">
         <div class="head"><h2>事件流</h2><div class="grow"></div>
-          <span class="hint">进度 · 结果 · 健康</span>
+          <span class="hint api-links">
+            <button class="api-link" type="button" data-event-view="progress">进度</button>
+            <button class="api-link" type="button" data-event-view="results">结果</button>
+            <button class="api-link" type="button" data-event-view="health">健康</button>
+          </span>
         </div>
         <div class="body timeline" id="events"></div>
       </section>
@@ -1444,7 +1466,20 @@ input[type="date"], input[type="number"], select {
 <script>
 (function () {
   var ALL = '__all__';
-  var S = { data: null, tab: ALL, sortBy: 'rank', search: '', es: null, pollTimer: null, cacheClearing: false, accounts: { accounts: [], loading: false, error: '' }, run: { active: false, loading: false, stopping: false, job: null } };
+  var S = {
+    data: null,
+    tab: ALL,
+    sortBy: 'rank',
+    search: '',
+    eventView: 'progress',
+    health: null,
+    healthLoading: false,
+    es: null,
+    pollTimer: null,
+    cacheClearing: false,
+    accounts: { accounts: [], loading: false, error: '' },
+    run: { active: false, loading: false, stopping: false, job: null }
+  };
   var SETTINGS_KEY = 'appmagic_dashboard_settings_v1';
   var PANEL_KEY = 'appmagic_dashboard_panel_sizes_v1';
   // AppMagic 品类页链接（tag id 与 scraper CATS 对应；已实测 ?tag= 参数生效）
@@ -1550,6 +1585,10 @@ input[type="date"], input[type="number"], select {
     renderAccounts();
   }
   function num(v) { return (v == null || v === '') ? '--' : Number(v).toLocaleString('en-US'); }
+  function pct(v) {
+    if (v == null || !isFinite(Number(v))) return '--';
+    return Math.round(Number(v) * 100) + '%';
+  }
   function dur(ms) {
     if (ms == null || isNaN(ms)) return '--';
     var s = Math.max(0, Math.round(ms / 1000));
@@ -1568,6 +1607,29 @@ input[type="date"], input[type="number"], select {
     if (v > 0) return '<span class="chg-up">▲' + v + '</span>';
     if (v < 0) return '<span class="chg-dn">▼' + (-v) + '</span>';
     return '<span class="chg-0">0</span>';
+  }
+  function failureDetail(e) {
+    if (!e) return '';
+    var parts = [];
+    if (Array.isArray(e.failures) && e.failures.length) parts.push('失败明细：' + e.failures.join('；'));
+    if (Array.isArray(e.emptyDates) && e.emptyDates.length) parts.push('空数据周：' + e.emptyDates.join('，'));
+    if (Array.isArray(e.issues) && e.issues.length) parts.push('自检问题：' + e.issues.join('；'));
+    if (e.status) parts.push('状态码：' + e.status);
+    if (e.body) parts.push('响应：' + String(e.body).slice(0, 240));
+    if (e.error) parts.push('错误：' + String(e.error).slice(0, 240));
+    return parts.join(' | ');
+  }
+  function apiPane(title, payload, loading) {
+    var body = loading ? { loading: true } : (payload || {});
+    return '<div class="api-pane">' +
+      '<div class="api-title">' + esc(title) + '</div>' +
+      '<pre class="api-pre">' + esc(JSON.stringify(body, null, 2)) + '</pre>' +
+    '</div>';
+  }
+  function updateEventViewButtons() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-event-view]'), function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-event-view') === S.eventView);
+    });
   }
   function spark(history) {
     var pts = (history || []).slice().reverse(); // 旧 -> 新
@@ -1709,6 +1771,7 @@ input[type="date"], input[type="number"], select {
       var cls = c.cls === 'done' ? 'done' : c.cls === 'err' ? 'err' : c.cls === 'wait' ? 'wait' : 'run';
       var rc = resultByCat[c.label];
       var sub = rc ? ('已采集 ' + rc.enriched + '/' + rc.focusCount) : zh(c.detail || '');
+      if (c.lastError) sub = zh(c.lastError);
       var u = catUrl(c.label);
       var catName = u
         ? '<a href="' + u + '" class="cat-link" target="_blank" rel="noreferrer">' + esc(c.label) + '</a>'
@@ -1820,9 +1883,10 @@ input[type="date"], input[type="number"], select {
         '<td class="ellip">' + name + '</td>' +
         '<td><span class="cat-chip">' + esc(f.category) + '</span></td>' +
         '<td class="num">#' + f.rank + '</td>' +
-        '<td class="num chg-up">▲' + f.change + '</td></tr>';
+        '<td class="num chg-up">▲' + f.change + '</td>' +
+        '<td class="num chg-up">' + pct(f.risePct) + '</td></tr>';
     }).join('');
-    document.getElementById('riserRows').innerHTML = html || '<tr><td colspan="5"><div class="empty">暂无上升数据</div></td></tr>';
+    document.getElementById('riserRows').innerHTML = html || '<tr><td colspan="6"><div class="empty">暂无上升数据</div></td></tr>';
   }
 
   function renderSplit(r) {
@@ -2045,10 +2109,12 @@ input[type="date"], input[type="number"], select {
       .then(function (j) {
         S.cacheClearing = false;
         if (j.ok) {
+          try { localStorage.removeItem(PANEL_KEY); } catch (e) {}
           S.data = { at: new Date().toISOString(), runDir: null, progress: null, results: { categories: [], risers: [], marketSplit: null } };
           S.run = Object.assign({ active: false, loading: false, stopping: false, job: null }, j.run || {}, { loading: false, stopping: false });
           S.accounts.error = '已清除页面数据 ' + (j.deleted || 0) + ' 个文件';
           render();
+          if (window.appmagicResetPanels) window.appmagicResetPanels();
         } else {
           S.accounts.error = j.error || '清除缓存失败';
         }
@@ -2136,7 +2202,7 @@ input[type="date"], input[type="number"], select {
   function initResizablePanels() {
     var DEFAULT_LAYOUT = {
       colSplit: 0.68,
-      leftRows: [0.34, 0.66],
+      leftRows: [0.95, 0.05],
       rightRows: [0.18, 0.12, 0.52, 0.18],
       rightVariableSplit: 0.18 / (0.18 + 0.52)
     };
@@ -2537,6 +2603,11 @@ input[type="date"], input[type="number"], select {
     applyLayout();
     window.addEventListener('resize', scheduleLayout);
     window.appmagicRelayoutPanels = scheduleLayout;
+    window.appmagicResetPanels = function () {
+      state = sanitizeState(DEFAULT_LAYOUT);
+      saveState();
+      scheduleLayout();
+    };
     if (window.ResizeObserver) {
       var layoutObserver = new ResizeObserver(function () {
         scheduleLayout();
@@ -2546,15 +2617,26 @@ input[type="date"], input[type="number"], select {
   }
 
   function renderRight(p) {
-    var events = (p && p.events || []).slice().reverse().map(function (e, i) {
-      var extra = [];
-      if (e.account) extra.push(accShort(e.account));
-      if (e.category) extra.push(e.category);
-      return '<div class="event' + (i === 0 ? ' newest' : '') + '" data-l="' + esc(e.level || 'info') + '">' +
-        '<div class="t">' + esc(ftime(e.at)) + (extra.length ? ' · ' + esc(extra.join(' · ')) : '') + '</div>' +
-        '<div class="m">' + esc(zh(e.message)) + '</div></div>';
-    }).join('');
-    document.getElementById('events').innerHTML = events || '<div class="empty">暂无事件（运行开始后展示）</div>';
+    updateEventViewButtons();
+    var eventBody = document.getElementById('events');
+    if (S.eventView === 'results') {
+      eventBody.innerHTML = apiPane('/api/results', (S.data && S.data.results) || {}, false);
+    } else if (S.eventView === 'health') {
+      eventBody.innerHTML = apiPane('/api/health', S.health || {}, S.healthLoading);
+    } else {
+      var events = (p && p.events || []).slice().reverse().map(function (e, i) {
+        var extra = [];
+        if (e.account) extra.push(accShort(e.account));
+        if (e.category) extra.push(e.category);
+        var detail = failureDetail(e);
+        return '<div class="event' + (i === 0 ? ' newest' : '') + '" data-l="' + esc(e.level || 'info') + '">' +
+          '<div class="t">' + esc(ftime(e.at)) + (extra.length ? ' · ' + esc(extra.join(' · ')) : '') + '</div>' +
+          '<div class="m">' + esc(zh(e.message)) + '</div>' +
+          (detail ? '<div class="d">' + esc(zh(detail)) + '</div>' : '') +
+        '</div>';
+      }).join('');
+      eventBody.innerHTML = events || '<div class="empty">暂无事件（运行开始后展示）</div>';
+    }
 
     var out = p ? (p.outputDir || '') : '';
     var ctx = [
@@ -2611,6 +2693,26 @@ input[type="date"], input[type="number"], select {
     }
     var t = e.target.closest('[data-login]');
     if (t) loginAccount(t.getAttribute('data-login'));
+  });
+  document.addEventListener('click', function (e) {
+    var view = e.target.closest('[data-event-view]');
+    if (!view) return;
+    e.preventDefault();
+    S.eventView = view.getAttribute('data-event-view') || 'progress';
+    if (S.eventView === 'health') {
+      S.healthLoading = true;
+      render();
+      fetch('/api/health', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { S.health = j; S.healthLoading = false; render(); })
+        .catch(function (err) {
+          S.health = { ok: false, error: err && err.message ? err.message : String(err) };
+          S.healthLoading = false;
+          render();
+        });
+      return;
+    }
+    render();
   });
   Array.prototype.forEach.call(document.querySelectorAll('#weekAnchorInput, #topDepthInput'), function (el) {
     el.addEventListener('change', function () { writeSettings(); });
