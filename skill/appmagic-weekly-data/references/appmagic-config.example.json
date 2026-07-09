@@ -1,0 +1,24 @@
+{
+  "_comment": "AppMagic Weekly Data 配置文件。env vars 优先于此文件。将此文件复制到项目根目录并改名为 appmagic-config.json。",
+  "accounts": "",
+  "deduplicateByEmail": true,
+  "maxAccounts": 10,
+  "topDepth": 1000,
+  "maxWorkers": 10,
+  "dcGapMs": 500,
+  "dcCooldownMs": 120000,
+  "leaderboardWeekConcurrency": 3,
+  "authCheckConcurrency": 3,
+  "skipExcel": false,
+  "notifications": {
+    "onComplete": { "type": "file", "url": "" },
+    "onFailure": { "type": "file", "url": "" },
+    "onAuthExpired": { "type": "file", "url": "" }
+  },
+  "schedule": {
+    "enabled": false,
+    "dayOfWeek": 1,
+    "hour": 9,
+    "minute": 0
+  }
+}

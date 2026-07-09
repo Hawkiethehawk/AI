@@ -37,6 +37,24 @@ if (-not $Categories -or $Categories.Count -eq 0) {
   )
 }
 
+# 从 appmagic-config.json 读取默认值（env vars 优先，配置文件作为 fallback）
+$ConfigFile = Join-Path $ProjectDir "appmagic-config.json"
+if (Test-Path $ConfigFile) {
+  try {
+    $cfg = Get-Content $ConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
+    if (-not $env:TOP_DEPTH -and $cfg.topDepth)           { $env:TOP_DEPTH = "$($cfg.topDepth)" }
+    if (-not $env:APPMAGIC_ACCOUNTS -and $cfg.accounts)    { $env:APPMAGIC_ACCOUNTS = $cfg.accounts }
+    if (-not $env:APPMAGIC_MAX_WORKERS -and $cfg.maxWorkers) { $env:APPMAGIC_MAX_WORKERS = "$($cfg.maxWorkers)" }
+    if (-not $env:DC_GAP_MS -and $cfg.dcGapMs)             { $env:DC_GAP_MS = "$($cfg.dcGapMs)" }
+    if (-not $env:DC_COOLDOWN_MS -and $cfg.dcCooldownMs)   { $env:DC_COOLDOWN_MS = "$($cfg.dcCooldownMs)" }
+    if (-not $env:LEADERBOARD_WEEK_CONCURRENCY -and $cfg.leaderboardWeekConcurrency) { $env:LEADERBOARD_WEEK_CONCURRENCY = "$($cfg.leaderboardWeekConcurrency)" }
+    if (-not $env:AUTH_CHECK_CONCURRENCY -and $cfg.authCheckConcurrency) { $env:AUTH_CHECK_CONCURRENCY = "$($cfg.authCheckConcurrency)" }
+    if (-not $env:LIST_ONLY -and $cfg.PSObject.Properties['listOnly'] -and $cfg.listOnly) { $env:LIST_ONLY = "1" }
+  } catch {
+    Write-Host "  ⚠️  配置文件读取失败: $ConfigFile -- $($_.Exception.Message)"
+  }
+}
+
 $env:APPMAGIC_PROJECT_DIR = $ProjectDir
 if ($Fresh) { $env:FORCE_REFRESH = "1" }
 if ($ListOnly) { $env:LIST_ONLY = "1" }
