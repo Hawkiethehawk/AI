@@ -373,15 +373,28 @@ function profileSlotIndex(profile) {
   return DEFAULT_ACCOUNT_PROFILES.indexOf(profile);
 }
 
+function currentProfileState(profile) {
+  const exists = profileExists(profile);
+  if (!exists) return 'missing';
+  const job = loginJobs.get(profile) || {};
+  if (job.state === 'login' || job.state === 'checking') return job.state;
+  const cached = accountStatus.get(profile) || {};
+  if (cached.state) return cached.state;
+  const token = readTokenMeta(profile);
+  return token.cached ? 'cached' : 'unknown';
+}
+
 function listAccountProfiles() {
   const visible = [];
+  let canExposeNextAddSlot = true;
   for (const profile of DEFAULT_ACCOUNT_PROFILES) {
     const exists = profileExists(profile);
     if (exists) {
       visible.push(profile);
+      if (currentProfileState(profile) !== 'ok') canExposeNextAddSlot = false;
       continue;
     }
-    visible.push(profile);
+    if (canExposeNextAddSlot) visible.push(profile);
     break;
   }
   visible.sort((a, b) => profileSortValue(a) - profileSortValue(b) || a.localeCompare(b));
@@ -496,7 +509,10 @@ function compactAuthError(message) {
 }
 
 function syncProfileMapKeys(map, moves, deletedProfile) {
-  if (deletedProfile) map.delete(deletedProfile);
+  const deletedProfiles = Array.isArray(deletedProfile)
+    ? deletedProfile
+    : (deletedProfile ? [deletedProfile] : []);
+  for (const deleted of deletedProfiles) map.delete(deleted);
   for (const [from, to] of Object.entries(moves)) {
     if (!map.has(from)) continue;
     map.set(to, map.get(from));
@@ -506,6 +522,47 @@ function syncProfileMapKeys(map, moves, deletedProfile) {
   for (const key of Array.from(map.keys())) {
     if (profileSlotIndex(key) >= 0 && !existing.has(key)) map.delete(key);
   }
+}
+
+function removeProfilesAndCompact(profiles) {
+  const uniqueProfiles = [...new Set((profiles || []).filter(isSafeProfile))]
+    .filter(profile => profileSlotIndex(profile) >= 0 && profileExists(profile));
+  if (!uniqueProfiles.length) return null;
+
+  const projectRoot = path.resolve(PROJECT_DIR) + path.sep;
+  for (const profile of uniqueProfiles) {
+    const target = profilePath(profile);
+    if (!target.startsWith(projectRoot)) throw new Error('profile path escaped project');
+    fs.rmSync(target, { recursive: true, force: true });
+  }
+
+
+  const moves = {};
+  const remaining = DEFAULT_ACCOUNT_PROFILES.filter(profileExists);
+  let nextSlot = 0;
+  for (const from of remaining) {
+    const to = profileSlotName(nextSlot++);
+    if (from === to) continue;
+    const fromPath = profilePath(from);
+    const toPath = profilePath(to);
+    if (fs.existsSync(toPath)) throw new Error(`target profile already exists: ${to}`);
+    fs.renameSync(fromPath, toPath);
+    moves[from] = to;
+  }
+
+  syncProfileMapKeys(accountStatus, moves, uniqueProfiles);
+  syncProfileMapKeys(loginJobs, moves, uniqueProfiles);
+  return {
+    ok: true,
+    deleted: uniqueProfiles[0],
+    deletedProfiles: uniqueProfiles,
+    moves,
+    accounts: accountRows(),
+  };
+}
+
+function removeProfileAndCompact(profile) {
+  return removeProfilesAndCompact([profile]);
 }
 
 function deleteProfile(profile) {
@@ -524,28 +581,29 @@ function deleteProfile(profile) {
   const row = rows.find(r => r.profile === profile);
   if (!row || !row.exists) return { ok: false, error: 'profile does not exist', accounts: rows };
 
-  const target = profilePath(profile);
-  const projectRoot = path.resolve(PROJECT_DIR) + path.sep;
-  if (!target.startsWith(projectRoot)) return { ok: false, error: 'profile path escaped project', accounts: rows };
+  return removeProfileAndCompact(profile);
+}
 
-  fs.rmSync(target, { recursive: true, force: true });
+function autoClearFailedLoginProfile(profile) {
+  if (!isSafeProfile(profile) || !profileExists(profile)) return null;
+  const slot = profileSlotIndex(profile);
+  if (slot < 0) return null;
+  if (activeRunJob() || isFreshProgressActive()) return null;
+  return removeProfileAndCompact(profile);
+}
 
-  const moves = {};
-  const remaining = DEFAULT_ACCOUNT_PROFILES.filter(profileExists);
-  let nextSlot = 0;
-  for (const from of remaining) {
-    const to = profileSlotName(nextSlot++);
-    if (from === to) continue;
-    const fromPath = profilePath(from);
-    const toPath = profilePath(to);
-    if (fs.existsSync(toPath)) throw new Error(`target profile already exists: ${to}`);
-    fs.renameSync(fromPath, toPath);
-    moves[from] = to;
+function autoClearFailedTailProfiles() {
+  if (activeRunJob() || isFreshProgressActive()) return null;
+  const existing = [];
+  for (const profile of DEFAULT_ACCOUNT_PROFILES) {
+    if (!profileExists(profile)) break;
+    existing.push({ profile, state: currentProfileState(profile) });
   }
-
-  syncProfileMapKeys(accountStatus, moves, profile);
-  syncProfileMapKeys(loginJobs, moves, profile);
-  return { ok: true, deleted: profile, moves, accounts: accountRows() };
+  const firstNonOk = existing.findIndex(row => row.state !== 'ok');
+  if (firstNonOk < 0) return null;
+  const tail = existing.slice(firstNonOk);
+  if (!tail.length || !tail.every(row => row.state === 'fail')) return null;
+  return removeProfilesAndCompact(tail.map(row => row.profile));
 }
 
 function parseAuthCheckOutput(output, profiles) {
@@ -613,7 +671,9 @@ function runAuthCheck(profileOrProfiles) {
           });
         }
       }
-      resolve({ ok: !error, output, accounts: accountRows() });
+      let cleanup = null;
+      try { cleanup = autoClearFailedTailProfiles(); } catch {}
+      resolve({ ok: !error, output, accounts: accountRows(), cleanup });
     });
   }).finally(() => {
     if (!explicitProfiles && !profile) authCheckAll = null;
@@ -642,11 +702,33 @@ function startLoginCapture(profile) {
     loginJobs.set(profile, next);
     runAuthCheck(profile).then(() => {
       const checked = accountStatus.get(profile);
-      loginJobs.set(profile, {
-        ...next,
-        state: checked && checked.state === 'ok' ? 'done' : 'failed',
-        checkedAt: new Date().toISOString(),
-      });
+      if (checked && checked.state === 'ok') {
+        loginJobs.set(profile, {
+          ...next,
+          state: 'done',
+          checkedAt: new Date().toISOString(),
+        });
+        return;
+      }
+      if (!profileExists(profile)) return;
+      try {
+        const cleared = autoClearFailedLoginProfile(profile);
+        if (!cleared) {
+          loginJobs.set(profile, {
+            ...next,
+            state: 'failed',
+            checkedAt: new Date().toISOString(),
+            detail: '登录态检测失败',
+          });
+        }
+      } catch (error) {
+        loginJobs.set(profile, {
+          ...next,
+          state: 'failed',
+          checkedAt: new Date().toISOString(),
+          detail: compactAuthError(error && error.message ? error.message : String(error)),
+        });
+      }
     });
   });
   child.on('error', error => {
