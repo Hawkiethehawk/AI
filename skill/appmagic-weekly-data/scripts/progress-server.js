@@ -98,7 +98,26 @@ function isFirstInTop100Trajectory(rank, history) {
     && history.slice(1).every(h => h == null || h > 100);
 }
 
+const BIG_PUBS = ['voodoo','saygames','supercent','azur','miniclip','rollic','kwalee','homa','habby','lion studios','crazylabs','good job games','bytedance','tencent','outfit7','zynga','playgendary','ketchapp','sybo','gameloft','tap2play','unico','poki','yso','abi global','mattel','popcore','geisha','bestplay','freeplay','aiby'];
+function isBigPublisher(publisher) {
+  const s = String(publisher || '').toLowerCase();
+  return BIG_PUBS.some(b => s.includes(b));
+}
+
+function isPotentialNewFocus(r, country, reasons, firstInTop100) {
+  if ((reasons || []).some(x => String(x || '').includes('潜力新品'))) return true;
+  const history = r.history || [];
+  const weeksOnBoard = r.weeksOnBoard || history.filter(h => h != null).length;
+  return !!firstInTop100
+    && weeksOnBoard <= 3
+    && !isBigPublisher(r.publisher)
+    && !!country
+    && ((country.mature || 0) >= 25 || (country.matureRev || 0) >= 25);
+}
+
 function focusEntry(r, country, extra) {
+  const reasons = (extra && extra.reasons) || [];
+  const firstInTop100 = !!(extra && extra.firstInTop100);
   return {
     rank: r.rank,
     name: r.name,
@@ -114,6 +133,7 @@ function focusEntry(r, country, extra) {
     market: country ? country.market : '',
     dlTop: dlTop(country, 3),
     url: r.url || storeUrl(r.storeIds),
+    potentialNew: isPotentialNewFocus(r, country, reasons, firstInTop100),
     ...extra,
   };
 }
@@ -1270,13 +1290,8 @@ input[type="date"], input[type="number"], select {
   .event .d { margin-top: 0.18rem; color: rgba(255, 220, 220, 0.82); font-size: 0.72rem; line-height: 1.35; white-space: normal; word-break: break-word; }
   .event.newest .m { color: var(--text); font-weight: 700; }
   .event.newest::before { background: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,0.8); animation: pulse 1.6s infinite; }
-  .api-pane { padding: 0.2rem 0.35rem 0.4rem; color: var(--muted); font-size: 0.78rem; }
-  .api-pane .api-title { margin: 0 0 0.45rem; color: var(--text); font-weight: 700; }
-  .api-pre {
-    margin: 0; padding: 0.65rem; border: 1px solid var(--line); border-radius: 0.55rem;
-    background: rgba(5, 8, 18, 0.34); color: #d6dcff; white-space: pre-wrap; word-break: break-word;
-    font-family: Consolas, 'SFMono-Regular', monospace; font-size: 0.72rem; line-height: 1.45;
-  }
+  .event .kv-mini { display: flex; gap: 0.55rem; flex-wrap: wrap; margin-top: 0.18rem; color: var(--muted); font-size: 0.72rem; }
+  .event .kv-mini span { border: 1px solid rgba(148,165,210,0.12); border-radius: 999px; padding: 0.04rem 0.42rem; background: rgba(148,165,210,0.04); }
 
   .split { display: flex; height: 0.55rem; border-radius: 999px; overflow: hidden; margin: 0.4rem 0.7rem 0.15rem; }
   .split .m { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
@@ -1608,6 +1623,9 @@ input[type="date"], input[type="number"], select {
     if (v < 0) return '<span class="chg-dn">▼' + (-v) + '</span>';
     return '<span class="chg-0">0</span>';
   }
+  function isPotentialFocus(f) {
+    return !!(f && (f.potentialNew || (f.reasons || []).some(function (x) { return String(x || '').indexOf('潜力新品') >= 0; })));
+  }
   function failureDetail(e) {
     if (!e) return '';
     var parts = [];
@@ -1619,12 +1637,64 @@ input[type="date"], input[type="number"], select {
     if (e.error) parts.push('错误：' + String(e.error).slice(0, 240));
     return parts.join(' | ');
   }
-  function apiPane(title, payload, loading) {
-    var body = loading ? { loading: true } : (payload || {});
-    return '<div class="api-pane">' +
-      '<div class="api-title">' + esc(title) + '</div>' +
-      '<pre class="api-pre">' + esc(JSON.stringify(body, null, 2)) + '</pre>' +
+  function eventItem(level, title, message, detail, kvs, newest) {
+    var chips = (kvs || []).filter(Boolean).map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('');
+    return '<div class="event' + (newest ? ' newest' : '') + '" data-l="' + esc(level || 'info') + '">' +
+      '<div class="t">' + esc(title || '') + '</div>' +
+      '<div class="m">' + esc(message || '') + '</div>' +
+      (detail ? '<div class="d">' + esc(detail) + '</div>' : '') +
+      (chips ? '<div class="kv-mini">' + chips + '</div>' : '') +
     '</div>';
+  }
+  function renderResultEvents(r) {
+    r = r || { categories: [], risers: [], marketSplit: null };
+    var cats = r.categories || [];
+    var rows = [];
+    var totalRecords = cats.reduce(function (sum, c) { return sum + (c.records || 0); }, 0);
+    var totalFocus = cats.reduce(function (sum, c) { return sum + (c.focusCount || 0); }, 0);
+    rows.push(eventItem(
+      'info',
+      '/api/results',
+      cats.length ? ('结果汇总：' + cats.length + ' 个品类') : '暂无结果数据',
+      '',
+      ['榜单 ' + num(totalRecords), '焦点 ' + num(totalFocus), '飙升 ' + num((r.risers || []).length)],
+      true
+    ));
+    cats.forEach(function (c) {
+      rows.push(eventItem(
+        c.live ? 'warn' : 'info',
+        c.category || '--',
+        c.live ? '实时缓存摘要' : '最终产物摘要',
+        '',
+        [
+          '榜单 ' + num(c.records),
+          '焦点 ' + num(c.focusCount),
+          '新入前百 ' + num(c.newTop100),
+          '已富化 ' + num(c.enriched)
+        ],
+        false
+      ));
+    });
+    var split = r.marketSplit || { mature: 0, emerging: 0, unknown: 0 };
+    rows.push(eventItem('info', '市场分布', '焦点应用市场属性', '', [
+      '偏成熟 ' + num(split.mature),
+      '偏新兴 ' + num(split.emerging),
+      '待采集 ' + num(split.unknown)
+    ], false));
+    return rows.join('');
+  }
+  function renderHealthEvents(h, loading) {
+    if (loading) return eventItem('info', '/api/health', '正在检查服务状态', '', [], true);
+    h = h || {};
+    return [
+      eventItem(h.ok ? 'info' : 'error', '/api/health', h.ok ? '服务正常' : '服务异常', h.error || '', [
+        '端口 ' + (h.port || '--'),
+        'SSE ' + num(h.sseClients),
+        h.hasProgress ? '有进度文件' : '无进度文件'
+      ], true),
+      eventItem('info', '项目目录', h.projectDir || '--', '', [], false),
+      eventItem(h.runDir ? 'info' : 'warn', '运行目录', h.runDir || '未找到运行目录', '', [], false)
+    ].join('');
   }
   function updateEventViewButtons() {
     Array.prototype.forEach.call(document.querySelectorAll('[data-event-view]'), function (btn) {
@@ -1848,12 +1918,21 @@ input[type="date"], input[type="number"], select {
       });
     }
     var key = S.sortBy;
-    list.sort(function (a, b) {
+    var baseCompare = function (a, b) {
       if (key === 'rank') return (a.rank || 9e9) - (b.rank || 9e9);
       return (b[key] || 0) - (a[key] || 0);
+    };
+    list.sort(function (a, b) {
+      if (key === 'rank') {
+        var ap = isPotentialFocus(a) ? 1 : 0;
+        var bp = isPotentialFocus(b) ? 1 : 0;
+        if (ap !== bp) return bp - ap;
+      }
+      return baseCompare(a, b);
     });
     var html = list.map(function (f) {
       var name = f.url ? '<a href="' + esc(f.url) + '" target="_blank" rel="noreferrer">' + esc(f.name) + '</a>' : esc(f.name);
+      if (isPotentialFocus(f)) name += '<span class="new-tag">潜力新品</span>';
       if (f.firstInTop100) name += '<span class="new-tag">新入前百</span>';
       return '<tr>' +
         '<td class="num">#' + f.rank + '</td>' +
@@ -2620,9 +2699,9 @@ input[type="date"], input[type="number"], select {
     updateEventViewButtons();
     var eventBody = document.getElementById('events');
     if (S.eventView === 'results') {
-      eventBody.innerHTML = apiPane('/api/results', (S.data && S.data.results) || {}, false);
+      eventBody.innerHTML = renderResultEvents((S.data && S.data.results) || {});
     } else if (S.eventView === 'health') {
-      eventBody.innerHTML = apiPane('/api/health', S.health || {}, S.healthLoading);
+      eventBody.innerHTML = renderHealthEvents(S.health || {}, S.healthLoading);
     } else {
       var events = (p && p.events || []).slice().reverse().map(function (e, i) {
         var extra = [];
