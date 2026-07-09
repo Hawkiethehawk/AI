@@ -503,10 +503,16 @@ async function cmdStart() {
 
   console.log('📡 启动看板...');
   const serverScript = path.join(SCRIPTS, 'progress-server.js');
-  execSync(`APPMAGIC_PROJECT_DIR="${projectDir}" APPMAGIC_NO_OPEN=1 nohup node "${serverScript}" > /dev/null 2>&1 &`, {
-    stdio: 'ignore',
-    timeout: 5000,
+  const out = fs.openSync(path.join(projectDir, 'appmagic-dashboard.log'), 'a');
+  const child = spawn(process.execPath, [serverScript], {
+    cwd: projectDir,
+    env: { ...process.env, APPMAGIC_PROJECT_DIR: projectDir, APPMAGIC_NO_OPEN: '1' },
+    detached: true,
+    stdio: ['ignore', out, out],
+    windowsHide: true,
   });
+  child.unref();
+  try { fs.closeSync(out); } catch {}
 
   await sleep(4000);
 

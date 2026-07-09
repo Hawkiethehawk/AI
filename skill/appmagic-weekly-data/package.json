@@ -1,0 +1,53 @@
+{
+  "name": "appmagic-weekly-data",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone AppMagic weekly ranking collection CLI and local dashboard.",
+  "type": "commonjs",
+  "bin": {
+    "am": "./am.js"
+  },
+  "scripts": {
+    "setup": "node am.js setup",
+    "status": "node am.js status",
+    "check": "node am.js check",
+    "start": "node am.js start",
+    "stop": "node am.js stop",
+    "restart": "node am.js restart",
+    "run": "node am.js run",
+    "export": "node am.js export",
+    "tags:update": "node am.js tags update",
+    "config": "node am.js config show",
+    "syntax": "node --check am.js && node --check scripts/appmagic-weekly.js && node --check scripts/appmagic-login.js && node --check scripts/appmagic_tags_dict.js && node --check scripts/notify.js && node --check scripts/progress-server.js && node --check scripts/validate.js"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.61.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "am.js",
+    "scripts/appmagic-weekly.js",
+    "scripts/appmagic-login.js",
+    "scripts/appmagic_profile_emails.ps1",
+    "scripts/appmagic_tags_dict.js",
+    "scripts/appmagic_xlsx.py",
+    "scripts/appmagic_xlsx_common.py",
+    "scripts/appmagic_xlsx_merged.py",
+    "scripts/notify.js",
+    "scripts/progress-server.js",
+    "scripts/run_appmagic_weekly.ps1",
+    "scripts/validate.js",
+    "references/appmagic-config.example.json",
+    "references/appmagic-tags-full.json",
+    "schedules/"
+  ],
+  "keywords": [
+    "appmagic",
+    "weekly",
+    "rankings",
+    "dashboard"
+  ],
+  "license": "UNLICENSED"
+}

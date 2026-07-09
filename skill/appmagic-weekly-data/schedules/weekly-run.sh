@@ -10,7 +10,7 @@ set -e
 
 # === 配置（修改为实际路径）===
 PROJECT_DIR="${APPMAGIC_PROJECT_DIR:-/path/to/your/appmagic-project}"
-NODE_BIN="${NODE_BIN:-node}"
+AM_BIN="${AM_BIN:-am}"
 LOG_DIR="${PROJECT_DIR}/logs"
 RETENTION_DAYS=30
 
@@ -24,7 +24,7 @@ echo "Start: $(date)" | tee -a "$LOG_FILE"
 echo "Project: $PROJECT_DIR" | tee -a "$LOG_FILE"
 
 cd "$PROJECT_DIR"
-"$NODE_BIN" appmagic.js run >> "$LOG_FILE" 2>&1
+"$AM_BIN" run >> "$LOG_FILE" 2>&1
 EXIT_CODE=$?
 
 echo "Exit: $EXIT_CODE at $(date)" | tee -a "$LOG_FILE"

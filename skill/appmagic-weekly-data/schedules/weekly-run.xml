@@ -2,7 +2,7 @@
 <!--
   AppMagic Weekly Run — Windows Task Scheduler 模板
   导入: schtasks /create /xml "weekly-run.xml" /tn "AppMagic Weekly"
-  修改: 替换下方 Command 和 Arguments 中的路径为实际路径
+  修改: 确保 npm 全局 bin 目录在 PATH 中，或把 Command 改为 am 的绝对路径
 -->
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
@@ -37,11 +37,10 @@
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>node</Command>
-      <!-- 修改为实际路径 -->
-      <Arguments>"E:\LLM-Sandbox\Codex\appmagic.js" run</Arguments>
-      <!-- 工作目录 -->
-      <WorkingDirectory>E:\LLM-Sandbox\Codex</WorkingDirectory>
+      <Command>am</Command>
+      <Arguments>run</Arguments>
+      <!-- 修改为实际 AppMagic 项目根目录 -->
+      <WorkingDirectory>C:\AppMagicProject</WorkingDirectory>
     </Exec>
   </Actions>
 </Task>
