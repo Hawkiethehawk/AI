@@ -118,11 +118,19 @@ function fmtDuration(ms) {
 async function cmdSetup() {
   console.log('🔧 AppMagic 独立化安装\n');
 
-  // 1. 检查 Node.js
-  const nodeVer = process.version;
-  console.log(`  Node.js: ${nodeVer}`);
+  // 1. 运行 npm postinstall 同款环境检查：Node / Chromium / Python openpyxl
+  const postinstallScript = path.join(SCRIPTS, 'postinstall.js');
+  if (fs.existsSync(postinstallScript)) {
+    try {
+      execSync(`node "${postinstallScript}"`, { cwd: SKILL_ROOT, stdio: 'inherit' });
+    } catch {
+      console.log('  ⚠️  环境检查存在未完成项，请按上方提示处理');
+    }
+  } else {
+    console.log(`  Node.js: ${process.version}`);
+  }
 
-  // 2. 检查 Python
+  // 2. 额外提示 Python 状态，便于 setup 输出更直观
   try {
     const py = execSync('python3 --version 2>&1 || python --version 2>&1', { encoding: 'utf-8' }).trim();
     console.log(`  Python:  ${py}`);
@@ -130,31 +138,7 @@ async function cmdSetup() {
     console.log('  ⚠️  Python 未检测到，Excel 导出功能需要 Python');
   }
 
-  // 3. npm install
-  console.log('\n📦 安装 Node.js 依赖...');
-  try {
-    execSync('npm install @playwright/test', { cwd: SKILL_ROOT, stdio: 'inherit' });
-  } catch {
-    console.log('  ⚠️  npm install 失败，请手动运行: npm install @playwright/test');
-  }
-
-  // 4. Playwright Chromium
-  console.log('\n🌐 安装 Chromium...');
-  try {
-    execSync('npx playwright install chromium', { cwd: SKILL_ROOT, stdio: 'inherit' });
-  } catch {
-    console.log('  ⚠️  Chromium 安装失败，请手动运行: npx playwright install chromium');
-  }
-
-  // 5. openpyxl
-  console.log('\n🐍 安装 openpyxl...');
-  try {
-    execSync('pip install openpyxl 2>&1 || pip3 install openpyxl 2>&1 || python -m pip install openpyxl 2>&1', { stdio: 'inherit' });
-  } catch {
-    console.log('  ⚠️  openpyxl 安装失败，请手动运行: pip install openpyxl');
-  }
-
-  // 6. 生成配置文件
+  // 3. 生成配置文件
   const projectDir = resolveProjectDir();
   const cfgPath = path.join(projectDir, 'appmagic-config.json');
   if (!fs.existsSync(cfgPath)) {
