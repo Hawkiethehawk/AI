@@ -1892,8 +1892,9 @@ input[type="date"], input[type="number"], select {
     var authReady = selectedAuthState(rows);
     var hint = document.getElementById('accountsHint');
     if (hint) {
-      var ok = rows.filter(function (r) { return r.state === 'ok'; }).length;
-      hint.textContent = box.error ? box.error : (rows.length ? ('有效 ' + ok + '/' + rows.length) : '本机 profile');
+      var realRows = rows.filter(function (r) { return r.exists; });
+      var ok = realRows.filter(function (r) { return r.state === 'ok'; }).length;
+      hint.textContent = box.error ? box.error : (realRows.length ? ('有效 ' + ok + '/' + realRows.length) : '本机 profile');
     }
     var btn = document.getElementById('accountRefresh');
     if (btn) {
@@ -2213,6 +2214,22 @@ input[type="date"], input[type="number"], select {
       return Math.min(64, cap);
     }
 
+    function panelBorderY(panel) {
+      return cssPx(panel, 'borderTopWidth', 0) + cssPx(panel, 'borderBottomWidth', 0);
+    }
+
+    function categoryProgressFullHeight(fallback) {
+      var panel = leftPanels[0];
+      if (!panel) return fallback;
+      var head = panel.querySelector('.head');
+      var body = panel.querySelector('.body');
+      var table = panel.querySelector('table.category-table');
+      if (!body || !table) return fallback;
+      var bodyPadding = cssPx(body, 'paddingTop', 0) + cssPx(body, 'paddingBottom', 0);
+      var content = (head ? head.offsetHeight : 0) + table.scrollHeight + bodyPadding + panelBorderY(panel) + 2;
+      return content > 20 ? Math.max(fallback, Math.ceil(content)) : fallback;
+    }
+
     function minVariablePanelSize(total) {
       return Math.min(120, Math.max(72, Math.floor(total / 4)));
     }
@@ -2248,10 +2265,12 @@ input[type="date"], input[type="number"], select {
       var normalized = normalizeRatios(ratios, panels.length, panels === leftPanels ? DEFAULT_LAYOUT.leftRows : DEFAULT_LAYOUT.rightRows);
       if (panels === leftPanels && panels.length === 2) {
         var minTop = minPanelSize(total, 2);
-        var maxTop = Math.max(minTop, total - minTop);
+        var minBottom = minPanelSize(total, 2);
+        var maxByBottom = Math.max(minTop, total - minBottom);
+        var maxByContent = categoryProgressFullHeight(minTop);
+        var maxTop = Math.max(minTop, Math.min(maxByBottom, maxByContent));
         var top = clamp(Math.round(total * normalized[0]), minTop, maxTop);
         var bottom = Math.max(0, total - top);
-        state.leftRows = total ? [top / total, bottom / total] : DEFAULT_LAYOUT.leftRows.slice();
         panels[0].style.flex = '0 0 auto';
         panels[0].style.height = top + 'px';
         panels[0].style.width = '';
@@ -2412,8 +2431,16 @@ input[type="date"], input[type="number"], select {
       var ratios = normalizeRatios(state[which], panels.length, fallback);
       var gap = rowGap(col);
       var total = Math.max(0, col.clientHeight - gap * (panels.length - 1));
+      var sizes = ratios.map(function (r) { return r * total; });
+      if (which === 'leftRows') {
+        var actual = panels.map(function (panel) {
+          return panel ? Math.max(0, panel.getBoundingClientRect().height) : 0;
+        });
+        var actualTotal = actual.reduce(function (a, b) { return a + b; }, 0);
+        if (actualTotal > 0) sizes = actual.map(function (v) { return v * total / actualTotal; });
+      }
       return {
-        sizes: ratios.map(function (r) { return r * total; }),
+        sizes: sizes,
         total: total,
         min: minPanelSize(total, panels.length)
       };
