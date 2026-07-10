@@ -19,6 +19,8 @@ migration-logs/
 output/repos/
 output/logs/
 output/folder/AppMagic-*/
+output/Appmagic-*.xlsx
+Cache/
 
 # Local skill private environment files.
 env.local.md
