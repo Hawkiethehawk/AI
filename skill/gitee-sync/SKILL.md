@@ -42,7 +42,7 @@ configured targetthehawk/AI 真源仓库已经合并到 `E:\LLM-Sandbox\Codex`�
 
 | 命令 | 作用 |
 |---|---|
-| `gitee.sh check` | 整库 `git pull` 同步 + 把仓库内所有有变化的 skill 同步到运行时（每次第一步） |
+| `gitee.sh check` | 整库 `git pull` 同步 + 同步 skill，并清理上次由仓库管理但已删除的运行时 skill（每次第一步） |
 | `gitee.sh status` | 工作区状态 + 各 skill 版本 + 与远程领先/落后 |
 | `gitee.sh pull` | 拉取最新（rebase） |
 | `gitee.sh push "msg"` | add + commit + rebase + push |

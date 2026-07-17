@@ -18,6 +18,7 @@ SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${SKILL_REPO:-$(cd "$SELF/.." && pwd)}"
 SRC="$REPO/skill"
 DST="$HOME/.claude/skills"
+MANIFEST="$HOME/.claude/.gitee-synced-skills"
 
 [ -d "$SRC" ] || { echo "[skill-selfcheck] 找不到 skill 源目录: $SRC" >&2; exit 0; }
 mkdir -p "$DST"
@@ -25,8 +26,22 @@ mkdir -p "$DST"
 # 1) 每次都整库同步：让本地 repo 跟上 gitee（容错，网络问题不阻塞 skill 使用）
 timeout 20 git -C "$REPO" pull --rebase --quiet 2>/dev/null || true
 
-# 2) 逐个 skill：运行时缺失或与 repo 不一致 → 同步整目录到运行时
+# 2) 清理上次由本仓库管理、但已经从 repo 删除的运行时 skill。
+#    没有清单时只初始化，不猜测哪些现有目录属于本仓库，避免误删用户自己的 skill。
 changed=""
+if [ -f "$MANIFEST" ]; then
+  while IFS= read -r name; do
+    case "$name" in
+      ""|.|..|*/*|*\\*) continue ;;
+    esac
+    if [ ! -f "$SRC/$name/SKILL.md" ] && [ -d "$DST/$name" ]; then
+      rm -rf -- "$DST/$name"
+      changed="$changed -$name(已删除)"
+    fi
+  done < "$MANIFEST"
+fi
+
+# 3) 逐个 skill：运行时缺失或与 repo 不一致 → 同步整目录到运行时
 for d in "$SRC"/*/; do
   [ -f "$d/SKILL.md" ] || continue
   name="$(basename "$d")"
@@ -39,6 +54,20 @@ for d in "$SRC"/*/; do
     changed="$changed ${name}(${oldv:-缺失}->${newv:-?})"
   fi
 done
+
+# 4) 记录当前由本仓库管理的 skill 名称，供下次检测删除使用。
+mkdir -p "$(dirname "$MANIFEST")"
+manifest_tmp="${MANIFEST}.tmp.$$"
+if {
+  for d in "$SRC"/*/; do
+    [ -f "$d/SKILL.md" ] || continue
+    basename "$d"
+  done
+} | sort > "$manifest_tmp" && mv -f -- "$manifest_tmp" "$MANIFEST"; then
+  :
+else
+  rm -f -- "$manifest_tmp"
+fi
 
 [ -n "$changed" ] && echo "[skill-selfcheck] 已把运行时 skill 更新到最新:$changed"
 exit 0

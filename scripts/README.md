@@ -13,8 +13,9 @@ v1.2.1 而 repo 还是 v1.1.0、或反过来 repo 是残稿而运行时是完整
 ## 它做什么
 
 1. 每小时最多一次 `git pull` 让本地 repo 跟上 gitee（容错，网络问题不阻塞）。
-2. 逐个 skill 比对：运行时缺失或与 repo 不一致 → 把 repo 版整目录同步过去。
-3. 有变更时打印一行摘要，例如 `[skill-selfcheck] 已把运行时 skill 更新到最新: example-skill(1.1.0->1.2.1)`。
+2. 逐个 skill 比对：运行时缺失或与 repo 不一致 → 把 repo 版整目录同步过去；清理上次由本 repo 管理、但已从 repo 删除的运行时 skill。
+3. 用 `~/.claude/.gitee-synced-skills` 记录仓库曾管理过的 skill。首次运行只建立清单，不猜测并删除已有的本地 skill。
+4. 有变更时打印一行摘要，例如 `[skill-selfcheck] 已把运行时 skill 更新到最新: example-skill(1.1.0->1.2.1)`。
 
 幂等：无变更时静默、零副作用。
 
