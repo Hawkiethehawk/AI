@@ -14,7 +14,7 @@ v1.2.1 而 repo 还是 v1.1.0、或反过来 repo 是残稿而运行时是完整
 
 1. 每小时最多一次 `git pull` 让本地 repo 跟上 gitee（容错，网络问题不阻塞）。
 2. 逐个 skill 比对：运行时缺失或与 repo 不一致 → 把 repo 版整目录同步过去。
-3. 有变更时打印一行摘要，例如 `[skill-selfcheck] 已把运行时 skill 更新到最新: learning-doc-builder(1.1.0->1.2.1)`。
+3. 有变更时打印一行摘要，例如 `[skill-selfcheck] 已把运行时 skill 更新到最新: example-skill(1.1.0->1.2.1)`。
 
 幂等：无变更时静默、零副作用。
 

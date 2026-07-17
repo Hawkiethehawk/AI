@@ -7,7 +7,7 @@ license: MIT
 metadata:
   hermes:
     tags: [notion, documentation, formatting, mcp, ascii-diagrams, markdown]
-    related_skills: [learning-doc-builder]
+    related_skills: []
 ---
 
 # Notion-Doc Builder — Format documents for Notion
@@ -207,7 +207,7 @@ Notion supports text colors via `<span color="Color">` syntax and callout blocks
 ## Output Convention
 
 - **Path A:** No local file needed — the page lives in Notion. Return the Notion URL.
-- **Path B:** Write to `output/markdown/<topic>.md` (bare topic name, no "学习文档" suffix — consistent with learning-doc-builder's naming rule).
+- **Path B:** Write to `output/markdown/<topic>.md` (use the bare topic name without a "学习文档" suffix).
 - Do NOT write to a `output/notion/` directory or any Notion-specific subdirectory. The output folder is by content type, not by target platform.
 
 ## Summary Checklist
