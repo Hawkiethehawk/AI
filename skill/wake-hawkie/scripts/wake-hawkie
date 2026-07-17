@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly CONFIG="$HOME/.config/wake-hawkie/router.env"
+[[ -r "$CONFIG" ]] || { echo "Missing $CONFIG" >&2; exit 1; }
+# shellcheck disable=SC1090
+source "$CONFIG"
+
+: "${ROUTER_URL:?Missing ROUTER_URL}"
+: "${ROUTER_PASSWORD:?Missing ROUTER_PASSWORD}"
+: "${TARGET_MAC:?Missing TARGET_MAC}"
+
+umask 077
+cookie_jar=$(mktemp)
+login_page=$(mktemp)
+wol_page=$(mktemp)
+trap 'rm -f "$cookie_jar" "$login_page" "$wol_page"' EXIT
+
+# Cudy intentionally returns the login form with HTTP 403 before authentication.
+curl -sS -c "$cookie_jar" "$ROUTER_URL/cgi-bin/luci" -o "$login_page"
+csrf=$(sed -n 's/.*name="_csrf"[^>]*value="\([^"]*\)".*/\1/p' "$login_page" | head -1)
+salt=$(sed -n 's/.*name="salt"[^>]*value="\([^"]*\)".*/\1/p' "$login_page" | head -1)
+[[ -n "$csrf" && -n "$salt" ]] || { echo "Router login page was not recognised" >&2; exit 1; }
+
+login_token=$(curl -fsS -b "$cookie_jar" -c "$cookie_jar" -X POST "$ROUTER_URL/cgi-bin/luci/admin/get_token")
+hash1=$(printf %s "$ROUTER_PASSWORD$salt" | sha256sum | awk '{print $1}')
+password_hash=$(printf %s "$hash1$login_token" | sha256sum | awk '{print $1}')
+
+login_status=$(curl -sS -b "$cookie_jar" -c "$cookie_jar" -o /dev/null -w '%{http_code}' -X POST "$ROUTER_URL/cgi-bin/luci/" \
+  --data-urlencode "_csrf=$csrf" --data-urlencode "token=$login_token" --data-urlencode "salt=$salt" \
+  --data-urlencode 'zonename=Asia/Shanghai' --data-urlencode "timeclock=$(date +%s)" \
+  --data-urlencode 'luci_language=zh_cn' --data-urlencode 'luci_username=admin' --data-urlencode "luci_password=$password_hash")
+[[ "$login_status" == "302" ]] || { echo "Router login failed (HTTP $login_status)" >&2; exit 1; }
+
+curl -fsS -b "$cookie_jar" "$ROUTER_URL/cgi-bin/luci/admin/network/wol" -o "$wol_page"
+wake_token=$(sed -n "s/.*const token = '\([^']*\)'.*/\1/p" "$wol_page" | head -1)
+[[ -n "$wake_token" ]] || { echo "Wake-on-LAN entry was not found" >&2; exit 1; }
+
+wake_status=$(curl -sS -b "$cookie_jar" -o /dev/null -w '%{http_code}' -X POST "$ROUTER_URL/cgi-bin/luci/admin/network/wol/wake" \
+  --data-urlencode "token=$wake_token" --data-urlencode "macaddr=$TARGET_MAC")
+[[ "$wake_status" == "200" ]] || { echo "Wake request failed (HTTP $wake_status)" >&2; exit 1; }
+echo "Wake request sent to configured target ($TARGET_MAC)."
