@@ -72,25 +72,6 @@ case "$cmd" in
     [ "$code" = "200" ] || echo "⚠ gitee API HTTP $code（临时故障或路径/权限问题，可重试）" >&2
     printf '%s\n' "$resp" | head -n -1
     ;;
-  create-private)
-    repo_name="${1:-}"; description="${2:-}"
-    [ -n "$repo_name" ] || { echo "用法: gitee.sh create-private <repo-name> [description]" >&2; exit 1; }
-    case "$repo_name" in *[!A-Za-z0-9._-]*|'') echo "仓库名仅允许字母、数字、点、下划线和连字符。" >&2; exit 1;; esac
-    t="$(need_token)" || exit 1
-    resp="$(curl -sS -m 30 -w '\n%{http_code}' -X POST "$API/user/repos" \
-      --data-urlencode "access_token=$t" \
-      --data-urlencode "name=$repo_name" \
-      --data-urlencode "description=$description" \
-      --data-urlencode 'private=true' \
-      --data-urlencode 'auto_init=true')"
-    code="$(printf '%s' "$resp" | tail -n1)"; body="$(printf '%s\n' "$resp" | head -n -1)"
-    if [ "$code" != "201" ]; then
-      echo "创建私有仓库失败（Gitee API HTTP $code）。" >&2
-      printf '%s\n' "$body" >&2
-      exit 1
-    fi
-    printf '%s\n' "$body" | python -c "import sys,json; d=json.load(sys.stdin); print('✓ 已创建私有仓库:', d.get('full_name')); print('地址:', d.get('html_url')); print('Git:', d.get('clone_url'))"
-    ;;
   info)
     t="$(need_token)" || exit 1
     curl -s -m 15 "$API/repos/$OWNER/$NAME?access_token=$t" | python -c "import sys,json
@@ -114,7 +95,6 @@ gitee.sh — 私有仓库 $OWNER/$NAME 助手
   push [msg]      add + commit + rebase + push
   api <path>      调 gitee REST API（带 token），如：api /repos/$OWNER/$NAME/commits
   info            仓库基本信息摘要
-  create-private <name> [description]  创建一个初始化的私有仓库
 EOF
     ;;
 esac
