@@ -42,13 +42,13 @@ case "$cmd" in
   status)
     echo "== 仓库 $OWNER/$NAME @ $BRANCH =="; git -C "$REPO" status -s
     echo "== 仓库内 skill 版本 =="; versions
-    git -c http.sslBackend=gnutls -C "$REPO" fetch -q origin "$BRANCH" 2>/dev/null || true
+    git -C "$REPO" fetch -q origin "$BRANCH" 2>/dev/null || true
     ahead="$(git -C "$REPO" rev-list --count "origin/$BRANCH..$BRANCH" 2>/dev/null || echo '?')"
     behind="$(git -C "$REPO" rev-list --count "$BRANCH..origin/$BRANCH" 2>/dev/null || echo '?')"
     echo "== 与远程：领先 $ahead / 落后 $behind =="
     ;;
   pull)
-    git -c http.sslBackend=gnutls -C "$REPO" pull --rebase "$(auth_repo_url)" "$BRANCH"
+    git -C "$REPO" pull --rebase "$(auth_repo_url)" "$BRANCH"
     ;;
   push)
     msg="${1:-update}"
@@ -62,7 +62,7 @@ case "$cmd" in
       echo "(检测到已暂存文件，仅提交当前 staged 变更)"
     fi
     git -C "$REPO" commit -m "$msg" || echo "(无改动可提交)"
-    git -c http.sslBackend=gnutls -C "$REPO" pull --rebase "$(auth_repo_url)" "$BRANCH" && git -c http.sslBackend=gnutls -C "$REPO" push "$(auth_repo_url)" "$BRANCH"
+    git -C "$REPO" pull --rebase "$(auth_repo_url)" "$BRANCH" && git -C "$REPO" push "$(auth_repo_url)" "$BRANCH"
     ;;
   api)
     path="${1:-/user}"; t="$(need_token)" || exit 1
