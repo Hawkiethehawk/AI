@@ -3,6 +3,17 @@
   const home=document.querySelector("#home");
   const resumeLink=document.querySelector("#resume-link");
   const articles=[...document.querySelectorAll(".chapter")];
+  function consolidateR143Steps(){
+    const r143Row=document.querySelector('[data-source-id="c10-node-084"]');
+    if(!r143Row)return;
+    const steps=[...r143Row.querySelectorAll(".step-item")];
+    steps.slice(3).forEach(function(step){
+      const number=step.querySelector(".step-number");
+      if(number)number.remove();
+      step.classList.add("r143-eternity-segment");
+    });
+  }
+  consolidateR143Steps();
   const articlesByRoute=new Map(articles.map(function(article){return [article.dataset.route,article];}));
   const articleTexts=articles.map(function(article){return article.textContent.replace(/\s+/g," ").trim();});
   const chapterLinks=[...document.querySelectorAll(".chapter-link")];
