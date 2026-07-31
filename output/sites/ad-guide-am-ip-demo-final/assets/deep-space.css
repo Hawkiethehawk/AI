@@ -219,6 +219,7 @@ body.glossary-open{overflow:hidden}
 .eternal-progress-table .table-copy-stack{justify-content:center}
 .table-copy-stack{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .resource-progress-table .merged-step-cell,.eternal-progress-table .merged-step-cell{text-align:left}
+.resource-progress-table tbody td.merged-step-cell,.eternal-progress-table tbody td.merged-step-cell{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 .merged-step-cell .step-item{display:block}
 .merged-step-cell .step-item+.step-item{margin-top:6px}
 .merged-step-cell .step-number{color:#8af0d5;font-weight:700}
