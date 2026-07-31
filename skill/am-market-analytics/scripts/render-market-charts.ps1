@@ -398,7 +398,11 @@ function Update-TrendChart {
     foreach ($node in @($oldDates + $oldTicks)) {
         [void]$main.RemoveChild($node)
     }
-    $tickEvery = [int]$contract.trend.tickEvery
+    # Preserve the approved minimum cadence while keeping all date labels legible.
+    # A 22-week series is not divisible by two; using a three-week cadence keeps
+    # the final week on the axis without adding an overlapping one-week interval.
+    $minimumTickEvery = [int]$contract.trend.tickEvery
+    $tickEvery = [Math]::Max($minimumTickEvery, [Math]::Ceiling(($dates.Count - 1) / 10))
     $indices = [System.Collections.Generic.List[int]]::new()
     for ($index = 0; $index -lt $dates.Count; $index += $tickEvery) {
         [void]$indices.Add($index)
