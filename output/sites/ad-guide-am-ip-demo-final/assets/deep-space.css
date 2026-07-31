@@ -205,6 +205,15 @@ body.glossary-open{overflow:hidden}
 .eternal-progress-table tbody th[scope="row"],.eternal-progress-table tbody td:nth-of-type(1),.eternal-progress-table tbody td:nth-of-type(3){text-align:center}
 .eternal-progress-table tbody td:nth-of-type(2),.eternal-progress-table tbody td:nth-of-type(4){text-align:justify;text-align-last:left;text-justify:auto}
 .resource-progress-table tbody th[scope="row"],.ip-progress-table tbody td:first-of-type,.eternal-progress-table tbody th[scope="row"],.eternal-progress-table tbody td:first-of-type{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+.guide-progress-table{width:100%;max-width:100%;overflow:hidden}
+.guide-progress-table table{width:100%;min-width:0;table-layout:fixed;font-size:16px}
+.guide-progress-table thead th:first-child{width:25%}
+.guide-progress-table thead th:nth-child(2){width:75%}
+.guide-progress-table tbody td{line-height:1.6;overflow-wrap:anywhere}
+.guide-progress-table tbody th[scope="row"]{text-align:center}
+.guide-progress-table tbody td{text-align:justify;text-align-last:left;text-justify:auto}
+.guide-progress-table .resource-stage-row th{padding:11px 13px}
+.guide-progress-table .resource-group-row th{padding:9px 13px}
 .eternal-progress-table .eternal-stage-row th{padding:12px 14px;background:#15352f;color:#8af0d5;text-align:left;font-size:16px;font-weight:700}
 .eternal-progress-table .eternal-group-row th{padding:9px 14px;background:#0f2932;color:#b8ced2;text-align:left;font-size:16px;font-weight:650}
 .eternal-progress-table .table-copy-stack{justify-content:center}
@@ -291,6 +300,10 @@ body.glossary-open{overflow:hidden}
  .ip-progress-table tbody td:nth-of-type(1):before{content:"当前AM"}
 .ip-progress-table tbody td:nth-of-type(2):before{content:"当前目标或操作"}
  .resource-progress-table tbody th[scope="row"]:before,.ip-progress-table tbody td:first-of-type:before{text-align:center}
+ .guide-progress-table tbody th[scope="row"]:before{content:"当前进度"}
+ .guide-progress-table tbody td:before{content:"当前目标或操作"}
+ .reality-progress-table tbody th[scope="row"]:before{content:"当前现实或关键进度"}
+ .reality-upgrades-progress-table tbody th[scope="row"]:before{content:"当前条件"}
  .am-progress-table tbody th[scope="row"]{grid-column:1/-1}
  .resource-progress-table tbody .resource-stage-row,.resource-progress-table tbody .resource-group-row{display:grid;width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:0;border-radius:0;background:transparent}
  .resource-progress-table tbody .resource-stage-row th,.resource-progress-table tbody .resource-group-row th{display:block;padding:10px 12px;text-align:center}
