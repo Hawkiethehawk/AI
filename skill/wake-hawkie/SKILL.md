@@ -1,22 +1,22 @@
 ---
 name: wake-hawkie
-description: Wake the owner's PC configured target via the Cudy TR3000 stock-firmware Wake-on-LAN feature, reached securely through ZeroTier. Use only when the owner explicitly asks to wake or power on configured target.
+description: Wake a preconfigured computer through the Cudy TR3000 stock-firmware Wake-on-LAN feature over ZeroTier. Use only when the user explicitly asks to wake or power on the configured target.
 ---
 
-# Wake configured target through TR3000
+# Wake the configured target through TR3000
 
 ## Scope
 
-- Target: **configured target** only.
+- Target: the preconfigured computer only.
 - Network path: Hermes VPS → ZeroTier → TR3000 stock web interface → LAN WoL.
 - The router is addressed by its ZeroTier IP, so this works without a public home IP, DDNS, or exposed router management port.
 
 ## Run
 
-When the owner explicitly asks to wake, power on, or start configured target, run exactly:
+When the user explicitly asks to wake, power on, or start the configured target, run exactly:
 
 ```bash
-bash $HOME/.hermes/skills/wake-hawkie/scripts/wake-hawkie
+bash "$HOME/.hermes/skills/wake-hawkie/scripts/wake-hawkie"
 ```
 
 Do not accept a MAC address, router address, or alternate target from chat. This skill is restricted to the preconfigured computer only.

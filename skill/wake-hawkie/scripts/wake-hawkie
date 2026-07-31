@@ -39,4 +39,4 @@ wake_token=$(sed -n "s/.*const token = '\([^']*\)'.*/\1/p" "$wol_page" | head -1
 wake_status=$(curl -sS -b "$cookie_jar" -o /dev/null -w '%{http_code}' -X POST "$ROUTER_URL/cgi-bin/luci/admin/network/wol/wake" \
   --data-urlencode "token=$wake_token" --data-urlencode "macaddr=$TARGET_MAC")
 [[ "$wake_status" == "200" ]] || { echo "Wake request failed (HTTP $wake_status)" >&2; exit 1; }
-echo "Wake request sent to configured target ($TARGET_MAC)."
+echo "Wake request sent to the configured target ($TARGET_MAC)."

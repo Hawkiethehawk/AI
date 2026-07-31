@@ -1,3 +1,4 @@
 router.env
+env.local.md
 *.cookie
 *.log
