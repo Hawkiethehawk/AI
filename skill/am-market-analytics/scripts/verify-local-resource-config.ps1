@@ -4,7 +4,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$defaultConfigPath = '[local-private-config]'
+$localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
+$defaultConfigPath = Join-Path $localAppData 'am-market-analytics\resources.json'
 
 if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
     $ConfigPath = $env:AM_MARKET_ANALYTICS_CONFIG

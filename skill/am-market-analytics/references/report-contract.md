@@ -2,10 +2,11 @@
 
 ## 私有资源配置
 
-- 固定资源地址不写入Skill、引用文件、日志、报告正文、提交或远程仓库；每次运行先读取`[local-private-config]`，或读取环境变量`AM_MARKET_ANALYTICS_CONFIG`指定的配置文件。
+- 固定资源地址不写入Skill、引用文件、日志、报告正文、提交或远程仓库；每次运行先执行配置校验脚本，由脚本从本机应用数据私有目录读取配置，或读取环境变量`AM_MARKET_ANALYTICS_CONFIG`指定的配置文件。
 - 配置必须提供`data_workbook.url`和`formal_document.url`。`data_workbook.url`用于读取唯一数据工作簿和生成“AppMagic数据”的原生表格链接对象；`formal_document.url`用于读取确认后的正式覆盖目标。
 - 配置文件缺失、字段缺失或地址无效时停止流程；不得搜索云文档、向用户索要已固定资源或自行猜测地址。
 - 每次调用前执行`scripts/verify-local-resource-config.ps1`。该脚本只输出校验状态，不输出资源地址。
+- 账号标识、访问令牌、机器绝对路径和本地配置内容同样不得进入Skill、报告、日志、提交或远程仓库。
 
 ## 数据边界
 
