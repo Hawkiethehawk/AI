@@ -177,6 +177,29 @@
     }
     if(offset<text.length)container.append(document.createTextNode(text.slice(offset)));
   }
+  function searchTarget(article,q){
+    const candidates=[...article.querySelectorAll("h1,h2,h3,p,li,tr,pre")];
+    return candidates.find(function(element){
+      return element.textContent.replace(/\s+/g," ").toLocaleLowerCase("zh-CN").includes(q);
+    })||null;
+  }
+  function jumpToSearchResult(match,event){
+    event.preventDefault();
+    rememberSearchReturn();
+    const route=articles[match.index].dataset.route;
+    const target=match.target;
+    const scroll=function(){
+      if(target)target.scrollIntoView({block:"start"});else window.scrollTo({top:0,behavior:"auto"});
+      updateProgress();
+    };
+    history.pushState(null,"","#"+route);
+    if(route!==currentRoute){
+      setChapter(route,false);
+      setTimeout(scroll,0);
+    }else{
+      scroll();
+    }
+  }
   function updateSearchReturn(){
     searchReturn.hidden=!searchReturnPosition;
   }
@@ -203,7 +226,7 @@
       const hay=(link.innerText+" "+articleText).toLocaleLowerCase("zh-CN");
       const show=!q||hay.includes(q);
       link.hidden=!show;
-      if(q&&show)matches.push({link:link,index:index,text:articleText});
+      if(q&&show)matches.push({link:link,index:index,text:articleText,target:searchTarget(articles[index],q)});
     });
     status.textContent=q?matches.length+" 个章节匹配":"";
     results.replaceChildren();
@@ -223,7 +246,7 @@
       snippet.className="search-result-snippet";
       appendHighlighted(snippet,searchExcerpt(match.text,q),q);
       item.append(title,snippet);
-      item.addEventListener("click",rememberSearchReturn);
+      item.addEventListener("click",function(event){jumpToSearchResult(match,event);});
       results.appendChild(item);
     });
   }
