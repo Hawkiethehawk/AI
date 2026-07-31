@@ -214,7 +214,7 @@ body.glossary-open{overflow:hidden}
 .guide-progress-table tbody td{text-align:justify;text-align-last:left;text-justify:auto}
 .guide-progress-table .resource-stage-row th{padding:11px 13px}
 .guide-progress-table .resource-group-row th{padding:9px 13px}
-.eternal-progress-table .eternal-stage-row th{padding:12px 14px;background:#15352f;color:#8af0d5;text-align:left;font-size:16px;font-weight:700}
+.eternal-progress-table .eternal-stage-row th{padding:12px 14px;background:#15352f;color:#8af0d5;text-align:center;font-size:16px;font-weight:700}
 .eternal-progress-table .eternal-group-row th{padding:9px 14px;background:#0f2932;color:#b8ced2;text-align:left;font-size:16px;font-weight:650}
 .eternal-progress-table .table-copy-stack{justify-content:center}
 .table-copy-stack{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -327,8 +327,10 @@ body.glossary-open{overflow:hidden}
  .eternal-progress-table tbody td:nth-of-type(3):before{content:"研究树"}
  .eternal-progress-table tbody td:nth-of-type(4):before{content:"其他要求或备注"}
  .eternal-progress-table tbody th[scope="row"]:before,.eternal-progress-table tbody td:first-of-type:before{text-align:center}
- .eternal-progress-table tbody .eternal-stage-row,.eternal-progress-table tbody .eternal-group-row{display:block;width:100%;border:0;border-radius:0;background:transparent}
+ .eternal-progress-table tbody .eternal-stage-row{display:grid;width:100%;grid-template-columns:minmax(0,2fr) minmax(0,3fr);border:0;border-radius:0;background:transparent}
+ .eternal-progress-table tbody .eternal-group-row{display:block;width:100%;border:0;border-radius:0;background:transparent}
  .eternal-progress-table tbody .eternal-stage-row th,.eternal-progress-table tbody .eternal-group-row th{display:block;padding:10px 12px;text-align:left}
+ .eternal-progress-table tbody .eternal-stage-row th{text-align:center}
  .eternal-progress-table tbody .eternal-stage-row th:before,.eternal-progress-table tbody .eternal-group-row th:before{display:none}
  .eternal-progress-table tbody tr:hover{background:#091821}
 }
