@@ -32,3 +32,11 @@ $HOME/.config/wake-hawkie/router.env
 ```
 
 That file is intentionally outside the skill directory and is mode `0600`; do not print, copy, or expose its contents. If the router ZeroTier IP changes, update only `ROUTER_URL` in that file.
+
+## Hardware replacement
+
+Replacing the target computer's motherboard or wired network adapter can change
+its MAC address. Update only `TARGET_MAC` in the external `router.env` file;
+do not add the real value to this repository. The script accepts colon-separated,
+hyphen-separated, dotted, and unseparated hexadecimal MAC formats and normalizes
+them before sending the WoL request.
