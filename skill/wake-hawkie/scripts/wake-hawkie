@@ -10,6 +10,22 @@ source "$CONFIG"
 : "${ROUTER_PASSWORD:?Missing ROUTER_PASSWORD}"
 : "${TARGET_MAC:?Missing TARGET_MAC}"
 
+normalize_mac() {
+  local compact=${1//:/}
+  compact=${compact//-/}
+  compact=${compact//./}
+  [[ "$compact" =~ ^[[:xdigit:]]{12}$ ]] || {
+    echo "TARGET_MAC must contain exactly 12 hexadecimal digits" >&2
+    exit 1
+  }
+  printf '%s:%s:%s:%s:%s:%s' \
+    "${compact:0:2}" "${compact:2:2}" "${compact:4:2}" \
+    "${compact:6:2}" "${compact:8:2}" "${compact:10:2}" | tr '[:lower:]' '[:upper:]'
+}
+
+# Accept the formats commonly copied from Windows and Linux network tools.
+TARGET_MAC=$(normalize_mac "$TARGET_MAC")
+
 umask 077
 cookie_jar=$(mktemp)
 login_page=$(mktemp)
