@@ -1,4 +1,0 @@
-interface:
-  display_name: "AppMagic市场分析"
-  short_description: "基于AppMagic数据生成全球市场分析报告"
-  default_prompt: "Use $am-market-analytics to generate an AppMagic global market analysis report."
