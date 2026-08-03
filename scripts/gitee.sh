@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gitee.sh — 仓库 configured targetthehawk/AI 的连接 & 同步助手（配套 gitee-sync skill，本地真源使用 E:\LLM-Sandbox\Codex）
+# gitee.sh — 仓库 Hawkiethehawk/AI 的连接 & 同步助手（配套 gitee-sync skill，本地真源使用 E:\LLM-Sandbox\Codex）
 # 一次性 setup token -> 保存到 ~/.claude/.gitee_token（供 REST API 使用）。
 # git push/pull 沿用系统已配的凭证（已免密），本脚本不改动它。
 set -u
@@ -8,7 +8,7 @@ export PYTHONUTF8=1 PYTHONIOENCODING=utf-8   # 让 python 的 stdin/stdout 统�
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${SKILL_REPO:-$(cd "$SELF/.." && pwd)}"
 TOKEN_FILE="$HOME/.claude/.gitee_token"
-OWNER="configured targetthehawk"; NAME="AI"; BRANCH="master"
+OWNER="Hawkiethehawk"; NAME="AI"; BRANCH="master"
 API="https://gitee.com/api/v5"
 
 repo_url(){ printf 'https://gitee.com/%s/%s.git' "$OWNER" "$NAME"; }
