@@ -10,6 +10,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $culture = [System.Globalization.CultureInfo]::InvariantCulture
+$contractPath = Join-Path $PSScriptRoot '..\references\chart-layout-contract.json'
+$contract = Get-Content -LiteralPath $contractPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $fixedHeaderLeft = 50
 $fixedContentTop = 36
 $fixedContentBottom = 932
@@ -513,6 +515,7 @@ function Update-CategoryChart {
         $lastBarRect.GetAttribute('height'),
         $culture
     ) + 40
+    $expectedAxisWidth = [string]::Format($culture, '{0:0.####}', [double]$contract.category.barWidthAt100)
     $rowBoundaryNodes = @(
         $children |
             Where-Object {
@@ -521,7 +524,7 @@ function Update-CategoryChart {
                 $null -ne $path -and
                 $position[1] -ge ($firstBarPosition[1] - 30) -and
                 $position[1] -le $bottomSearchLimit -and
-                $path.GetAttribute('d') -match '^M 0 0 L (?:1491|945) 0$'
+                $path.GetAttribute('d') -match "^M 0 0 L (?:1491|$([regex]::Escape($expectedAxisWidth))) 0$"
             } |
             Sort-Object {
                 (Get-Translate $_)[1]

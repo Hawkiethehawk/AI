@@ -12,6 +12,9 @@
     "body": 24,
     "minimum": 24
   },
+  "spacing": {
+    "minimumElementGap": 72
+  },
   "header": {
     "left": 50,
     "titleBaseline": 82.589,
@@ -29,18 +32,24 @@
       "regions": 1491
     }
   },
+  "global": {
+    "legendCenterX": 770
+  },
   "category": {
     "rowCount": 7,
     "categoryCenterX": 136.5,
     "coverageCenterX": 1354.5,
-    "barStartX": 273,
-    "barWidthAt100": 945,
+    "legendCenterX": 745,
+    "barStartX": 240,
+    "barWidthAt100": 1010,
+    "barLabelGap": 6,
     "barHeight": 18.9,
     "barCenterGap": 26.25
   },
   "regions": {
     "rowCount": 4,
     "nameCenterX": 770,
+    "legendCenterX": 770,
     "downloadAxisX": 704,
     "incomeStartX": 836,
     "barHeight": 48.4,
@@ -54,6 +63,7 @@
     "plotHeight": 425.52,
     "axisMin": 30,
     "axisMax": 65,
-    "tickEvery": 2
+    "tickEvery": 2,
+    "legendCenterX": 765.8232
   }
 }

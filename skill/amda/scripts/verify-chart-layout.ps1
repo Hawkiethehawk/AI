@@ -5,6 +5,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $culture = [System.Globalization.CultureInfo]::InvariantCulture
+$contractPath = Join-Path $PSScriptRoot '..\references\chart-layout-contract.json'
+$contract = Get-Content -LiteralPath $contractPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $tolerance = 0.001
 $expectedFiles = @(
     '01-global.svg',
@@ -75,6 +77,147 @@ function Get-TextLabel {
     param([System.Xml.XmlElement]$Node)
 
     return (($Node.InnerText -replace '\s+', ' ').Trim())
+}
+
+function Get-EstimatedTextWidth {
+    param([System.Xml.XmlElement]$Node)
+
+    $textNode = Get-TextNode $Node
+    if ($null -eq $textNode) {
+        throw "Text node not found on node $($Node.GetAttribute('id'))"
+    }
+    $fontSize = [double]::Parse($textNode.GetAttribute('font-size'), $culture)
+    $width = 0.0
+    foreach ($character in (Get-TextLabel $Node).ToCharArray()) {
+        $codePoint = [int][char]$character
+        $width += if ($codePoint -ge 0x2E80 -and $codePoint -le 0x9FFF) {
+            $fontSize
+        }
+        else {
+            $fontSize * 0.6
+        }
+    }
+    return $width
+}
+
+function Get-NodeHorizontalBounds {
+    param(
+        [System.Xml.XmlElement]$Node,
+        [System.Xml.XmlElement]$Root
+    )
+
+    $position = Get-AbsolutePosition $Node $Root
+    $rect = $Node.SelectSingleNode('./*[local-name()="rect"]')
+    if ($null -ne $rect) {
+        $x = if ($rect.HasAttribute('x')) { [double]::Parse($rect.GetAttribute('x'), $culture) } else { 0.0 }
+        $width = [double]::Parse($rect.GetAttribute('width'), $culture)
+        return [pscustomobject]@{
+            Left = $position[0] + $x
+            Right = $position[0] + $x + $width
+        }
+    }
+
+    $ellipse = $Node.SelectSingleNode('./*[local-name()="ellipse" or local-name()="circle"]')
+    if ($null -ne $ellipse) {
+        $center = [double]::Parse($ellipse.GetAttribute('cx'), $culture)
+        $radius = if ($ellipse.LocalName -eq 'circle') {
+            [double]::Parse($ellipse.GetAttribute('r'), $culture)
+        }
+        else {
+            [double]::Parse($ellipse.GetAttribute('rx'), $culture)
+        }
+        return [pscustomobject]@{
+            Left = $position[0] + $center - $radius
+            Right = $position[0] + $center + $radius
+        }
+    }
+
+    $path = $Node.SelectSingleNode('./*[local-name()="path"]')
+    if ($null -ne $path -and $path.GetAttribute('d') -match 'M\s*0\s*0\s*L\s*([-+0-9.eE]+)\s*0') {
+        $endX = [double]::Parse($Matches[1], $culture)
+        return [pscustomobject]@{
+            Left = $position[0] + [math]::Min(0, $endX)
+            Right = $position[0] + [math]::Max(0, $endX)
+        }
+    }
+
+    $text = $Node.SelectSingleNode('.//*[local-name()="text"]')
+    if ($null -ne $text) {
+        $textX = if ($text.HasAttribute('x')) { [double]::Parse($text.GetAttribute('x'), $culture) } else { 0.0 }
+        $width = Get-EstimatedTextWidth $Node
+        $anchor = $text.GetAttribute('text-anchor')
+        if ($anchor -eq 'middle') {
+            return [pscustomobject]@{
+                Left = $position[0] + $textX - ($width / 2)
+                Right = $position[0] + $textX + ($width / 2)
+            }
+        }
+        if ($anchor -eq 'end') {
+            return [pscustomobject]@{
+                Left = $position[0] + $textX - $width
+                Right = $position[0] + $textX
+            }
+        }
+        return [pscustomobject]@{
+            Left = $position[0] + $textX
+            Right = $position[0] + $textX + $width
+        }
+    }
+
+    throw "Cannot estimate horizontal bounds for $($Node.GetAttribute('id'))"
+}
+
+function New-LegendItem {
+    param(
+        [System.Xml.XmlElement[]]$Nodes,
+        [System.Xml.XmlElement]$Root
+    )
+
+    $parts = @()
+    foreach ($node in @($Nodes)) {
+        $bounds = Get-NodeHorizontalBounds $node $Root
+        $parts += [pscustomobject]@{
+            Left = $bounds.Left
+            Right = $bounds.Right
+        }
+    }
+    if ($parts.Count -eq 0) {
+        throw 'Legend item must contain at least one element'
+    }
+    return [pscustomobject]@{
+        Left = ($parts | Measure-Object -Property Left -Minimum).Minimum
+        Right = ($parts | Measure-Object -Property Right -Maximum).Maximum
+    }
+}
+
+function Assert-LegendLayout {
+    param(
+        [object[]]$Items,
+        [double]$ExpectedCenter,
+        [string]$Label
+    )
+
+    if (@($Items).Count -eq 0) {
+        Add-CheckError "$Label has no legend items"
+        return
+    }
+    $orderedItems = @($Items | Sort-Object Left)
+    $left = ($orderedItems | Measure-Object -Property Left -Minimum).Minimum
+    $right = ($orderedItems | Measure-Object -Property Right -Maximum).Maximum
+    Assert-Approx (($left + $right) / 2) $ExpectedCenter "$Label overall center"
+
+    $minimumGap = [double]$contract.spacing.minimumElementGap
+    for ($index = 0; $index -lt ($orderedItems.Count - 1); $index++) {
+        $current = $orderedItems[$index]
+        $next = $orderedItems[$index + 1]
+        $actualGap = $next.Left - $current.Right
+        if ($actualGap + $tolerance -lt $minimumGap) {
+            Add-CheckError (
+                "$Label gap {0} is {1:0.####}, below minimum {2:0.####}" -f
+                    ($index + 1), $actualGap, $minimumGap
+            )
+        }
+    }
 }
 
 function Get-PathNode {
@@ -270,6 +413,21 @@ function Assert-GlobalChart {
         if ($markers.Count -ne 5) {
             Add-CheckError '01-global.svg legend markers are incomplete'
         }
+        $legendChildren = Get-ElementChildren $legend
+        if ($legendChildren.Count -ne 10) {
+            Add-CheckError '01-global.svg legend marker-text pairs are incomplete'
+        }
+        else {
+            $legendItems = @()
+            for ($index = 0; $index -lt 5; $index++) {
+                $legendItems += New-LegendItem @(
+                    $legendChildren[$index * 2],
+                    $legendChildren[($index * 2) + 1]
+                ) $Root
+            }
+            $mainPosition = Get-AbsolutePosition $Main $Root
+            Assert-LegendLayout $legendItems ($mainPosition[0] + [double]$contract.global.legendCenterX) '01-global.svg legend'
+        }
     }
 
     $fills = @('#5b5ce2', '#20a7a0', '#63bce3', '#3867b9', '#cbd5e1')
@@ -382,6 +540,43 @@ function Assert-NoteGeometry {
     Assert-Approx ($notePosition[1] + $fontSize) 932 "$FileName note bottom anchor"
 }
 
+function Assert-TrendLegendSpacing {
+    param(
+        [System.Xml.XmlElement]$Main,
+        [System.Xml.XmlElement]$Root
+    )
+
+    $children = Get-ElementChildren $Main
+    $legendDefinitions = @(
+        @{ Stroke = '#2f67e8'; Label = '下载侧T3' },
+        @{ Stroke = '#f05a00'; Label = '收入侧US+T1' },
+        @{ Stroke = '#0f766e'; Label = '收入数据覆盖率' }
+    )
+    $legendItems = @()
+    foreach ($definition in $legendDefinitions) {
+        $line = $children | Where-Object {
+            $path = Get-PathNode $_
+            $null -ne $path -and
+            $path.GetAttribute('stroke') -eq $definition.Stroke -and
+            $path.GetAttribute('d') -eq 'M 0 0 L 28.08 0'
+        } | Select-Object -First 1
+        $text = $children | Where-Object { (Get-TextLabel $_) -eq $definition.Label } | Select-Object -First 1
+        if ($null -eq $line -or $null -eq $text) {
+            Add-CheckError "02-trend.svg legend item is missing for $($definition.Label)"
+            continue
+        }
+
+        $legendItems += New-LegendItem @($line, $text) $Root
+    }
+
+    if ($legendItems.Count -lt 2) {
+        return
+    }
+
+    $mainPosition = Get-AbsolutePosition $Main $Root
+    Assert-LegendLayout $legendItems ($mainPosition[0] + [double]$contract.trend.legendCenterX) '02-trend.svg legend'
+}
+
 function Assert-TrendRows {
     param(
         [System.Xml.XmlElement]$Main,
@@ -389,6 +584,7 @@ function Assert-TrendRows {
     )
 
     $children = Get-ElementChildren $Main
+    Assert-TrendLegendSpacing $Main $Root
     $note = $children |
         Where-Object { (Get-TextLabel $_) -match '^口径：' } |
         Select-Object -First 1
@@ -512,6 +708,24 @@ function Assert-CategoryRows {
     )
 
     $children = Get-ElementChildren $Main
+    $legend = $children | Where-Object { (Get-TextLabel $_) -eq '下载T2+T3收入US+T1' } | Select-Object -First 1
+    if ($null -eq $legend) {
+        Add-CheckError '03-category.svg legend is missing'
+    }
+    else {
+        $legendChildren = Get-ElementChildren $legend
+        if ($legendChildren.Count -ne 4) {
+            Add-CheckError '03-category.svg legend marker-text pairs are incomplete'
+        }
+        else {
+            $legendItems = @(
+                (New-LegendItem @($legendChildren[0], $legendChildren[1]) $Root)
+                (New-LegendItem @($legendChildren[2], $legendChildren[3]) $Root)
+            )
+            $mainPosition = Get-AbsolutePosition $Main $Root
+            Assert-LegendLayout $legendItems ($mainPosition[0] + [double]$contract.category.legendCenterX) '03-category.svg legend'
+        }
+    }
     $bars = @($children | Where-Object {
         $rect = $_.SelectSingleNode("./*[local-name()='rect']")
         $null -ne $rect -and $rect.GetAttribute('height') -eq '18.9' -and $rect.GetAttribute('fill') -in @('#3867b9', '#93c5fd')
@@ -521,12 +735,13 @@ function Assert-CategoryRows {
         return
     }
 
+    $expectedAxisWidth = [string]::Format($culture, '{0:0.####}', [double]$contract.category.barWidthAt100)
     $boundaries = @($children | Where-Object {
         $path = Get-PathNode $_
         $position = Get-AbsolutePosition $_ $Root
         $null -ne $path -and
         $_.GetAttribute('id') -ne 'category-bottom-boundary' -and
-        $path.GetAttribute('d') -match '^M 0 0 L (?:1491|945) 0$' -and
+        $path.GetAttribute('d') -match "^M 0 0 L (?:1491|$([regex]::Escape($expectedAxisWidth))) 0$" -and
         $position[1] -ge 300 -and
         $position[1] -lt 850
     } | Sort-Object { (Get-AbsolutePosition $_ $Root)[1] })
@@ -564,8 +779,8 @@ function Assert-CategoryRows {
         '超休闲'
     )
     $mainPosition = Get-AbsolutePosition $Main $Root
-    $expectedCategoryX = $mainPosition[0] + 136.5
-    $expectedCoverageX = $mainPosition[0] + 1354.5
+    $expectedCategoryX = $mainPosition[0] + [double]$contract.category.categoryCenterX
+    $expectedCoverageX = $mainPosition[0] + [double]$contract.category.coverageCenterX
 
     foreach ($node in @($children | Where-Object { $categoryLabels -contains (Get-TextLabel $_) })) {
         $position = Get-AbsolutePosition $node $Root
@@ -590,7 +805,9 @@ function Assert-CategoryRows {
         $label = Get-TextLabel $_
         $position = Get-AbsolutePosition $_ $Root
         $label -match '^\d+(?:\.\d+)?%$' -and
-        $position[0] -gt ($mainPosition[0] + 1200)
+        $position[0] -gt ($mainPosition[0] + 1200) -and
+        $position[1] -gt 300 -and
+        $position[1] -lt 800
     })
     if ($coverageNodes.Count -ne 7) {
         Add-CheckError '03-category coverage values are missing'
@@ -627,6 +844,26 @@ function Assert-RegionRows {
     )
 
     $children = Get-ElementChildren $Main
+    $legendItems = @()
+    foreach ($definition in @(
+        @{ Fill = '#2f67e8'; Label = '下载侧' },
+        @{ Fill = '#f05a00'; Label = '收入侧' }
+    )) {
+        $marker = $children | Where-Object {
+            $shape = $_.SelectSingleNode('./*[local-name()="ellipse" or local-name()="circle"]')
+            $null -ne $shape -and $shape.GetAttribute('fill') -eq $definition.Fill
+        } | Select-Object -First 1
+        $text = $children | Where-Object { (Get-TextLabel $_) -eq $definition.Label } | Select-Object -First 1
+        if ($null -eq $marker -or $null -eq $text) {
+            Add-CheckError "04-regions.svg legend item is missing for $($definition.Label)"
+            continue
+        }
+        $legendItems += New-LegendItem @($marker, $text) $Root
+    }
+    if ($legendItems.Count -eq 2) {
+        $mainPosition = Get-AbsolutePosition $Main $Root
+        Assert-LegendLayout $legendItems ($mainPosition[0] + [double]$contract.regions.legendCenterX) '04-regions.svg legend'
+    }
     $downloadBars = @($children | Where-Object {
         $rect = $_.SelectSingleNode("./*[local-name()='rect']")
         $null -ne $rect -and $rect.GetAttribute('fill') -eq '#2f67e8' -and $rect.GetAttribute('height') -eq '48.4'

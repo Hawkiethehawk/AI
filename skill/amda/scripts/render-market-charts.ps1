@@ -95,6 +95,161 @@ function Get-LeafText {
     return ''
 }
 
+function Get-EstimatedTextWidth {
+    param([System.Xml.XmlElement]$Node)
+
+    $textNode = $Node.SelectSingleNode('.//*[local-name()="text"]')
+    if ($null -eq $textNode) {
+        throw "Text node not found on $($Node.GetAttribute('id'))"
+    }
+    $fontSize = [double]$textNode.GetAttribute('font-size')
+    $width = 0.0
+    foreach ($character in (Get-LeafText $Node).ToCharArray()) {
+        $codePoint = [int][char]$character
+        $width += if ($codePoint -ge 0x2E80 -and $codePoint -le 0x9FFF) {
+            $fontSize
+        }
+        else {
+            $fontSize * 0.6
+        }
+    }
+    return $width
+}
+
+function Get-NodeHorizontalBounds {
+    param([System.Xml.XmlElement]$Node)
+
+    $position = Get-Translate $Node
+    $rect = $Node.SelectSingleNode('./*[local-name()="rect"]')
+    if ($null -ne $rect) {
+        $x = if ($rect.HasAttribute('x')) { [double]::Parse($rect.GetAttribute('x'), $culture) } else { 0.0 }
+        $width = [double]::Parse($rect.GetAttribute('width'), $culture)
+        return [pscustomobject]@{
+            Left = $position[0] + $x
+            Right = $position[0] + $x + $width
+        }
+    }
+
+    $ellipse = $Node.SelectSingleNode('./*[local-name()="ellipse" or local-name()="circle"]')
+    if ($null -ne $ellipse) {
+        $center = [double]::Parse($ellipse.GetAttribute('cx'), $culture)
+        $radius = if ($ellipse.LocalName -eq 'circle') {
+            [double]::Parse($ellipse.GetAttribute('r'), $culture)
+        }
+        else {
+            [double]::Parse($ellipse.GetAttribute('rx'), $culture)
+        }
+        return [pscustomobject]@{
+            Left = $position[0] + $center - $radius
+            Right = $position[0] + $center + $radius
+        }
+    }
+
+    $path = $Node.SelectSingleNode('./*[local-name()="path"]')
+    if ($null -ne $path -and $path.GetAttribute('d') -match 'M\s*0\s*0\s*L\s*([-+0-9.eE]+)\s*0') {
+        $endX = [double]::Parse($Matches[1], $culture)
+        return [pscustomobject]@{
+            Left = $position[0] + [math]::Min(0, $endX)
+            Right = $position[0] + [math]::Max(0, $endX)
+        }
+    }
+
+    $text = $Node.SelectSingleNode('.//*[local-name()="text"]')
+    if ($null -ne $text) {
+        $textX = if ($text.HasAttribute('x')) { [double]::Parse($text.GetAttribute('x'), $culture) } else { 0.0 }
+        $width = Get-EstimatedTextWidth $Node
+        $anchor = $text.GetAttribute('text-anchor')
+        if ($anchor -eq 'middle') {
+            return [pscustomobject]@{
+                Left = $position[0] + $textX - ($width / 2)
+                Right = $position[0] + $textX + ($width / 2)
+            }
+        }
+        if ($anchor -eq 'end') {
+            return [pscustomobject]@{
+                Left = $position[0] + $textX - $width
+                Right = $position[0] + $textX
+            }
+        }
+        return [pscustomobject]@{
+            Left = $position[0] + $textX
+            Right = $position[0] + $textX + $width
+        }
+    }
+
+    throw "Cannot estimate horizontal bounds for $($Node.GetAttribute('id'))"
+}
+
+function New-LegendItem {
+    param([System.Xml.XmlElement[]]$Nodes)
+
+    $parts = @()
+    foreach ($node in @($Nodes)) {
+        $position = Get-Translate $node
+        $bounds = Get-NodeHorizontalBounds $node
+        $parts += [pscustomobject]@{
+            Node = $node
+            X = $position[0]
+            Y = $position[1]
+            Left = $bounds.Left
+            Right = $bounds.Right
+        }
+    }
+    if ($parts.Count -eq 0) {
+        throw 'Legend item must contain at least one element'
+    }
+
+    $baseX = ($parts | Measure-Object -Property Left -Minimum).Minimum
+    $right = ($parts | Measure-Object -Property Right -Maximum).Maximum
+    return [pscustomobject]@{
+        Parts = @($parts | ForEach-Object {
+            [pscustomobject]@{
+                Node = $_.Node
+                OffsetX = $_.X - $baseX
+                Y = $_.Y
+            }
+        })
+        LeftX = $baseX
+        RightX = $right
+        ItemWidth = $right - $baseX
+    }
+}
+
+function Set-LegendItemsCenter {
+    param(
+        [object[]]$Items,
+        [double]$CenterX
+    )
+
+    if (@($Items).Count -eq 0) {
+        throw 'Legend items are required for horizontal layout'
+    }
+    $gap = [double]$contract.spacing.minimumElementGap
+    $totalWidth = (($Items | ForEach-Object { [double]$_.ItemWidth } | Measure-Object -Sum).Sum) + ($gap * (@($Items).Count - 1))
+    $cursor = $CenterX - ($totalWidth / 2)
+    foreach ($item in @($Items)) {
+        foreach ($part in @($item.Parts)) {
+            Set-Translate $part.Node ($cursor + $part.OffsetX) $part.Y
+        }
+        $cursor += [double]$item.ItemWidth + $gap
+    }
+}
+
+function Set-NestedLegendCenter {
+    param(
+        [System.Xml.XmlElement]$Container,
+        [object[]]$Items,
+        [double]$CenterX
+    )
+
+    $left = ($Items | Measure-Object -Property LeftX -Minimum).Minimum
+    $right = ($Items | Measure-Object -Property RightX -Maximum).Maximum
+    $internalCenter = ($left + $right) / 2
+    Set-LegendItemsCenter $Items $internalCenter
+    $containerPosition = Get-Translate $Container
+    Set-Translate $Container ($CenterX - $internalCenter) $containerPosition[1]
+}
+
 function Set-LeafText {
     param(
         [System.Xml.XmlElement]$Node,
@@ -240,6 +395,22 @@ function Update-GlobalChart {
 
     $main = Get-MainGroup $Svg
     $children = Get-ElementChildren $main
+    $legend = $children | Where-Object { $_.InnerText.Trim() -eq 'UST1T2T3其他' } | Select-Object -First 1
+    if ($null -eq $legend) {
+        throw 'Global legend not found'
+    }
+    $legendChildren = Get-ElementChildren $legend
+    if ($legendChildren.Count -ne 10) {
+        throw 'Global legend must contain five marker-text pairs'
+    }
+    $legendItems = @()
+    for ($index = 0; $index -lt 5; $index++) {
+        $legendItems += New-LegendItem @(
+            $legendChildren[$index * 2],
+            $legendChildren[($index * 2) + 1]
+        )
+    }
+    Set-NestedLegendCenter $legend $legendItems ([double]$contract.global.legendCenterX)
     $fills = @{
         US = '#5b5ce2'
         T1 = '#20a7a0'
@@ -343,6 +514,29 @@ function Update-TrendChart {
         @{ Key = 'incomeUSPlusT1'; Stroke = '#f05a00'; Label = '收入侧US+T1' },
         @{ Key = 'coverage'; Stroke = '#0f766e'; Label = '收入数据覆盖率' }
     )
+    $legendItems = @()
+    foreach ($item in $series) {
+        $legendLine = $children | Where-Object {
+            $path = Get-DirectPath $_
+            $null -ne $path -and
+            $path.GetAttribute('stroke') -eq $item.Stroke -and
+            $path.GetAttribute('d') -eq 'M 0 0 L 28.08 0'
+        } | Select-Object -First 1
+        $legendText = $children | Where-Object { (Get-LeafText $_) -eq $item.Label } | Select-Object -First 1
+        $legendMarker = $children | Where-Object {
+            $shape = $_.SelectSingleNode('./*[local-name()="ellipse" or local-name()="circle"]')
+            $position = Get-Translate $_
+            $null -ne $shape -and
+            $shape.GetAttribute('stroke') -eq $item.Stroke -and
+            $position[1] -gt 210 -and
+            $position[1] -lt 240
+        } | Select-Object -First 1
+        if ($null -eq $legendLine -or $null -eq $legendText -or $null -eq $legendMarker) {
+            throw "Trend legend item not found for $($item.Label)"
+        }
+        $legendItems += New-LegendItem @($legendLine, $legendMarker, $legendText)
+    }
+    Set-LegendItemsCenter $legendItems ([double]$contract.trend.legendCenterX)
     $plotX = [double]$contract.trend.plotX
     $plotTop = [double]$contract.trend.plotTop
     $plotWidth = [double]$contract.trend.plotWidth
@@ -462,6 +656,19 @@ function Update-CategoryChart {
 
     $main = Get-MainGroup $Svg
     $children = Get-ElementChildren $main
+    $legend = $children | Where-Object { $_.InnerText.Trim() -eq '下载T2+T3收入US+T1' } | Select-Object -First 1
+    if ($null -eq $legend) {
+        throw 'Category legend not found'
+    }
+    $legendChildren = Get-ElementChildren $legend
+    if ($legendChildren.Count -ne 4) {
+        throw 'Category legend must contain two marker-text pairs'
+    }
+    $legendItems = @(
+        (New-LegendItem @($legendChildren[0], $legendChildren[1]))
+        (New-LegendItem @($legendChildren[2], $legendChildren[3]))
+    )
+    Set-NestedLegendCenter $legend $legendItems ([double]$contract.category.legendCenterX)
     $rows = @($ChartData.rows)
     if ($rows.Count -ne [int]$contract.category.rowCount) {
         throw "category.rows must contain $($contract.category.rowCount) rows"
@@ -475,6 +682,69 @@ function Update-CategoryChart {
     if ($boundaries.Count -ne 8) {
         throw "Category template must contain eight row boundaries"
     }
+
+    $plotStartX = [double]$contract.category.barStartX
+    $plotWidth = [double]$contract.category.barWidthAt100
+    $plotTicks = @(
+        for ($index = 0; $index -le 4; $index++) {
+            $plotStartX + ($plotWidth * $index / 4)
+        }
+    )
+    $gridLines = @(
+        $children | Where-Object {
+            $path = Get-DirectPath $_
+            $position = Get-Translate $_
+            $null -ne $path -and
+            $path.GetAttribute('d') -eq 'M 0 0 L 0 466.2' -and
+            $position[1] -gt 320 -and
+            $position[1] -lt 335
+        } | Sort-Object { (Get-Translate $_)[0] }
+    )
+    $axisTicks = @(
+        $children | Where-Object {
+            $path = Get-DirectPath $_
+            $position = Get-Translate $_
+            $null -ne $path -and
+            $path.GetAttribute('d') -eq 'M 0 0 L 0 8.4' -and
+            $position[1] -gt 785 -and
+            $position[1] -lt 800
+        } | Sort-Object { (Get-Translate $_)[0] }
+    )
+    if ($gridLines.Count -ne 5 -or $axisTicks.Count -ne 5) {
+        throw 'Category template must contain five plot grid lines and five axis ticks'
+    }
+    for ($index = 0; $index -lt 5; $index++) {
+        $gridPosition = Get-Translate $gridLines[$index]
+        Set-Translate $gridLines[$index] $plotTicks[$index] $gridPosition[1]
+        $tickPosition = Get-Translate $axisTicks[$index]
+        Set-Translate $axisTicks[$index] $plotTicks[$index] $tickPosition[1]
+    }
+    $axis = $children | Where-Object {
+        $path = Get-DirectPath $_
+        $position = Get-Translate $_
+        $null -ne $path -and
+        $path.GetAttribute('d') -match '^M 0 0 L [0-9.]+ 0$' -and
+        $position[1] -gt 785 -and
+        $position[1] -lt 800
+    } | Select-Object -First 1
+    if ($null -eq $axis) {
+        throw 'Category template plot axis is missing'
+    }
+    $axisPosition = Get-Translate $axis
+    Set-Translate $axis $plotStartX $axisPosition[1]
+    (Get-DirectPath $axis).SetAttribute('d', [string]::Format($culture, 'M 0 0 L {0:0.####} 0', $plotWidth))
+
+    $tickOffsets = @(-10.8465, -14.9257, -14.9257, -14.9257, -19.005)
+    $tickLabels = @('0%', '25%', '50%', '75%', '100%')
+    for ($index = 0; $index -lt $tickLabels.Count; $index++) {
+        $tickLabel = $children | Where-Object { (Get-LeafText $_) -eq $tickLabels[$index] } | Select-Object -First 1
+        if ($null -eq $tickLabel) {
+            throw "Category template axis label '$($tickLabels[$index])' is missing"
+        }
+        $tickPosition = Get-Translate $tickLabel
+        Set-Translate $tickLabel ($plotTicks[$index] + $tickOffsets[$index]) $tickPosition[1]
+    }
+
     $rowCenters = for ($index = 0; $index -lt 7; $index++) {
         $top = (Get-Translate $boundaries[$index])[1]
         $bottom = (Get-Translate $boundaries[$index + 1])[1]
@@ -534,8 +804,14 @@ function Update-CategoryChart {
         $lowerLabel = $barLabels[$row * 2 + 1]
         Set-LeafText $upperLabel (Format-Percent $download)
         Set-LeafText $lowerLabel (Format-Percent $income)
-        Set-Translate $upperLabel ($contract.category.barStartX + $upperWidth + 10.8) ($center - ($contract.category.barCenterGap / 2))
-        Set-Translate $lowerLabel ($contract.category.barStartX + $lowerWidth + 10.8) ($center + ($contract.category.barCenterGap / 2))
+        $labelGap = if ($contract.category.PSObject.Properties.Name -contains 'barLabelGap') {
+            [double]$contract.category.barLabelGap
+        }
+        else {
+            10.8
+        }
+        Set-Translate $upperLabel ($contract.category.barStartX + $upperWidth + $labelGap) ($center - ($contract.category.barCenterGap / 2))
+        Set-Translate $lowerLabel ($contract.category.barStartX + $lowerWidth + $labelGap) ($center + ($contract.category.barCenterGap / 2))
         Set-TextVerticalCenter $upperLabel ($center - ($contract.category.barCenterGap / 2))
         Set-TextVerticalCenter $lowerLabel ($center + ($contract.category.barCenterGap / 2))
     }
@@ -553,6 +829,22 @@ function Update-RegionsChart {
 
     $main = Get-MainGroup $Svg
     $children = Get-ElementChildren $main
+    $legendItems = @()
+    foreach ($definition in @(
+        @{ Fill = '#2f67e8'; Label = '下载侧' },
+        @{ Fill = '#f05a00'; Label = '收入侧' }
+    )) {
+        $marker = $children | Where-Object {
+            $shape = $_.SelectSingleNode('./*[local-name()="ellipse" or local-name()="circle"]')
+            $null -ne $shape -and $shape.GetAttribute('fill') -eq $definition.Fill
+        } | Select-Object -First 1
+        $text = $children | Where-Object { (Get-LeafText $_) -eq $definition.Label } | Select-Object -First 1
+        if ($null -eq $marker -or $null -eq $text) {
+            throw "Regions legend item not found for $($definition.Label)"
+        }
+        $legendItems += New-LegendItem @($marker, $text)
+    }
+    Set-LegendItemsCenter $legendItems ([double]$contract.regions.legendCenterX)
     $rows = @($ChartData.rows)
     if ($rows.Count -ne [int]$contract.regions.rowCount) {
         throw "regions.rows must contain $($contract.regions.rowCount) rows"

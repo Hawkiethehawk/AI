@@ -10,7 +10,7 @@ $tableContracts = @(
     [pscustomobject]@{
         Name = '全球主分组结构表'
         Headers = @('主分层', '下载侧全历史', '下载侧最近4周', '收入侧全历史', '收入侧最近4周', '分组角色')
-        Widths = @(100, 115, 115, 115, 115, 260)
+        Widths = @(100, 115, 125, 115, 125, 240)
         CenterColumnCount = 5
     },
     [pscustomobject]@{
@@ -29,7 +29,7 @@ $tableContracts = @(
     [pscustomobject]@{
         Name = '补充地区组表'
         Headers = @('观察组', '下载侧全历史', '下载侧最近4周', '收入侧全历史', '收入侧最近4周', '分组角色与国家诊断')
-        Widths = @(120, 105, 105, 105, 105, 280)
+        Widths = @(120, 105, 125, 105, 125, 240)
         CenterColumnCount = 5
     },
     [pscustomobject]@{
@@ -86,6 +86,59 @@ function Get-DirectParagraph {
     }
 
     return $paragraph
+}
+
+function Get-CellParagraphs {
+    param(
+        [System.Xml.XmlElement]$Cell,
+        [string]$Label
+    )
+
+    $paragraphs = @($Cell.SelectNodes('./p'))
+    if ($paragraphs.Count -eq 0) {
+        Add-CheckError "$Label must contain at least one paragraph"
+        return @()
+    }
+
+    return $paragraphs
+}
+
+function Test-CellHasLineBreak {
+    param([System.Xml.XmlElement]$Cell)
+
+    if ($null -ne $Cell.SelectSingleNode('.//br')) {
+        return $true
+    }
+
+    if (@($Cell.SelectNodes('./p')).Count -gt 1) {
+        return $true
+    }
+
+    return $Cell.InnerXml -match '\r|\n'
+}
+
+function Get-CellPlainText {
+    param([System.Xml.XmlElement]$Cell)
+
+    return (($Cell.InnerText -replace '\r|\n', ' ') -replace '\s+', ' ').Trim()
+}
+
+function Add-TablePunctuationErrors {
+    param(
+        [System.Xml.XmlElement]$Cell,
+        [string]$Label
+    )
+
+    $text = Get-CellPlainText $Cell
+    if ($text -match '。') {
+        Add-CheckError "$Label contains a Chinese full stop"
+    }
+    if ($text -match '[；;]') {
+        Add-CheckError "$Label contains a semicolon; replace it with a line break"
+    }
+    if ($text -match '(?<!\d)\.(?!\d)') {
+        Add-CheckError "$Label contains a sentence period"
+    }
 }
 
 if ($Content.TrimStart().StartsWith('{')) {
@@ -151,6 +204,7 @@ for ($tableIndex = 0; $tableIndex -lt [Math]::Min($tables.Count, $tableContracts
     }
     for ($columnIndex = 0; $columnIndex -lt $headers.Count; $columnIndex++) {
         $cell = $headers[$columnIndex]
+        Add-TablePunctuationErrors $cell "$($contract.Name) header $($columnIndex + 1)"
         if ($cell.GetAttribute('vertical-align') -ne 'middle') {
             Add-CheckError "$($contract.Name) header $($columnIndex + 1) is not vertically centered"
         }
@@ -167,7 +221,22 @@ for ($tableIndex = 0; $tableIndex -lt [Math]::Min($tables.Count, $tableContracts
         }
     }
 
-    foreach ($row in @($table.SelectNodes('./tbody/tr'))) {
+    $bodyRows = @($table.SelectNodes('./tbody/tr'))
+    $columnHasLineBreak = @(
+        for ($columnIndex = 0; $columnIndex -lt $contract.Widths.Count; $columnIndex++) {
+            $hasLineBreak = $false
+            foreach ($row in $bodyRows) {
+                $rowCells = @($row.SelectNodes('./td'))
+                if ($rowCells.Count -eq $contract.Widths.Count -and (Test-CellHasLineBreak $rowCells[$columnIndex])) {
+                    $hasLineBreak = $true
+                    break
+                }
+            }
+            $hasLineBreak
+        }
+    )
+
+    foreach ($row in $bodyRows) {
         $cells = @($row.SelectNodes('./td'))
         if ($cells.Count -ne $contract.Widths.Count) {
             Add-CheckError "$($contract.Name) body row has $($cells.Count) cells, expected $($contract.Widths.Count)"
@@ -176,22 +245,26 @@ for ($tableIndex = 0; $tableIndex -lt [Math]::Min($tables.Count, $tableContracts
         for ($columnIndex = 0; $columnIndex -lt $cells.Count; $columnIndex++) {
             $cell = $cells[$columnIndex]
             $cellLabel = "$($contract.Name) row $($row.GetAttribute('id')) column $($columnIndex + 1)"
+            Add-TablePunctuationErrors $cell $cellLabel
             if ($cell.GetAttribute('vertical-align') -ne 'middle') {
                 Add-CheckError "$cellLabel is not vertically centered"
             }
-            $paragraph = Get-DirectParagraph $cell $cellLabel
-            if ($null -eq $paragraph) { continue }
+            $paragraphs = Get-CellParagraphs $cell $cellLabel
+            if ($paragraphs.Count -eq 0) { continue }
 
-            if (($columnIndex + 1) -le $contract.CenterColumnCount) {
-                if ($paragraph.GetAttribute('align') -ne 'center') {
-                    Add-CheckError "$cellLabel must be horizontally centered"
-                }
-                if ((Get-EstimatedNoWrapWidth $paragraph.InnerText.Trim()) -gt $contract.Widths[$columnIndex]) {
-                    Add-CheckError "$cellLabel is too narrow for one line"
+            $expectedAlign = if ($columnHasLineBreak[$columnIndex]) { 'left' } else { 'center' }
+            foreach ($paragraph in $paragraphs) {
+                if (-not $paragraph.HasAttribute('align') -or $paragraph.GetAttribute('align') -ne $expectedAlign) {
+                    Add-CheckError "$cellLabel must be horizontally $expectedAlign because the whole column has$(
+                        if ($columnHasLineBreak[$columnIndex]) { '' } else { ' no' }
+                    ) line breaks"
                 }
             }
-            elseif ($paragraph.HasAttribute('align') -and $paragraph.GetAttribute('align') -ne 'left') {
-                Add-CheckError "$cellLabel must be left aligned as a paragraph column"
+            if (-not $columnHasLineBreak[$columnIndex]) {
+                $cellText = Get-CellPlainText $cell
+                if ((Get-EstimatedNoWrapWidth $cellText) -gt $contract.Widths[$columnIndex]) {
+                    Add-CheckError "$cellLabel is too narrow for one line"
+                }
             }
         }
     }
@@ -201,7 +274,7 @@ for ($tableIndex = 0; $tableIndex -lt [Math]::Min($tables.Count, $tableContracts
             $changeCell = @($row.SelectNodes('./td'))[$contract.PercentageChangeColumn - 1]
             $changeParagraph = Get-DirectParagraph $changeCell "$($contract.Name) recent-change cell"
             if ($null -eq $changeParagraph) { continue }
-            $changeText = $changeParagraph.InnerText.Trim()
+            $changeText = Get-CellPlainText $changeCell
             if ($changeText -notmatch '^[+-]\d+(?:\.\d+)?%$') {
                 Add-CheckError "$($contract.Name) recent-change value '$changeText' must use a signed percentage"
             }
