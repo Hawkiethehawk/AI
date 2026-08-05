@@ -482,13 +482,46 @@
     }
     .article pre code { padding: 0; color: inherit; background: transparent; }
     .article.json-article { max-width: 100%; }
-    .article .json-view {
-      margin-top: 0;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      tab-size: 2;
+    .json-document { display: grid; gap: 12px; margin-top: 0; }
+    .json-object { min-width: 0; }
+    .json-section { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--line); }
+    .json-section:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+    .json-section-title { margin: 0 0 9px; color: var(--ink); font-size: 15px; }
+    .json-section-title code,
+    .json-key code,
+    .json-entry-summary code {
+      margin-left: 6px;
+      padding: 1px 4px;
+      color: var(--meta);
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 500;
     }
+    .json-field {
+      display: grid;
+      grid-template-columns: minmax(145px, .28fr) minmax(0, .72fr);
+      gap: 16px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .json-key { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .json-value { min-width: 0; color: var(--ink); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+    .json-value a { color: var(--teal); text-decoration: underline; text-underline-offset: 2px; }
+    .json-collection { display: grid; gap: 8px; }
+    .json-entry { border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
+    .json-entry summary { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; color: var(--ink); cursor: pointer; list-style-position: inside; }
+    .json-entry summary:hover { color: var(--teal); }
+    .json-entry-summary { min-width: 0; font-size: 13px; font-weight: 740; }
+    .json-entry-body { padding: 0 12px 12px; }
+    .json-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0; }
+    .json-chip { max-width: 100%; padding: 3px 7px; color: var(--outline-ink); background: var(--soft); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; overflow-wrap: anywhere; }
+    .json-chip a { color: var(--teal); text-decoration: underline; text-underline-offset: 2px; }
+    .json-empty { color: var(--muted); font-size: 12px; }
+    .json-raw { margin-top: 14px; border-top: 1px solid var(--line); }
+    .json-raw summary { padding: 10px 0; color: var(--muted); cursor: pointer; font-size: 12px; }
+    .json-raw pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; tab-size: 2; }
     .article table {
       width: 100%;
       margin: 15px 0 19px;
@@ -775,11 +808,119 @@
         return lines.join("\n");
       }
 
+      function jsonKeyTitle(key) {
+        var titles = {
+          version: "版本",
+          language: "语言",
+          purpose: "用途",
+          source_precedence: "来源优先级",
+          global_rules: "全局规则",
+          report_types: "报表类型",
+          metrics: "指标目录",
+          id: "标识",
+          name: "名称",
+          filename_patterns: "文件名匹配",
+          required_headers: "必需字段",
+          signature_headers: "特征字段",
+          grain: "数据粒度",
+          analysis_rule: "分析规则",
+          source_columns: "来源列",
+          display_name: "显示名称",
+          semantic_name_en: "英文语义名",
+          kind: "类型",
+          data_type: "数据类型",
+          unit: "单位",
+          aggregation: "聚合规则",
+          definition: "定义",
+          formula: "公式",
+          documentation_status: "文档状态",
+          validation_status: "校验状态",
+          validation_note: "校验说明",
+          sources: "来源"
+        };
+        return titles[key] || key;
+      }
+
+      function jsonScalar(value) {
+        if (value === null) { return '<span class="json-empty">null</span>'; }
+        var text = escapeHtml(String(value));
+        return text.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      }
+
+      function jsonKeyBadge(key, label) {
+        return label === key ? "" : '<code>' + escapeHtml(key) + '</code>';
+      }
+
+      function jsonEntryLabel(value, key, index) {
+        if (value && typeof value === "object" && !Array.isArray(value)) {
+          return value.display_name || value.name || value.title || value.id || key || String(index + 1);
+        }
+        return key || String(index + 1);
+      }
+
+      function jsonRecordCollection(value) {
+        var keys = Object.keys(value || {});
+        return keys.length > 6 && keys.every(function (key) {
+          return value[key] && typeof value[key] === "object" && !Array.isArray(value[key]);
+        });
+      }
+
+      function renderJsonNode(value, key, depth) {
+        if (Array.isArray(value)) {
+          if (!value.length) { return '<span class="json-empty">空数组</span>'; }
+          var primitiveArray = value.every(function (item) {
+            return item === null || typeof item !== "object";
+          });
+          if (primitiveArray) {
+            return '<div class="json-list">' + value.map(function (item) {
+              return '<span class="json-chip">' + jsonScalar(item) + '</span>';
+            }).join("") + '</div>';
+          }
+          return '<div class="json-collection">' + value.map(function (item, index) {
+            var label = jsonEntryLabel(item, "", index);
+            var expanded = key === "report_types" ? " open" : "";
+            return '<details class="json-entry"' + expanded + '><summary><span class="json-entry-summary">' + escapeHtml(label) + '</span>' +
+              '<code>' + escapeHtml(String(index + 1).padStart(2, "0")) + '</code></summary>' +
+              '<div class="json-entry-body">' + renderJsonNode(item, "", depth + 1) + '</div></details>';
+          }).join("") + '</div>';
+        }
+        if (value && typeof value === "object") {
+          if (jsonRecordCollection(value)) {
+            return '<div class="json-collection">' + Object.keys(value).map(function (entryKey) {
+              var item = value[entryKey];
+              var label = jsonEntryLabel(item, entryKey, 0);
+              return '<details class="json-entry"><summary><span class="json-entry-summary">' + escapeHtml(label) + '</span>' +
+                '<code>' + escapeHtml(entryKey) + '</code></summary>' +
+                '<div class="json-entry-body">' + renderJsonNode(item, entryKey, depth + 1) + '</div></details>';
+            }).join("") + '</div>';
+          }
+          return renderJsonObject(value, depth);
+        }
+        return jsonScalar(value);
+      }
+
+      function renderJsonObject(value, depth) {
+        return '<div class="json-object">' + Object.keys(value || {}).map(function (key) {
+          var item = value[key];
+          var label = jsonKeyTitle(key);
+          if (item && typeof item === "object") {
+            return '<section class="json-section"><h3 class="json-section-title">' + escapeHtml(label) + jsonKeyBadge(key, label) + '</h3>' +
+              renderJsonNode(item, key, depth + 1) + '</section>';
+          }
+          return '<div class="json-field"><span class="json-key">' + escapeHtml(label) + jsonKeyBadge(key, label) + '</span>' +
+            '<span class="json-value">' + jsonScalar(item) + '</span></div>';
+        }).join("") + '</div>';
+      }
+
       function renderJsonDocument(content) {
         var raw = String(content || "").trim();
-        var formatted = raw;
-        try { formatted = JSON.stringify(JSON.parse(raw), null, 2); } catch (error) {}
-        return '<pre class="json-view"><code>' + escapeHtml(formatted) + '</code></pre>';
+        try {
+          var parsed = JSON.parse(raw);
+          return '<div class="json-document">' + renderJsonNode(parsed, "", 0) +
+            '<details class="json-raw"><summary>查看原始 JSON</summary><pre><code>' + escapeHtml(JSON.stringify(parsed, null, 2)) + '</code></pre></details></div>';
+        } catch (error) {
+          return '<pre><code>' + escapeHtml(raw) + '</code></pre>';
+        }
       }
 
       function renderDocumentBody(doc) {
