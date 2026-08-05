@@ -2,7 +2,7 @@
 
 ## 使用规则
 
-本文件只登记公开网页，不登记内部页面、文档、账户、项目或业务数据。构建完成后可以访问下列公开来源核对页面和时效性，但不得访问构建来源。
+本文件只登记公开网页，不登记内部页面、文档、账户、项目或业务数据。构建完成后可以联网访问下列公开来源核对页面和时效性，但不得再访问受限构建来源。
 
 引用格式为加粗的“编号-中文标题”，例如 **[IAA-TOPON-01-聚合平台概况]**。引用应紧跟被支持的事实；同一段包含多个事实时分别标注，不用一个链接覆盖整段无关内容。
 
@@ -60,6 +60,8 @@
 | IAA-TOPON-17 | 广告分层入门和优化技巧 | [广告分层入门和优化技巧](https://help.toponad.net/cn/docs/eUCSzO) |
 | IAA-TOPON-18 | 头部竞价 | [头部竞价](https://help.toponad.net/cn/docs/dfnwQG) |
 | IAA-TOPON-19 | 聚合管理（Waterfall）报表数据说明 | [聚合管理（Waterfall）报表数据说明](https://help.toponad.net/cn/docs/bUh0Id) |
+| IAA-TOPON-20 | 综合报表指标、字段和报表时区 | [综合报表](https://help.toponad.net/cn/docs/DVM3Tf) |
+| IAA-TOPON-21 | Open API 综合报表字段和口径 | [Open API 综合报表](https://help.toponad.net/cn/docs/dukFyc) |
 
 旧版 cn/docs 页面保留用于来源追溯；如果页面跳转到新地址，以同一主题的当前官方页面为准。
 

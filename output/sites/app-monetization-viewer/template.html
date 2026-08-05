@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>App Monetization Expert · Skill Browser</title>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem("app-monetization-theme") === "light") {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      } catch (error) {}
+    }());
+  </script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #e7f0ec;
+      --muted: #a4b3ac;
+      --soft: #0c1512;
+      --line: #2b3b35;
+      --line-strong: #455850;
+      --paper: #17231f;
+      --sidebar: #111c18;
+      --inspector: #111b18;
+      --teal: #6fe0cf;
+      --teal-soft: #123c36;
+      --orange: #f1a17e;
+      --orange-soft: #3b2a23;
+      --blue: #9dc4ff;
+      --blue-soft: #1e3048;
+      --violet: #d0b1ef;
+      --violet-soft: #382c47;
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.34);
+      --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.25);
+      --brand-ink: #07120f;
+      --placeholder: #7f968d;
+      --sidebar-heading: #81938b;
+      --nav-ink: #c4d3cc;
+      --nav-index: #7f9289;
+      --nav-meta: #85978e;
+      --hover-wash: rgba(255, 255, 255, .06);
+      --wash: rgba(255, 255, 255, .04);
+      --path: #87928d;
+      --foot: #8a9691;
+      --boundary-ink: #c4d3cc;
+      --meta: #87928d;
+      --outline-ink: #b0c1b8;
+      --blockquote-ink: #b8d8d0;
+      --blockquote-bg: #173b35;
+      --code-ink: #ffc0a1;
+      --pre-ink: #e9f5f0;
+      --pre-bg: #0b1210;
+      --inspector-heading: #8fa39a;
+      --inspector-button: #a8b9b1;
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+      --ink: #1c2a25;
+      --muted: #5e6f67;
+      --soft: #f2f6f4;
+      --line: #d5e0db;
+      --line-strong: #a9bcb3;
+      --paper: #ffffff;
+      --sidebar: #edf3f0;
+      --inspector: #f6f9f7;
+      --teal: #087f72;
+      --teal-soft: #d9f0ec;
+      --orange: #a84f28;
+      --orange-soft: #fae9df;
+      --blue: #2c6095;
+      --blue-soft: #e3effa;
+      --violet: #6a4b89;
+      --violet-soft: #eee6f7;
+      --shadow: 0 12px 32px rgba(37, 66, 56, .13);
+      --shadow-soft: 0 4px 16px rgba(37, 66, 56, .1);
+      --brand-ink: #06251f;
+      --placeholder: #71847b;
+      --sidebar-heading: #5f746b;
+      --nav-ink: #3c5149;
+      --nav-index: #71837a;
+      --nav-meta: #70837a;
+      --hover-wash: rgba(31, 80, 66, .08);
+      --wash: rgba(31, 80, 66, .06);
+      --path: #687c73;
+      --foot: #61756c;
+      --boundary-ink: #3c5149;
+      --meta: #687c73;
+      --outline-ink: #52665d;
+      --blockquote-ink: #24574f;
+      --blockquote-bg: #e5f3ef;
+      --code-ink: #93401f;
+      --pre-ink: #e9f5f0;
+      --pre-bg: #1c2b26;
+      --inspector-heading: #63786f;
+      --inspector-button: #52675f;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--soft); }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--soft);
+      font-family: Inter, "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a { color: var(--teal); }
+
+    .app-shell { min-height: 100vh; }
+    .topbar {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0 28px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 250px;
+      color: inherit;
+      text-decoration: none;
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      color: var(--brand-ink);
+      background: var(--teal);
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .05em;
+    }
+    .brand-title { display: block; font-size: 15px; font-weight: 760; letter-spacing: .01em; }
+    .brand-subtitle { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; }
+    .topbar-spacer { flex: 1; }
+    .search-box {
+      width: min(360px, 32vw);
+      height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 12px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      transition: border-color .2s, background .2s;
+    }
+    .search-box:focus-within { border-color: var(--teal); background: var(--paper); }
+    .search-label { flex: 0 0 auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .search-box input {
+      min-width: 0;
+      width: 100%;
+      border: 0;
+      outline: 0;
+      color: var(--ink);
+      background: transparent;
+    }
+    .search-box input::placeholder { color: var(--placeholder); }
+    .theme-toggle,
+    .source-toggle {
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 14px;
+      color: var(--ink);
+      background: var(--paper);
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      white-space: nowrap;
+    }
+    .theme-toggle { width: 38px; padding: 0; }
+    .theme-toggle:hover,
+    .source-toggle:hover { border-color: var(--teal); color: var(--teal); }
+    .theme-icon { font-size: 16px; line-height: 1; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr) 286px;
+      min-height: calc(100vh - 72px);
+    }
+    .sidebar {
+      padding: 22px 14px 18px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--line);
+      overflow-y: auto;
+    }
+    .sidebar-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0 10px 13px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .sidebar-count { color: var(--teal); font-size: 12px; letter-spacing: 0; }
+    .nav-group { margin: 16px 0 5px; }
+    .nav-group-title {
+      padding: 0 10px 7px;
+      color: var(--sidebar-heading);
+      font-size: 11px;
+      font-weight: 760;
+      letter-spacing: .06em;
+    }
+    .nav-item {
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 9px 10px;
+      text-align: left;
+      color: var(--nav-ink);
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      line-height: 1.35;
+    }
+    .nav-item:hover { background: var(--hover-wash); color: var(--ink); }
+    .nav-item.active { color: var(--teal); background: var(--paper); box-shadow: var(--shadow-soft); }
+    .nav-index {
+      flex: 0 0 23px;
+      color: var(--nav-index);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      padding-top: 1px;
+    }
+    .nav-item.active .nav-index { color: var(--teal); }
+    .nav-copy { min-width: 0; }
+    .nav-title { display: block; font-size: 13px; font-weight: 650; }
+    .nav-meta { display: block; color: var(--nav-meta); font-size: 10px; margin-top: 2px; }
+    .sidebar-foot {
+      margin: 26px 8px 0;
+      padding: 12px 11px;
+      color: var(--muted);
+      background: var(--wash);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.55;
+    }
+    .sidebar-foot strong { color: var(--ink); display: block; margin-bottom: 3px; }
+
+    .main {
+      min-width: 0;
+      padding: 36px clamp(24px, 4vw, 68px) 80px;
+      background: var(--paper);
+      overflow: hidden;
+    }
+    .content-width { max-width: 1000px; margin: 0 auto; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 760;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .eyebrow-line { width: 24px; height: 1px; background: var(--teal); }
+    .hero-title {
+      max-width: 760px;
+      margin: 12px 0 12px;
+      font-size: clamp(30px, 4vw, 49px);
+      line-height: 1.13;
+      letter-spacing: -.02em;
+    }
+    .hero-lede {
+      max-width: 720px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+    .hero-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 25px;
+      padding: 3px 9px;
+      color: var(--teal);
+      background: var(--teal-soft);
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .pill.orange { color: var(--orange); background: var(--orange-soft); }
+    .pill.blue { color: var(--blue); background: var(--blue-soft); }
+    .pill.violet { color: var(--violet); background: var(--violet-soft); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 34px 0 34px;
+    }
+    .metric {
+      padding: 16px 17px 15px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+    }
+    .metric-value {
+      display: block;
+      color: var(--ink);
+      font-size: 26px;
+      font-weight: 760;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .metric-label { display: block; color: var(--muted); font-size: 11px; margin-top: 8px; }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 18px;
+      margin: 38px 0 14px;
+    }
+    .section-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.01em; }
+    .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .architecture-step {
+      position: relative;
+      min-height: 128px;
+      padding: 17px 17px 16px;
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+    }
+    .architecture-step:last-child { border-right: 0; }
+    .architecture-step::after {
+      content: "→";
+      position: absolute;
+      top: 46px;
+      right: -9px;
+      z-index: 2;
+      width: 17px;
+      height: 17px;
+      color: var(--teal);
+      background: var(--paper);
+      text-align: center;
+      line-height: 15px;
+      font-size: 15px;
+    }
+    .architecture-step:last-child::after { display: none; }
+    .architecture-kicker { color: var(--teal); font-size: 11px; font-weight: 760; }
+    .architecture-title { margin: 8px 0 5px; font-size: 14px; font-weight: 760; }
+    .architecture-copy { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .module-card {
+      min-height: 145px;
+      display: flex;
+      flex-direction: column;
+      padding: 17px 18px;
+      color: inherit;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      text-decoration: none;
+      transition: transform .18s, box-shadow .18s, border-color .18s;
+    }
+    .module-card:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: var(--shadow-soft); }
+    .module-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .module-card-title { margin: 11px 0 5px; font-size: 15px; font-weight: 740; }
+    .module-card-copy { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .module-card-path { margin-top: 7px; color: var(--path); font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
+    .module-card-foot { display: flex; align-items: center; gap: 9px; margin-top: auto; padding-top: 14px; color: var(--foot); font-size: 11px; }
+    .module-card-arrow { margin-left: auto; color: var(--teal); font-size: 16px; }
+
+    .boundary {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 14px;
+      margin-top: 30px;
+    }
+    .boundary-panel {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+    }
+    .boundary-panel h3 { margin: 0 0 10px; font-size: 14px; }
+    .boundary-panel p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+    .boundary-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .boundary-list li { display: flex; gap: 9px; color: var(--boundary-ink); font-size: 12px; line-height: 1.5; }
+    .boundary-list li::before { content: "•"; color: var(--teal); font-weight: 800; }
+
+    .doc-header {
+      padding-bottom: 26px;
+      border-bottom: 1px solid var(--line);
+    }
+    .doc-title { margin: 10px 0 7px; font-size: clamp(26px, 3.2vw, 39px); line-height: 1.18; letter-spacing: -.02em; }
+    .doc-description { max-width: 720px; margin: 0; color: var(--muted); font-size: 14px; }
+    .doc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 15px; }
+    .doc-meta-item { color: var(--meta); font-size: 11px; }
+    .outline-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 15px; }
+    .outline-chip {
+      padding: 3px 7px;
+      color: var(--outline-ink);
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    .article {
+      max-width: 860px;
+      padding-top: 28px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+    .article h1 { display: none; }
+    .article h2 { margin: 34px 0 12px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 21px; }
+    .article h3 { margin: 24px 0 9px; color: var(--ink); font-size: 16px; }
+    .article h4 { margin: 18px 0 7px; font-size: 14px; }
+    .article h1, .article h2, .article h3, .article h4 { scroll-margin-top: 88px; }
+    .article p { margin: 10px 0; }
+    .article blockquote {
+      margin: 15px 0;
+      padding: 12px 15px;
+      color: var(--blockquote-ink);
+      background: var(--blockquote-bg);
+      border-left: 3px solid var(--teal);
+    }
+    .article ul, .article ol { margin: 10px 0 14px; padding-left: 22px; }
+    .article li { margin: 4px 0; }
+    .article code {
+      padding: 1px 4px;
+      color: var(--code-ink);
+      background: var(--orange-soft);
+      border-radius: 3px;
+      font-size: .92em;
+    }
+    .article pre {
+      overflow: auto;
+      margin: 14px 0;
+      padding: 14px 16px;
+      color: var(--pre-ink);
+      background: var(--pre-bg);
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .article pre code { padding: 0; color: inherit; background: transparent; }
+    .article table {
+      width: 100%;
+      margin: 15px 0 19px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .article th, .article td {
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      vertical-align: middle;
+      text-align: left;
+    }
+    .article th { color: var(--ink); background: var(--soft); font-weight: 750; }
+    .article a { text-decoration: underline; text-underline-offset: 2px; }
+    .article a.citation-link { color: var(--teal); font-weight: 700; text-decoration: none; }
+    .article a.citation-link:hover { text-decoration: underline; }
+    .article hr { margin: 24px 0; border: 0; border-top: 1px solid var(--line); }
+
+    .inspector {
+      min-width: 0;
+      padding: 24px 18px;
+      background: var(--inspector);
+      border-left: 1px solid var(--line);
+      overflow-y: auto;
+    }
+    .inspector-title { margin: 0 0 6px; font-size: 12px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+    .inspector-copy { margin: 0 0 18px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .inspector-section { margin: 24px 0 0; }
+    .inspector-section h3 { margin: 0 0 9px; color: var(--inspector-heading); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+    .inspector-outline { display: grid; gap: 4px; }
+    .inspector-outline button {
+      padding: 5px 7px;
+      color: var(--inspector-button);
+      text-align: left;
+      background: transparent;
+      border: 0;
+      border-left: 2px solid transparent;
+      font-size: 11px;
+    }
+    .inspector-outline button:hover { color: var(--teal); border-left-color: var(--teal); }
+    .source-card {
+      display: block;
+      margin: 8px 0;
+      padding: 10px;
+      color: inherit;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    .source-card:hover { border-color: var(--teal); }
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      max-width: 1000px;
+      margin: 22px auto 0;
+    }
+    .source-grid .source-card { margin: 0; min-width: 0; }
+    .source-id { color: var(--teal); font-size: 10px; font-weight: 780; letter-spacing: .04em; }
+    .source-name { margin-top: 3px; color: var(--ink); font-size: 12px; font-weight: 690; line-height: 1.35; }
+    .source-scope { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .source-empty { color: var(--muted); font-size: 11px; line-height: 1.55; }
+
+    .search-results { max-width: 900px; margin: 0 auto; }
+    .search-summary { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+    .result-list { display: grid; gap: 10px; }
+    .result-item {
+      display: block;
+      padding: 15px 17px;
+      color: inherit;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      text-decoration: none;
+    }
+    .result-item:hover { border-color: var(--teal); box-shadow: var(--shadow-soft); }
+    .result-title { margin: 5px 0; font-size: 15px; font-weight: 740; }
+    .result-snippet { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .empty-state { padding: 60px 20px; text-align: center; color: var(--muted); }
+
+    @media (max-width: 1120px) {
+      .workspace { grid-template-columns: 220px minmax(0, 1fr); }
+      .inspector { display: none; }
+      .brand { min-width: 210px; }
+    }
+    @media (max-width: 760px) {
+      .topbar { height: auto; min-height: 64px; flex-wrap: wrap; gap: 10px 12px; padding: 12px 16px; }
+      .brand { flex: 1 1 auto; min-width: 0; }
+      .brand-title { font-size: 14px; }
+      .brand-subtitle { display: none; }
+      .topbar-spacer { display: none; }
+      .search-box { order: 3; width: 100%; }
+      .source-toggle { order: 2; padding: 0 10px; }
+      .workspace { display: block; min-height: calc(100vh - 112px); }
+      .sidebar {
+        padding: 10px 12px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      .sidebar-head { display: none; }
+      .nav {
+        display: flex;
+        gap: 7px;
+        min-width: max-content;
+      }
+      .nav-group { display: contents; }
+      .nav-group-title { display: none; }
+      .nav-item {
+        width: auto;
+        min-height: 34px;
+        align-items: center;
+        padding: 7px 9px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+      }
+      .nav-item.active { border-color: var(--teal); }
+      .nav-index, .nav-meta { display: none; }
+      .nav-title { font-size: 11px; white-space: nowrap; }
+      .sidebar-foot { display: none; }
+      .main { padding: 27px 17px 60px; }
+      .hero-title { font-size: 31px; }
+      .hero-lede { font-size: 14px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 25px 0; }
+      .metric { padding: 13px; }
+      .metric-value { font-size: 22px; }
+      .architecture { grid-template-columns: 1fr 1fr; }
+      .architecture-step { min-height: 120px; border-bottom: 1px solid var(--line); }
+      .architecture-step:nth-child(2) { border-right: 0; }
+      .architecture-step:nth-child(2)::after { display: none; }
+      .architecture-step:nth-child(3), .architecture-step:nth-child(4) { border-bottom: 0; }
+      .architecture-step:nth-child(3)::after { display: none; }
+      .module-grid, .boundary { grid-template-columns: 1fr; }
+      .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .section-heading { display: block; }
+      .section-heading p { margin-top: 3px; }
+      .article { font-size: 13px; }
+      .article table { display: block; overflow-x: auto; white-space: nowrap; }
+      .doc-title { font-size: 28px; }
+    }
+    @media (max-width: 480px) {
+      .source-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#overview" aria-label="回到 Skill 总览">
+        <span class="brand-mark">IAA</span>
+        <span>
+          <span class="brand-title">App Monetization Expert</span>
+          <span class="brand-subtitle">Desktop Reference Browser</span>
+        </span>
+      </a>
+      <div class="topbar-spacer"></div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换到亮色主题" aria-pressed="false" title="切换到亮色主题">
+        <span class="theme-icon" aria-hidden="true">☾</span>
+      </button>
+      <label class="search-box">
+        <span class="search-label">搜索</span>
+        <input id="searchInput" type="search" placeholder="查找模块、指标、来源或关键词" autocomplete="off">
+      </label>
+      <button class="source-toggle" id="sourceToggle" type="button">来源库</button>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-head"><span>内容地图</span><span class="sidebar-count" id="docCount"></span></div>
+        <nav class="nav" id="nav" aria-label="Skill 内容地图"></nav>
+        <div class="sidebar-foot">
+          <strong>离线快照</strong>
+          内容在构建时嵌入。公开来源可从右侧打开。
+        </div>
+      </aside>
+      <main class="main" id="main"></main>
+      <aside class="inspector" id="inspector"></aside>
+    </div>
+  </div>
+
+  <script>
+    window.SKILL_DATA = __SKILL_VIEWER_DATA__;
+
+    (function () {
+      "use strict";
+
+      var DATA = window.SKILL_DATA;
+      var docs = DATA.docs || [];
+      var sources = DATA.sources || [];
+      var sourceMap = {};
+      sources.forEach(function (source) { sourceMap[source.id] = source; });
+      var sourceIds = Object.keys(sourceMap).sort(function (a, b) { return b.length - a.length; });
+      var sourceIdPattern = sourceIds.join("|");
+      var fullCitationPattern = new RegExp("\\*\\*\\[(" + sourceIdPattern + ")-[^\\]]+\\]\\*\\*", "g");
+      var bareCitationPattern = new RegExp("\\[(" + sourceIdPattern + ")\\]", "g");
+      var GROUP_ORDER = ["入口", "IAA 核心", "TopOn 分析", "增长支持", "IAP 按需", "来源"];
+      var state = { view: "overview", query: "", sourceMode: false };
+      var searchInput = document.getElementById("searchInput");
+      var main = document.getElementById("main");
+      var nav = document.getElementById("nav");
+      var inspector = document.getElementById("inspector");
+      var sourceToggle = document.getElementById("sourceToggle");
+      var themeToggle = document.getElementById("themeToggle");
+
+      document.getElementById("docCount").textContent = docs.length + " 个文件";
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function setTheme(theme, persist) {
+        var normalized = theme === "light" ? "light" : "dark";
+        var nextTheme = normalized === "dark" ? "light" : "dark";
+        var nextLabel = nextTheme === "light" ? "亮色" : "暗色";
+        document.documentElement.setAttribute("data-theme", normalized);
+        themeToggle.querySelector(".theme-icon").textContent = normalized === "light" ? "☼" : "☾";
+        themeToggle.setAttribute("aria-label", "切换到" + nextLabel + "主题");
+        themeToggle.setAttribute("title", "切换到" + nextLabel + "主题");
+        themeToggle.setAttribute("aria-pressed", normalized === "light" ? "true" : "false");
+        if (persist) {
+          try { localStorage.setItem("app-monetization-theme", normalized); } catch (error) {}
+        }
+      }
+
+      setTheme(document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark", false);
+
+      function inlineMarkdown(value) {
+        var text = escapeHtml(value);
+        var tick = String.fromCharCode(96);
+        var codePattern = new RegExp(tick + "([^" + tick + "]+)" + tick, "g");
+        text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        text = text.replace(/\[([^\]]+)\]\((#[^)]+)\)/g, '<a href="$2" data-heading-link="$1">$1</a>');
+        text = text.replace(fullCitationPattern, function (match, id) {
+          var source = sourceMap[id];
+          if (!source) { return match; }
+          return '<a class="citation-link" href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener"><strong>[' + escapeHtml(id + "-" + source.title) + ']</strong></a>';
+        });
+        text = text.replace(bareCitationPattern, function (match, id) {
+          var source = sourceMap[id];
+          if (!source) { return match; }
+          return '<a class="citation-link" href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener"><strong>[' + escapeHtml(id + "-" + source.title) + ']</strong></a>';
+        });
+        text = text.replace(codePattern, "<code>$1</code>");
+        text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+        return text;
+      }
+
+      function tableCells(line) {
+        var clean = line.trim();
+        if (clean.charAt(0) === "|") { clean = clean.slice(1); }
+        if (clean.charAt(clean.length - 1) === "|") { clean = clean.slice(0, -1); }
+        return clean.split("|").map(function (cell) { return cell.trim(); });
+      }
+
+      function isTableSeparator(line) {
+        return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line.trim());
+      }
+
+      function renderMarkdown(markdown) {
+        var lines = String(markdown || "").replace(/\r/g, "").split("\n");
+        var html = "";
+        var code = false;
+        var codeLines = [];
+        var listType = "";
+        var listItems = [];
+
+        function flushList() {
+          if (!listItems.length) { return; }
+          html += "<" + listType + ">" + listItems.map(function (item) {
+            return "<li>" + inlineMarkdown(item) + "</li>";
+          }).join("") + "</" + listType + ">";
+          listItems = [];
+          listType = "";
+        }
+
+        function flushCode() {
+          if (!codeLines.length) { html += "<pre><code></code></pre>"; }
+          else { html += "<pre><code>" + escapeHtml(codeLines.join("\n")) + "</code></pre>"; }
+          codeLines = [];
+        }
+
+        for (var i = 0; i < lines.length; i += 1) {
+          var line = lines[i];
+          var trimmed = line.trim();
+          var isFence = line.indexOf(String.fromCharCode(96).repeat(3)) === 0 || line.indexOf("~~~") === 0;
+
+          if (isFence) {
+            flushList();
+            if (code) { flushCode(); }
+            code = !code;
+            continue;
+          }
+          if (code) {
+            codeLines.push(line);
+            continue;
+          }
+          if (!trimmed) {
+            flushList();
+            continue;
+          }
+
+          var heading = line.match(/^(#{1,4})\s+(.+)$/);
+          if (heading) {
+            flushList();
+            var level = Math.min(4, heading[1].length);
+            html += "<h" + level + ">" + inlineMarkdown(heading[2]) + "</h" + level + ">";
+            continue;
+          }
+          if (line.indexOf(">") === 0) {
+            flushList();
+            html += "<blockquote>" + inlineMarkdown(line.slice(1).trim()) + "</blockquote>";
+            continue;
+          }
+          if (line.indexOf("---") === 0 && /^-{3,}$/.test(trimmed)) {
+            flushList();
+            html += "<hr>";
+            continue;
+          }
+          if (line.indexOf("|") === 0 && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+            flushList();
+            var headers = tableCells(line);
+            var rows = [];
+            i += 2;
+            while (i < lines.length && lines[i].trim().indexOf("|") === 0) {
+              rows.push(tableCells(lines[i]));
+              i += 1;
+            }
+            i -= 1;
+            html += "<table><thead><tr>" + headers.map(function (cell) {
+              return "<th>" + inlineMarkdown(cell) + "</th>";
+            }).join("") + "</tr></thead><tbody>";
+            rows.forEach(function (row) {
+              html += "<tr>" + headers.map(function (_, index) {
+                return "<td>" + inlineMarkdown(row[index] || "") + "</td>";
+              }).join("") + "</tr>";
+            });
+            html += "</tbody></table>";
+            continue;
+          }
+
+          var unordered = line.match(/^\s*-\s+(.+)$/);
+          var ordered = line.match(/^\s*\d+\.\s+(.+)$/);
+          if (unordered || ordered) {
+            var nextType = unordered ? "ul" : "ol";
+            if (listType && listType !== nextType) { flushList(); }
+            listType = nextType;
+            listItems.push((unordered || ordered)[1]);
+            continue;
+          }
+          flushList();
+          html += "<p>" + inlineMarkdown(line) + "</p>";
+        }
+
+        if (code) { flushCode(); }
+        flushList();
+        return html;
+      }
+
+      function citationIds(content) {
+        var matches = [];
+        var pattern = new RegExp("\\[(" + sourceIdPattern + ")(?:-[^\\]]+)?\\]", "g");
+        var match;
+        while ((match = pattern.exec(String(content || ""))) !== null) {
+          if (matches.indexOf(match[1]) === -1) { matches.push(match[1]); }
+        }
+        return matches;
+      }
+
+      function tagClass(tag) {
+        if (tag === "IAP") { return "pill violet"; }
+        if (tag === "Sources") { return "pill orange"; }
+        if (tag === "Growth" || tag === "Research") { return "pill blue"; }
+        return "pill";
+      }
+
+      function docById(id) {
+        return docs.filter(function (doc) { return doc.id === id; })[0];
+      }
+
+      function renderNav() {
+        nav.innerHTML = GROUP_ORDER.map(function (group) {
+          var groupDocs = docs.filter(function (doc) { return doc.group === group; });
+          if (!groupDocs.length) { return ""; }
+          return '<div class="nav-group"><div class="nav-group-title">' + escapeHtml(group) + '</div>' +
+            groupDocs.map(function (doc, index) {
+              var active = state.view === doc.id && !state.query ? " active" : "";
+              return '<button class="nav-item' + active + '" type="button" data-view="' + doc.id + '">' +
+                '<span class="nav-index">' + String(index + 1).padStart(2, "0") + '</span>' +
+                '<span class="nav-copy"><span class="nav-title">' + escapeHtml(doc.title) + '</span>' +
+                '<span class="nav-meta">' + doc.lines + ' 行 · ' + escapeHtml(doc.tag) + '</span></span></button>';
+            }).join("") + "</div>";
+        }).join("");
+      }
+
+      function renderOverview() {
+        var meta = DATA.meta || {};
+        var cards = docs.filter(function (doc) { return doc.kind !== "entry" && doc.kind !== "source"; });
+        main.innerHTML =
+          '<div class="content-width">' +
+            '<section class="hero">' +
+              '<div class="eyebrow"><span class="eyebrow-line"></span>IAA 主线 / 本地预览</div>' +
+              '<h1 class="hero-title">一张图浏览整个商业化 Skill</h1>' +
+              '<p class="hero-lede">以 IAA 为主线，从广告设计、平台配置、上线验收、数据诊断到买量回收；IAP 作为按需加载的订阅常识补充，公开来源和引用关系集中在来源库。</p>' +
+              '<div class="hero-note"><span class="pill">只读快照</span><span class="pill orange">公开来源可跳转</span><span class="pill blue">Reference 全文已嵌入</span></div>' +
+            '</section>' +
+            '<section class="metrics">' +
+              '<div class="metric"><span class="metric-value">' + meta.fileCount + '</span><span class="metric-label">已嵌入文件</span></div>' +
+              '<div class="metric"><span class="metric-value">' + meta.lineCount + '</span><span class="metric-label">Markdown 行数</span></div>' +
+              '<div class="metric"><span class="metric-value">' + meta.iaaCount + '</span><span class="metric-label">IAA 核心模块</span></div>' +
+              '<div class="metric"><span class="metric-value">' + meta.sourceCount + '</span><span class="metric-label">来源编号</span></div>' +
+            '</section>' +
+            '<div class="section-heading"><h2>运行路径</h2><p>从触发到验证的工作关系</p></div>' +
+            '<section class="architecture">' +
+              '<div class="architecture-step"><span class="architecture-kicker">01 / 入口</span><h3 class="architecture-title">识别任务</h3><p class="architecture-copy">分类、固定边界，决定需要加载哪些参考文件。</p></div>' +
+              '<div class="architecture-step"><span class="architecture-kicker">02 / IAA</span><h3 class="architecture-title">还原广告链路</h3><p class="architecture-copy">从场景到请求、填充、可展示和实际展示。</p></div>' +
+              '<div class="architecture-step"><span class="architecture-kicker">03 / 判断</span><h3 class="architecture-title">定位异常节点</h3><p class="architecture-copy">用收益树、数据口径和来源编号解释变化。</p></div>' +
+              '<div class="architecture-step"><span class="architecture-kicker">04 / 迭代</span><h3 class="architecture-title">动作与回退</h3><p class="architecture-copy">单变量改动，设护栏、观察窗口和回退条件。</p></div>' +
+            '</section>' +
+            '<div class="section-heading"><h2>模块与 Reference 内容</h2><p>点击任意模块查看对应 reference 全文</p></div>' +
+            '<section class="module-grid">' +
+              cards.map(function (doc) {
+                return '<a class="module-card" href="#module/' + doc.id + '" data-view="' + doc.id + '">' +
+                  '<div class="module-card-top"><span class="' + tagClass(doc.tag) + '">' + escapeHtml(doc.tag) + '</span><span class="doc-meta-item">' + doc.lines + ' 行</span></div>' +
+                  '<h3 class="module-card-title">' + escapeHtml(doc.title) + '</h3>' +
+                  '<p class="module-card-copy">' + escapeHtml(doc.description) + '</p>' +
+                  '<div class="module-card-path">' + escapeHtml(doc.path) + '</div>' +
+                  '<div class="module-card-foot"><span>' + escapeHtml(doc.group) + '</span><span class="module-card-arrow">→</span></div>' +
+                '</a>';
+              }).join("") +
+            '</section>' +
+            '<section class="boundary">' +
+              '<div class="boundary-panel"><h3>阅读边界</h3><p>Skill 正文和 references 在构建阶段嵌入浏览器。公开来源链接可以打开。</p></div>' +
+              '<div class="boundary-panel"><h3>按需加载</h3><ul class="boundary-list"><li>IAA 默认作为主线</li><li>IAP 只在明确询问或混合变现时读取</li><li>来源库用于事实核对和引用追溯</li></ul></div>' +
+            '</section>' +
+          '</div>';
+      }
+
+      function renderSearch() {
+        var query = state.query.trim().toLowerCase();
+        var matches = docs.filter(function (doc) {
+          return (doc.title + " " + doc.description + " " + doc.content).toLowerCase().indexOf(query) !== -1;
+        });
+        main.innerHTML = '<div class="search-results"><div class="eyebrow"><span class="eyebrow-line"></span>Search</div>' +
+          '<h1 class="doc-title">搜索结果</h1><p class="search-summary">“' + escapeHtml(state.query.trim()) + '”匹配 ' + matches.length + ' 个文件</p>' +
+          '<div class="result-list">' +
+          (matches.length ? matches.map(function (doc) {
+            var lower = doc.content.toLowerCase();
+            var position = lower.indexOf(query);
+            var start = Math.max(0, position - 70);
+            var snippet = doc.content.slice(start, start + 190).replace(/\s+/g, " ");
+            return '<a class="result-item" href="#module/' + doc.id + '" data-view="' + doc.id + '">' +
+              '<span class="' + tagClass(doc.tag) + '">' + escapeHtml(doc.tag) + '</span>' +
+              '<h2 class="result-title">' + escapeHtml(doc.title) + '</h2>' +
+              '<p class="result-snippet">' + escapeHtml(snippet) + '…</p></a>';
+          }).join("") : '<div class="empty-state">没有找到匹配内容。试试广告位、Waterfall、LTV、付费墙或来源编号。</div>') +
+          '</div></div>';
+      }
+
+      function renderSourceCard(source) {
+        return '<a class="source-card" href="' + source.url + '" target="_blank" rel="noopener">' +
+          '<div class="source-id">' + escapeHtml(source.id) + '</div>' +
+          '<div class="source-name">' + escapeHtml(source.title) + '</div>' +
+          '<div class="source-scope">' + escapeHtml(source.scope) + '</div></a>';
+      }
+
+      function renderInspector(doc) {
+        if (!doc) {
+          inspector.innerHTML = '<h2 class="inspector-title">来源库</h2><p class="inspector-copy">公开来源、引用编号和原始页面链接集中在这里。</p>' +
+            '<div class="inspector-section"><h3>来源总数</h3><p class="source-empty">' + sources.length + ' 个公开来源，点击卡片可打开原始页面。</p></div>' +
+            sources.slice(0, 6).map(renderSourceCard).join("");
+          return;
+        }
+        var ids = citationIds(doc.content);
+        var cited = ids.map(function (id) { return sourceMap[id]; }).filter(Boolean);
+        inspector.innerHTML = '<h2 class="inspector-title">当前章节</h2><p class="inspector-copy">' + escapeHtml(doc.description) + '</p>' +
+          '<div class="inspector-section"><h3>章节提纲</h3><div class="inspector-outline">' +
+          doc.headings.filter(function (heading) { return heading !== doc.title; }).slice(0, 18).map(function (heading) {
+            return '<button type="button" data-heading="' + escapeHtml(heading) + '">' + escapeHtml(heading) + '</button>';
+          }).join("") + '</div></div>' +
+          '<div class="inspector-section"><h3>引用来源 · ' + cited.length + '</h3>' +
+          (cited.length ? cited.map(renderSourceCard).join("") : '<p class="source-empty">本章节以 GEN 结构性方法或 Skill 流程整理为主，没有单一公开来源。</p>') +
+          '</div>';
+      }
+
+      function renderDoc(doc) {
+        if (!doc) { renderOverview(); renderInspector(null); return; }
+        var ids = citationIds(doc.content);
+        main.innerHTML = '<div class="content-width">' +
+          '<section class="doc-header"><div class="eyebrow"><span class="eyebrow-line"></span>' + escapeHtml(doc.group) + '</div>' +
+          '<h1 class="doc-title">' + escapeHtml(doc.title) + '</h1><p class="doc-description">' + escapeHtml(doc.description) + '</p>' +
+          '<div class="doc-meta"><span class="' + tagClass(doc.tag) + '">' + escapeHtml(doc.tag) + '</span><span class="doc-meta-item">' + doc.lines + ' 行</span><span class="doc-meta-item">' + ids.length + ' 个引用编号</span><span class="doc-meta-item">' + escapeHtml(doc.path) + '</span></div>' +
+          '<div class="outline-row">' + doc.headings.filter(function (heading) { return heading !== doc.title; }).slice(0, 12).map(function (heading) { return '<span class="outline-chip">' + escapeHtml(heading) + '</span>'; }).join("") + '</div></section>' +
+          '<article class="article">' + renderMarkdown(doc.content) + '</article></div>';
+        renderInspector(doc);
+      }
+
+      function render() {
+        renderNav();
+        if (state.query.trim()) { renderSearch(); renderInspector(null); }
+        else if (state.sourceMode || state.view === "public-sources") {
+          main.innerHTML = '<div class="content-width"><section class="doc-header"><div class="eyebrow"><span class="eyebrow-line"></span>公开来源</div><h1 class="doc-title">来源库</h1><p class="doc-description">公开页面、引用编号和原始 URL。点击任意卡片打开原始页面。</p><div class="doc-meta"><span class="pill orange">' + sources.length + ' 个来源</span><span class="doc-meta-item">页面核验由构建阶段完成</span></div></section><div class="source-grid">' + sources.map(renderSourceCard).join("") + '</div></div>';
+          inspector.innerHTML = '<h2 class="inspector-title">来源说明</h2><p class="inspector-copy">官方平台文档优先；第三方报告只做方向性参考；原始 URL 是事实核对入口。</p>';
+        } else if (state.view === "overview") { renderOverview(); renderInspector(null); }
+        else { renderDoc(docById(state.view)); }
+      }
+
+      function readHash() {
+        var hash = window.location.hash.replace(/^#/, "");
+        if (hash.indexOf("module/") === 0) {
+          state.view = hash.slice(7) || "overview";
+          state.sourceMode = state.view === "public-sources";
+        } else {
+          state.view = "overview";
+          state.sourceMode = false;
+        }
+        render();
+      }
+
+      nav.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-view]");
+        if (!button) { return; }
+        window.location.hash = "module/" + button.getAttribute("data-view");
+      });
+      main.addEventListener("click", function (event) {
+        var headingLink = event.target.closest("[data-heading-link]");
+        if (headingLink) {
+          event.preventDefault();
+          var wanted = headingLink.getAttribute("data-heading-link");
+          var headings = main.querySelectorAll(".article h1, .article h2, .article h3, .article h4");
+          for (var headingIndex = 0; headingIndex < headings.length; headingIndex += 1) {
+            if (headings[headingIndex].textContent.trim() === wanted) {
+              headings[headingIndex].scrollIntoView({ behavior: "smooth", block: "start" });
+              break;
+            }
+          }
+          return;
+        }
+        var target = event.target.closest("[data-view]");
+        if (target) {
+          event.preventDefault();
+          window.location.hash = "module/" + target.getAttribute("data-view");
+        }
+      });
+      inspector.addEventListener("click", function (event) {
+        var target = event.target.closest("[data-heading]");
+        if (!target) { return; }
+        var headingText = target.getAttribute("data-heading");
+        var headings = main.querySelectorAll(".article h1, .article h2, .article h3, .article h4");
+        for (var i = 0; i < headings.length; i += 1) {
+          if (headings[i].textContent.trim() === headingText) {
+            headings[i].scrollIntoView({ behavior: "smooth", block: "start" });
+            break;
+          }
+        }
+      });
+      searchInput.addEventListener("input", function (event) {
+        state.query = event.target.value;
+        render();
+      });
+      sourceToggle.addEventListener("click", function () {
+        searchInput.value = "";
+        state.query = "";
+        window.location.hash = "module/public-sources";
+      });
+      themeToggle.addEventListener("click", function () {
+        var current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+        setTheme(current === "dark" ? "light" : "dark", true);
+      });
+      document.addEventListener("keydown", function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+          event.preventDefault();
+          searchInput.focus();
+        }
+        if (event.key === "Escape" && document.activeElement === searchInput) {
+          searchInput.value = "";
+          state.query = "";
+          render();
+        }
+      });
+      window.addEventListener("hashchange", readHash);
+      readHash();
+    }());
+  </script>
+</body>
+</html>
