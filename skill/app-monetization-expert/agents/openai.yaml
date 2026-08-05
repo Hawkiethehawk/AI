@@ -1,0 +1,4 @@
+interface:
+  display_name: "App Monetization Expert"
+  short_description: "以 IAA 为重点的应用商业化配置、诊断、分析与持续优化"
+  default_prompt: "使用 $app-monetization-expert 诊断这个应用的 IAA 收益问题并给出可验证的调整方案。"
