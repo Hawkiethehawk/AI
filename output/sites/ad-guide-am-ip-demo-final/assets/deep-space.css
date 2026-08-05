@@ -361,6 +361,21 @@ body.glossary-open{overflow:hidden}
  .chapter-pager>span{display:none}
  .home-section-head{align-items:flex-start;flex-direction:column;gap:7px}
   .route-chapters small{display:none}
+  /* Stack stage labels on narrow screens; hide empty IP placeholders. */
+  .resource-progress-table tbody .resource-stage-row,
+  .resource-progress-table tbody .resource-group-row,
+  .eternal-progress-table tbody .eternal-stage-row{
+    grid-template-columns:minmax(0,1fr)
+  }
+  .resource-progress-table tbody .resource-stage-row th,
+  .resource-progress-table tbody .resource-group-row th,
+  .eternal-progress-table tbody .eternal-stage-row th{
+    grid-column:1/-1
+  }
+  .resource-progress-table tbody .resource-stage-row th:empty,
+  .resource-progress-table tbody .resource-group-row th:empty{
+    display:none
+  }
   .glossary-dialog{padding:14px}
   .glossary-panel{max-height:calc(100vh - 28px)}
   .glossary-content{padding:10px}
@@ -371,7 +386,7 @@ body.glossary-open{overflow:hidden}
   .glossary-column th[scope="row"]{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
-@media print{.sidebar,.mobile-header,.chapter-pager,.copy-button,.guide-home{display:none!important}body{background:#fff;color:#111;padding:0}main{margin:0}.content-grid{display:block;width:auto}.article-column{padding:0}.chapter[hidden]{display:block}.chapter{break-before:page}.body-copy{color:#222}.chapter-header h1,.section-title{color:#111}.code-card{background:#f5f5f5}.code-card code{color:#111}}
+@media print{.sidebar,.mobile-header,.chapter-pager,.copy-button,.copy-tree-preview,.guide-home{display:none!important}body{background:#fff;color:#111;padding:0}main{margin:0}.content-grid{display:block;width:auto}.article-column{padding:0}.chapter[hidden]{display:block}.chapter{break-before:page}.body-copy{color:#222}.chapter-header h1,.section-title{color:#111}.code-card{background:#f5f5f5}.code-card code{color:#111}}
 
 /* Inline copy blocks */
 .prose-flow{margin:0}
@@ -383,6 +398,8 @@ body.glossary-open{overflow:hidden}
 .inline-copy-text.table-copy-button{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid #2d6457;border-radius:5px;line-height:1.2;text-decoration:none;white-space:nowrap}
 .inline-copy-text.table-copy-button:hover,.inline-copy-text.table-copy-button:focus{background:#103128}
 .table-copy-button i{font-size:14px}
+.copy-tree-preview{position:fixed;z-index:120;display:block;width:max-content;max-width:min(520px,calc(100vw - 16px));min-width:0;max-height:calc(100vh - 16px);overflow:auto;padding:8px 10px;border:1px solid #3b806d;border-radius:6px;background:#0b2628;color:#d5fff0;box-shadow:0 12px 30px #0008;font:500 12px/1.5 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;letter-spacing:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;text-align:left;opacity:0;visibility:hidden;transform:translateY(3px);pointer-events:none;transition:opacity .14s ease,transform .14s ease,visibility 0s linear .14s}
+.copy-tree-preview.show{opacity:1;visibility:visible;transform:none;transition-delay:0s}
 
 html[data-theme="light"]{
   --bg:#f3f7f5;--bg-deep:#ffffff;--surface:#edf3f0;--surface-2:#e5eeea;--surface-3:#e8f3ee;
@@ -434,6 +451,7 @@ html[data-theme="light"] .inline-copy-text:hover,html[data-theme="light"] .inlin
 html[data-theme="light"] .inline-copy-text.copied{color:#9a6500}
 html[data-theme="light"] .inline-copy-text.table-copy-button{border-color:#92bfae}
 html[data-theme="light"] .inline-copy-text.table-copy-button:hover,html[data-theme="light"] .inline-copy-text.table-copy-button:focus{background:#e3f1eb}
+html[data-theme="light"] .copy-tree-preview{border-color:#86b9a7;background:#f7fffb;color:#174e3d;box-shadow:0 12px 30px #1c443538}
 html[data-theme="light"] .eternal-progress-table tbody th[scope="row"][rowspan],html[data-theme="light"] .eternal-progress-table tbody .ep-cell[rowspan]{background:#fff}
 html[data-theme="light"] .eternal-progress-table tbody th[scope="row"][rowspan]:hover,html[data-theme="light"] .eternal-progress-table tbody .ep-cell[rowspan]:hover{background:#edf5f1}
 html[data-theme="light"] .glossary-trigger-desktop{background:#fff;color:#435c54}
@@ -442,16 +460,4 @@ html[data-theme="light"] .glossary-panel{background:#f8fbf9;box-shadow:0 24px 70
 html[data-theme="light"] .glossary-close{color:#536a63}
 html[data-theme="light"] .glossary-close:hover{background:#e7f2ed;color:#087458}
 @media(max-width:1120px){html[data-theme="light"] .mobile-header{background:#fff}html[data-theme="light"] .icon-button{color:#435c54}}
-@media(max-width:840px){
- .eternal-progress-table{overflow-x:auto;border:1px solid var(--line-strong);border-radius:var(--radius);background:#091821}
- .eternal-progress-table table{display:table;width:100%;min-width:720px;max-width:none;table-layout:fixed;border-collapse:collapse;background:#091821}
- .eternal-progress-table thead{display:table-header-group}
- .eternal-progress-table tbody{display:table-row-group;width:auto;min-width:0;max-width:none;background:transparent}
- .eternal-progress-table tbody tr{display:table-row;width:auto;min-width:0;border:0;border-radius:0;background:transparent}
- .eternal-progress-table tbody th,.eternal-progress-table tbody td{display:table-cell;width:auto;min-width:0;max-width:none;padding:7px 8px;border:0;border-bottom:1px solid var(--line);text-align:left;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
- .eternal-progress-table tbody th[scope="row"],.eternal-progress-table tbody .ep-cell,.eternal-progress-table tbody .tree-cell{background:transparent;text-align:center}
- .eternal-progress-table tbody .action-cell,.eternal-progress-table tbody .note-cell{text-align:justify;text-align-last:left;text-justify:auto}
- .eternal-progress-table tbody th:before,.eternal-progress-table tbody td:before{display:none}
- .eternal-progress-table tbody tr:last-child th,.eternal-progress-table tbody tr:last-child td{border-bottom:0}
-}
 @media(max-width:840px){html[data-theme="light"] .eternal-progress-table,html[data-theme="light"] .eternal-progress-table table{background:#fff}}
