@@ -449,6 +449,7 @@
     }
     .article h1 { display: none; }
     .article h2 { margin: 34px 0 12px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 21px; }
+    .article > h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
     .article h3 { margin: 24px 0 9px; color: var(--ink); font-size: 16px; }
     .article h4 { margin: 18px 0 7px; font-size: 14px; }
     .article h1, .article h2, .article h3, .article h4 { scroll-margin-top: 88px; }
@@ -480,6 +481,14 @@
       line-height: 1.6;
     }
     .article pre code { padding: 0; color: inherit; background: transparent; }
+    .article.json-article { max-width: 100%; }
+    .article .json-view {
+      margin-top: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      tab-size: 2;
+    }
     .article table {
       width: 100%;
       margin: 15px 0 19px;
@@ -746,6 +755,44 @@
         return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line.trim());
       }
 
+      function stripViewerToc(markdown) {
+        var lines = String(markdown || "").replace(/\r/g, "").split("\n");
+        var tocIndex = -1;
+        for (var i = 0; i < lines.length; i += 1) {
+          if (/^##\s+目录\s*$/.test(lines[i].trim())) {
+            tocIndex = i;
+            break;
+          }
+        }
+        if (tocIndex < 0) { return lines.join("\n"); }
+        var end = tocIndex + 1;
+        while (end < lines.length) {
+          var item = lines[end].trim();
+          if (!item || /^[-*]\s+/.test(item) || /^\d+\.\s+/.test(item)) { end += 1; }
+          else { break; }
+        }
+        lines.splice(tocIndex, end - tocIndex);
+        return lines.join("\n");
+      }
+
+      function renderJsonDocument(content) {
+        var raw = String(content || "").trim();
+        var formatted = raw;
+        try { formatted = JSON.stringify(JSON.parse(raw), null, 2); } catch (error) {}
+        return '<pre class="json-view"><code>' + escapeHtml(formatted) + '</code></pre>';
+      }
+
+      function renderDocumentBody(doc) {
+        if (/\.json$/i.test(doc.path)) { return renderJsonDocument(doc.content); }
+        return renderMarkdown(doc.kind === "topn" ? stripViewerToc(doc.content) : doc.content);
+      }
+
+      function visibleHeadings(doc) {
+        return (doc.headings || []).filter(function (heading) {
+          return heading !== doc.title && !(doc.kind === "topn" && heading === "目录");
+        });
+      }
+
       function renderMarkdown(markdown) {
         var lines = String(markdown || "").replace(/\r/g, "").split("\n");
         var html = "";
@@ -962,11 +1009,12 @@
         }
         var ids = citationIds(doc.content);
         var cited = ids.map(function (id) { return sourceMap[id]; }).filter(Boolean);
+        var headings = visibleHeadings(doc);
         inspector.innerHTML = '<h2 class="inspector-title">当前章节</h2><p class="inspector-copy">' + escapeHtml(doc.description) + '</p>' +
-          '<div class="inspector-section"><h3>章节提纲</h3><div class="inspector-outline">' +
-          doc.headings.filter(function (heading) { return heading !== doc.title; }).slice(0, 18).map(function (heading) {
+          (headings.length ? '<div class="inspector-section"><h3>章节提纲</h3><div class="inspector-outline">' +
+          headings.slice(0, 18).map(function (heading) {
             return '<button type="button" data-heading="' + escapeHtml(heading) + '">' + escapeHtml(heading) + '</button>';
-          }).join("") + '</div></div>' +
+          }).join("") + '</div></div>' : '') +
           '<div class="inspector-section"><h3>引用来源 · ' + cited.length + '</h3>' +
           (cited.length ? cited.map(renderSourceCard).join("") : '<p class="source-empty">本章节以 GEN 结构性方法或 Skill 流程整理为主，没有单一公开来源。</p>') +
           '</div>';
@@ -975,12 +1023,14 @@
       function renderDoc(doc) {
         if (!doc) { renderOverview(); renderInspector(null); return; }
         var ids = citationIds(doc.content);
+        var headings = visibleHeadings(doc);
+        var articleClass = /\.json$/i.test(doc.path) ? "article json-article" : "article";
         main.innerHTML = '<div class="content-width">' +
           '<section class="doc-header"><div class="eyebrow"><span class="eyebrow-line"></span>' + escapeHtml(doc.group) + '</div>' +
           '<h1 class="doc-title">' + escapeHtml(doc.title) + '</h1><p class="doc-description">' + escapeHtml(doc.description) + '</p>' +
           '<div class="doc-meta"><span class="' + tagClass(doc.tag) + '">' + escapeHtml(doc.tag) + '</span><span class="doc-meta-item">' + doc.lines + ' 行</span><span class="doc-meta-item">' + ids.length + ' 个引用编号</span><span class="doc-meta-item">' + escapeHtml(doc.path) + '</span></div>' +
-          '<div class="outline-row">' + doc.headings.filter(function (heading) { return heading !== doc.title; }).slice(0, 12).map(function (heading) { return '<span class="outline-chip">' + escapeHtml(heading) + '</span>'; }).join("") + '</div></section>' +
-          '<article class="article">' + renderMarkdown(doc.content) + '</article></div>';
+          '<div class="outline-row">' + headings.slice(0, 12).map(function (heading) { return '<span class="outline-chip">' + escapeHtml(heading) + '</span>'; }).join("") + '</div></section>' +
+          '<article class="' + articleClass + '">' + renderDocumentBody(doc) + '</article></div>';
         renderInspector(doc);
       }
 
