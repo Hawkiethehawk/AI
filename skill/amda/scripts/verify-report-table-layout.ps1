@@ -10,38 +10,32 @@ $tableContracts = @(
     [pscustomobject]@{
         Name = '全球主分组结构表'
         Headers = @('主分层', '下载侧全历史', '下载侧最近4周', '收入侧全历史', '收入侧最近4周', '分组角色')
-        Widths = @(100, 115, 125, 115, 125, 240)
+        Widths = @(66, 108, 117, 108, 117, 304)
         CenterColumnCount = 5
     },
     [pscustomobject]@{
         Name = '全部周期趋势表'
-        Headers = @('指标', '全历史', '前4周', '最近4周', '近期变化', '解读动作')
-        Widths = @(150, 95, 95, 95, 110, 275)
+        Headers = @('指标', '全历史', '前4周', '最近4周', '近期变化', '近期特征')
+        Widths = @(122, 66, 65, 75, 80, 412)
         CenterColumnCount = 5
         PercentageChangeColumn = 5
     },
     [pscustomobject]@{
         Name = '分品类决策表'
-        Headers = @('品类', 'IAA规模层', 'IAP观察层', '收入数据覆盖率', '近期信号', '当前动作')
-        Widths = @(150, 100, 100, 130, 150, 190)
-        CenterColumnCount = 4
+        Headers = @('品类', 'IAA规模层', 'IAP观察层', '收入数据覆盖率', '近期信号')
+        Widths = @(122, 90, 89, 122, 397)
+        CenterColumnCount = 5
     },
     [pscustomobject]@{
         Name = '分品类IAA重点国家表'
-        Headers = @('品类', 'IAA核心分组', '下载侧重点国家', '全历史/最近4周', 'IAA执行重点')
-        Widths = @(110, 103, 230, 123, 254)
-        CenterColumnCount = 3
+        Headers = @('品类', 'IAA核心分组', '下载侧重点国家', '全历史/最近4周')
+        Widths = @(122, 104, 471, 123)
+        CenterColumnCount = 4
     },
     [pscustomobject]@{
         Name = '组内国家诊断表'
         Headers = @('分组/观察组', '重点国家', '下载侧全历史', '下载侧最近4周', '收入全/近4周', '观察结论')
-        Widths = @(120, 180, 105, 113, 120, 182)
-        CenterColumnCount = 4
-    },
-    [pscustomobject]@{
-        Name = '执行结论表'
-        Headers = @('品类', 'IAA规模层', 'IAP观察层', '收入信号可信度', '执行结论')
-        Widths = @(150, 110, 110, 130, 320)
+        Widths = @(108, 94, 108, 117, 111, 282)
         CenterColumnCount = 4
     }
 )
@@ -123,6 +117,43 @@ function Test-CellHasLineBreak {
     return $Cell.InnerXml -match '\r|\n'
 }
 
+function Get-ParagraphLines {
+    param([System.Xml.XmlElement]$Paragraph)
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $current = [System.Text.StringBuilder]::new()
+    foreach ($node in $Paragraph.ChildNodes) {
+        if ($node.NodeType -eq [System.Xml.XmlNodeType]::Element -and $node.LocalName -eq 'br') {
+            [void]$lines.Add($current.ToString())
+            [void]$current.Clear()
+        }
+        elseif ($node.NodeType -eq [System.Xml.XmlNodeType]::Text) {
+            [void]$current.Append($node.Value)
+        }
+        else {
+            [void]$current.Append($node.InnerText)
+        }
+    }
+    [void]$lines.Add($current.ToString())
+    return @($lines)
+}
+
+function Test-CellWouldAutoWrap {
+    param(
+        [System.Xml.XmlElement]$Cell,
+        [int]$ColumnWidth
+    )
+
+    foreach ($paragraph in @($Cell.SelectNodes('./p'))) {
+        foreach ($line in (Get-ParagraphLines $paragraph)) {
+            if ((Get-EstimatedNoWrapWidth $line.Trim()) -gt $ColumnWidth) {
+                return $true
+            }
+        }
+    }
+    return $false
+}
+
 function Get-CellPlainText {
     param([System.Xml.XmlElement]$Cell)
 
@@ -166,9 +197,9 @@ $root = $document.DocumentElement
 $tables = @($root.SelectNodes('./table'))
 $expectedStructure = @{
     h1 = 7
-    table = 6
-    callout = 8
-    whiteboard = 4
+    table = 5
+    callout = 10
+    whiteboard = 5
 }
 foreach ($entry in $expectedStructure.GetEnumerator()) {
     $actual = @($root.SelectNodes("./$($entry.Key)")).Count
@@ -228,17 +259,17 @@ for ($tableIndex = 0; $tableIndex -lt [Math]::Min($tables.Count, $tableContracts
     }
 
     $bodyRows = @($table.SelectNodes('./tbody/tr'))
-    $columnHasLineBreak = @(
+    $columnNeedsAutoWrap = @(
         for ($columnIndex = 0; $columnIndex -lt $contract.Widths.Count; $columnIndex++) {
-            $hasLineBreak = $false
+            $needsAutoWrap = $false
             foreach ($row in $bodyRows) {
                 $rowCells = @($row.SelectNodes('./td'))
-                if ($rowCells.Count -eq $contract.Widths.Count -and (Test-CellHasLineBreak $rowCells[$columnIndex])) {
-                    $hasLineBreak = $true
+                if ($rowCells.Count -eq $contract.Widths.Count -and (Test-CellWouldAutoWrap $rowCells[$columnIndex] $contract.Widths[$columnIndex])) {
+                    $needsAutoWrap = $true
                     break
                 }
             }
-            $hasLineBreak
+            $needsAutoWrap
         }
     )
 
@@ -258,7 +289,7 @@ for ($tableIndex = 0; $tableIndex -lt [Math]::Min($tables.Count, $tableContracts
             $paragraphs = Get-CellParagraphs $cell $cellLabel
             if ($paragraphs.Count -eq 0) { continue }
 
-            $expectedAlign = if ($columnHasLineBreak[$columnIndex]) { 'left' } else { 'center' }
+            $expectedAlign = if ($columnNeedsAutoWrap[$columnIndex]) { 'left' } else { 'center' }
             foreach ($paragraph in $paragraphs) {
                 # Feishu omits the explicit left alignment attribute on readback because left is the native default.
                 $alignIsValid = if ($expectedAlign -eq 'left') {
@@ -268,15 +299,18 @@ for ($tableIndex = 0; $tableIndex -lt [Math]::Min($tables.Count, $tableContracts
                     $paragraph.HasAttribute('align') -and $paragraph.GetAttribute('align') -eq 'center'
                 }
                 if (-not $alignIsValid) {
-                    Add-CheckError "$cellLabel must be horizontally $expectedAlign because the whole column has$(
-                        if ($columnHasLineBreak[$columnIndex]) { '' } else { ' no' }
-                    ) line breaks"
+                    Add-CheckError "$cellLabel must be horizontally $expectedAlign because the column $(
+                        if ($columnNeedsAutoWrap[$columnIndex]) { 'requires automatic wrapping' } else { 'does not require automatic wrapping' }
+                    )"
                 }
             }
-            if (-not $columnHasLineBreak[$columnIndex]) {
-                $cellText = Get-CellPlainText $cell
-                if ((Get-EstimatedNoWrapWidth $cellText) -gt $contract.Widths[$columnIndex]) {
-                    Add-CheckError "$cellLabel is too narrow for one line"
+            if (-not $columnNeedsAutoWrap[$columnIndex]) {
+                foreach ($paragraph in $paragraphs) {
+                    foreach ($line in (Get-ParagraphLines $paragraph)) {
+                        if ((Get-EstimatedNoWrapWidth $line.Trim()) -gt $contract.Widths[$columnIndex]) {
+                            Add-CheckError "$cellLabel has a line too wide for the column: '$($line.Trim())'"
+                        }
+                    }
                 }
             }
         }

@@ -49,10 +49,25 @@ $docs = foreach ($spec in $docSpecs) {
 
     $content = [System.IO.File]::ReadAllText($fullPath, [System.Text.Encoding]::UTF8)
     $lines = @($content -split '\r?\n').Count
-    $headings = @(
-        [regex]::Matches($content, '(?m)^#{1,3}\s+(.+?)\s*$') |
-            ForEach-Object { $_.Groups[1].Value.Trim() }
-    )
+    if ($spec.path -like "*.json") {
+        try {
+            $parsedJson = $content | ConvertFrom-Json
+            if ($parsedJson.report_types) {
+                $headings = @("登记概览", "报表类型") + @($parsedJson.report_types | ForEach-Object { $_.name })
+            } elseif ($parsedJson.metrics) {
+                $headings = @("目录概览", "来源优先级", "全局规则", "数据属性", "指标", "维度")
+            } else {
+                $headings = @()
+            }
+        } catch {
+            $headings = @()
+        }
+    } else {
+        $headings = @(
+            [regex]::Matches($content, '(?m)^#{2,3}\s+(.+?)\s*$') |
+                ForEach-Object { $_.Groups[1].Value.Trim() }
+        )
+    }
 
     [pscustomobject]@{
         id = $spec.id

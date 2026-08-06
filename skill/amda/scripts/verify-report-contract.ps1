@@ -200,7 +200,7 @@ if ($Content -match '<ol[^>]*type\s*=\s*["'']a["'']') {
     Add-CheckError 'The report contains an unsupported type="a" ordered list'
 }
 
-$summarySection = Find-Section $sections '执行规则与结论|综合总结'
+$summarySection = Find-Section $sections '综合总结|总结'
 if ($null -eq $summarySection) {
     Add-CheckError 'The execution and conclusion section must contain the integrated summary'
 }
