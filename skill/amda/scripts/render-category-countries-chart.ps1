@@ -1,11 +1,19 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$DataPath,
-    [Parameter(Mandatory = $true)][string]$OutputPath
+    [string]$OutputPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $culture = [System.Globalization.CultureInfo]::InvariantCulture
+
+if ([string]::IsNullOrWhiteSpace($OutputPath)) {
+    $projectDir = $env:AMDA_PROJECT_DIR
+    if ([string]::IsNullOrWhiteSpace($projectDir)) {
+        $projectDir = 'F:\amda'
+    }
+    $OutputPath = Join-Path $projectDir 'output\charts\category-countries.svg'
+}
 
 $data = Get-Content -Raw -LiteralPath $DataPath -Encoding UTF8 | ConvertFrom-Json
 $rows = @($data.categoryCountries.rows)

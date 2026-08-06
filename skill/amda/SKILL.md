@@ -26,6 +26,12 @@ description: Generate or update an AppMagic global market analysis in Feishu fro
 - 涉及新建文档（包括更新草稿）时，如用户没有明确指定其他位置，严禁放入飞书云盘或任何文件夹；只能创建在“我的文档库”根目录。
 - 使用 `lark-cli docs +create` 时，必须显式传入 `--parent-position my_library`。仅在用户明确指定目标文件夹、知识库或其他位置时，才可改用相应的 `--parent-token`。
 
+## 本地产物目录
+
+- amda 图表分析产生的所有本地产物（四张 SVG/PNG、`.render-stages/` 中间文件、数据 JSON 等）一律写入 amda 项目文件夹内的 `output\charts\` 子目录；项目文件夹由环境变量 `AMDA_PROJECT_DIR` 指定，未设置时默认 `F:\amda`。
+- 禁止把上述产物写入 Codex 工作仓库根目录、`output/`、`artifacts/`、`diagrams/`、`tmp/` 或任何其它位置。
+- 调用 `scripts/render-market-charts.ps1` 或 `scripts/render-category-countries-chart.ps1` 时，不传输出参数时脚本默认输出到该目录；显式传参也只能指向 amda 项目文件夹内部。
+
 ## 必须先读
 
 1. 读取`references/report-contract.md`、`references/analysis-framework.md`和`references/examples.md`。规则文件与示例文件必须成对读取，不能只读取规则而跳过示例。

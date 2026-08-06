@@ -3,8 +3,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$DataPath,
 
-    [Parameter(Mandatory = $true)]
-    [string]$OutputDir,
+    [string]$OutputDir = '',
 
     [string]$TemplateDir = ''
 )
@@ -12,6 +11,14 @@ param(
 $ErrorActionPreference = 'Stop'
 $culture = [System.Globalization.CultureInfo]::InvariantCulture
 $scriptRoot = $PSScriptRoot
+
+if ([string]::IsNullOrWhiteSpace($OutputDir)) {
+    $projectDir = $env:AMDA_PROJECT_DIR
+    if ([string]::IsNullOrWhiteSpace($projectDir)) {
+        $projectDir = 'F:\amda'
+    }
+    $OutputDir = Join-Path $projectDir 'output\charts'
+}
 
 if ([string]::IsNullOrWhiteSpace($TemplateDir)) {
     $TemplateDir = Join-Path $scriptRoot '..\templates'
