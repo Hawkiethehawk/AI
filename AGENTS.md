@@ -8,7 +8,7 @@
 
 涉及 AppMagic 功能的修改时，默认直接使用 `F:\AppMagic` 项目目录进行修改、验证和重启，不再优先修改 `output/repos/AppMagic` 后推送。
 
-amda 图表分析的本地产物只允许写入 amda 项目文件夹内的 `output\charts`（项目文件夹默认 `F:\amda`，可用环境变量 `AMDA_PROJECT_DIR` 覆盖），禁止写入仓库根目录、`output/`、`artifacts/`、`diagrams/`、`tmp/` 等其它位置。
+AMDA 图表分析的本地产物只允许写入 AMDA 项目文件夹内的 `output\charts`（项目文件夹默认 `F:\AMDA`，可用环境变量 `AMDA_PROJECT_DIR` 覆盖），禁止写入仓库根目录、`output/`、`artifacts/`、`diagrams/`、`tmp/` 等其它位置。
 
 生成、改写或协作文档时，默认使用 `doc-coauthoring` 完成结构与内容，并使用 `deslop` 进行自然表达与去 AI 化润色。
 
