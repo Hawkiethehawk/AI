@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:,">
-  <title>App Monetization Expert · Skill Browser</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <title>Monety · Skill Browser</title>
   <script>
     (function () {
       try {
-        if (localStorage.getItem("app-monetization-theme") === "light") {
+        if (localStorage.getItem("monety-theme") === "light") {
           document.documentElement.setAttribute("data-theme", "light");
         }
       } catch (error) {}
@@ -82,13 +82,13 @@
       --sidebar-heading: #5f746b;
       --nav-ink: #3c5149;
       --nav-index: #71837a;
-      --nav-meta: #70837a;
+      --nav-meta: #52675f;
       --hover-wash: rgba(31, 80, 66, .08);
       --wash: rgba(31, 80, 66, .06);
-      --path: #687c73;
-      --foot: #61756c;
+      --path: #52675f;
+      --foot: #52675f;
       --boundary-ink: #3c5149;
-      --meta: #687c73;
+      --meta: #5d7469;
       --outline-ink: #52665d;
       --blockquote-ink: #24574f;
       --blockquote-bg: #e5f3ef;
@@ -112,6 +112,9 @@
     button, input { font: inherit; }
     button { cursor: pointer; }
     a { color: var(--teal); }
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 
     .app-shell { min-height: 100vh; }
     .topbar {
@@ -150,11 +153,10 @@
     .brand-subtitle { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; }
     .topbar-spacer { flex: 1; }
     .search-box {
-      width: min(360px, 32vw);
+      width: min(320px, 28vw);
       height: 38px;
       display: flex;
       align-items: center;
-      gap: 9px;
       padding: 0 12px;
       background: var(--soft);
       border: 1px solid var(--line);
@@ -162,7 +164,6 @@
       transition: border-color .2s, background .2s;
     }
     .search-box:focus-within { border-color: var(--teal); background: var(--paper); }
-    .search-label { flex: 0 0 auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
     .search-box input {
       min-width: 0;
       width: 100%;
@@ -173,6 +174,7 @@
     }
     .search-box input::placeholder { color: var(--placeholder); }
     .theme-toggle,
+    .search-toggle,
     .source-toggle {
       height: 38px;
       display: inline-flex;
@@ -188,19 +190,27 @@
     }
     .theme-toggle { width: 38px; padding: 0; }
     .theme-toggle:hover,
+    .search-toggle:hover,
     .source-toggle:hover { border-color: var(--teal); color: var(--teal); }
-    .theme-icon { font-size: 16px; line-height: 1; }
+    .theme-icon { width: 16px; height: 16px; display: block; }
+    .theme-icon svg { width: 100%; height: 100%; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
     .workspace {
       display: grid;
       grid-template-columns: 248px minmax(0, 1fr) 286px;
       min-height: calc(100vh - 72px);
+      align-items: start;
     }
     .sidebar {
+      position: sticky;
+      top: 72px;
+      height: calc(100vh - 72px);
+      max-height: calc(100vh - 72px);
       padding: 22px 14px 18px;
       background: var(--sidebar);
       border-right: 1px solid var(--line);
       overflow-y: auto;
+      overscroll-behavior: contain;
     }
     .sidebar-head {
       display: flex;
@@ -247,7 +257,7 @@
     .nav-item.active .nav-index { color: var(--teal); }
     .nav-copy { min-width: 0; }
     .nav-title { display: block; font-size: 13px; font-weight: 650; }
-    .nav-meta { display: block; color: var(--nav-meta); font-size: 10px; margin-top: 2px; }
+    .nav-meta { display: block; color: var(--nav-meta); font-size: 11px; margin-top: 2px; }
     .sidebar-foot {
       margin: 26px 8px 0;
       padding: 12px 11px;
@@ -262,6 +272,7 @@
 
     .main {
       min-width: 0;
+      min-height: calc(100vh - 72px);
       padding: 36px clamp(24px, 4vw, 68px) 80px;
       background: var(--paper);
       overflow: hidden;
@@ -281,9 +292,9 @@
     .hero-title {
       max-width: 760px;
       margin: 12px 0 12px;
-      font-size: clamp(30px, 4vw, 49px);
+      font-size: 44px;
       line-height: 1.13;
-      letter-spacing: -.02em;
+      letter-spacing: 0;
     }
     .hero-lede {
       max-width: 720px;
@@ -342,7 +353,7 @@
       gap: 18px;
       margin: 38px 0 14px;
     }
-    .section-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.01em; }
+    .section-heading h2 { margin: 0; font-size: 18px; letter-spacing: 0; }
     .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
 
     .architecture {
@@ -427,7 +438,7 @@
       padding-bottom: 26px;
       border-bottom: 1px solid var(--line);
     }
-    .doc-title { margin: 10px 0 7px; font-size: clamp(26px, 3.2vw, 39px); line-height: 1.18; letter-spacing: -.02em; }
+    .doc-title { margin: 10px 0 7px; font-size: 36px; line-height: 1.18; letter-spacing: 0; }
     .doc-description { max-width: 720px; margin: 0; color: var(--muted); font-size: 14px; }
     .doc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 15px; }
     .doc-meta-item { color: var(--meta); font-size: 11px; }
@@ -450,6 +461,7 @@
     .article h1 { display: none; }
     .article h2 { margin: 34px 0 12px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 21px; }
     .article > h1 + h2 { margin-top: 0; padding-top: 0; border-top: 0; }
+    .article.json-article > .json-document > h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
     .article h3 { margin: 24px 0 9px; color: var(--ink); font-size: 16px; }
     .article h4 { margin: 18px 0 7px; font-size: 14px; }
     .article h1, .article h2, .article h3, .article h4 { scroll-margin-top: 88px; }
@@ -481,8 +493,8 @@
       line-height: 1.6;
     }
     .article pre code { padding: 0; color: inherit; background: transparent; }
-    .article.json-article { max-width: 100%; }
-    .json-document { display: grid; gap: 12px; margin-top: 0; }
+    .article.json-article { max-width: 860px; }
+    .json-document { margin-top: 0; }
     .json-object { min-width: 0; }
     .json-section { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--line); }
     .json-section:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
@@ -522,6 +534,79 @@
     .json-raw { margin-top: 14px; border-top: 1px solid var(--line); }
     .json-raw summary { padding: 10px 0; color: var(--muted); cursor: pointer; font-size: 12px; }
     .json-raw pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; tab-size: 2; }
+    .json-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; margin-bottom: 20px; }
+    .json-overview-item { display: grid; grid-template-columns: 105px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .json-overview-label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .json-overview-value { min-width: 0; color: var(--ink); font-size: 13px; overflow-wrap: anywhere; }
+    .json-overview-value code { color: var(--meta); background: transparent; }
+    .json-local-ref { padding: 0; font-size: 12px; }
+    .json-source-link { color: var(--teal); text-decoration: none; }
+    .json-source-link:hover { text-decoration: underline; }
+    .json-report-index-title { margin: 34px 0 12px; padding-top: 7px; border-top: 1px solid var(--line); color: var(--ink); font-size: 21px; }
+    .json-report-list { display: block; }
+    .json-report { padding: 0; border: 0; }
+    .json-report + .json-report { margin-top: 28px; }
+    .json-report-heading { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 9px; }
+    .json-report-number { color: var(--teal); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; font-weight: 760; }
+    .json-report-heading h3 { margin: 0; color: var(--ink); font-size: 16px; }
+    .json-report-id { color: var(--meta); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; }
+    .json-definition-list { margin: 0; border-top: 1px solid var(--line); }
+    .json-definition-row { display: grid; grid-template-columns: 145px minmax(0, 1fr); gap: 18px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .json-definition-key { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .json-definition-value { min-width: 0; color: var(--ink); font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+    .json-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .json-tag { padding: 3px 7px; color: var(--outline-ink); background: var(--soft); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; line-height: 1.35; }
+    .json-tag a { color: var(--teal); text-decoration: underline; text-underline-offset: 2px; }
+    .json-catalog-meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 28px; margin: 0; }
+    .json-catalog-block { min-width: 0; }
+    .json-catalog-block .json-metric-heading { margin-top: 0; }
+    .json-rule-list { margin: 0; padding-left: 22px; color: var(--ink); font-size: 13px; }
+    .json-rule-list li { margin: 5px 0; padding-left: 4px; }
+    .json-source-list { margin: 0 0 14px; padding-left: 22px; color: var(--ink); font-size: 13px; }
+    .json-source-list li { margin: 5px 0; padding-left: 4px; }
+    .json-metric-count { color: var(--meta); font-size: 12px; }
+    .json-metric-heading { margin: 24px 0 10px; color: var(--ink); font-size: 18px; }
+    .json-table-wrap { overflow-x: auto; margin: 15px 0 19px; }
+    .json-table-wrap table { min-width: 0; margin: 0; }
+    .json-attribute-table th { width: 150px; color: var(--muted); background: transparent; font-weight: 700; }
+    .json-attribute-table td { color: var(--ink); line-height: 1.6; }
+    .json-metric-index { width: 100%; min-width: 0; table-layout: fixed; }
+    .json-metric-index th, .json-metric-index td { vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
+    .json-metric-index thead th { position: sticky; top: 72px; z-index: 2; color: var(--ink); background: var(--soft); box-shadow: 0 1px 0 var(--line); }
+    .json-metric-index th:nth-child(1), .json-metric-index td:nth-child(1) { width: 21%; }
+    .json-metric-index th:nth-child(2), .json-metric-index td:nth-child(2) { width: 16%; }
+    .json-metric-index th:nth-child(3), .json-metric-index td:nth-child(3) { width: 22%; }
+    .json-metric-index th:nth-child(4), .json-metric-index td:nth-child(4) { width: 41%; }
+    .json-metric-index .metric-name-cell, .json-metric-index .metric-source-cell { min-width: 0; }
+    .json-metric-index .metric-name-cell strong { display: block; color: var(--ink); font-size: 13px; }
+    .json-metric-index .metric-name-cell code { display: block; margin-top: 4px; color: var(--meta); background: transparent; overflow-wrap: anywhere; }
+    .json-metric-type-line { margin: 0 0 4px; color: var(--ink); font-size: 12px; overflow-wrap: anywhere; }
+    .json-metric-type-label { margin-right: 5px; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .json-metric-rules-cell { line-height: 1.55; }
+    .json-metric-row:nth-child(even) td { background: var(--wash); }
+    .json-metric-rule { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; margin: 0 0 7px; }
+    .json-metric-rule:last-child { margin-bottom: 0; }
+    .json-metric-rule-label { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .json-metric-index .json-tags { display: inline; }
+    .json-metric-index .json-tag { display: inline; padding: 0; color: var(--outline-ink); background: transparent; border: 0; border-radius: 0; font-size: 12px; }
+    .json-metric-index .json-tag + .json-tag::before { content: "、"; color: var(--muted); }
+    .json-metric-group-row th { color: var(--teal); background: var(--soft); font-size: 13px; }
+    .json-formula { display: inline-block; max-width: 100%; padding: 2px 6px; color: var(--code-ink); background: var(--orange-soft); border-radius: 3px; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .json-metric-groups { display: grid; gap: 42px; margin-top: 18px; }
+    .json-metric-group { min-width: 0; }
+    .json-metric-group-heading { display: flex; align-items: baseline; gap: 10px; margin: 0; padding: 0 0 10px; border-bottom: 2px solid var(--line-strong); }
+    .json-metric-group-heading h3 { margin: 0; color: var(--ink); font-size: 17px; }
+    .json-metric-group-count { color: var(--muted); font-size: 11px; }
+    .json-metric-card-grid { display: block; }
+    .json-metric-card { display: grid; grid-template-columns: 42px minmax(140px, .4fr) minmax(0, 1.6fr); column-gap: 18px; min-width: 0; padding: 18px 0 19px; color: var(--ink); background: transparent; border-bottom: 1px solid var(--line); }
+    .json-metric-card:first-child { border-top: 1px solid var(--line); }
+    .json-metric-card-number { padding-top: 2px; color: var(--teal); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; font-weight: 760; line-height: 1.6; font-variant-numeric: tabular-nums; }
+    .json-metric-card-header { min-width: 0; }
+    .json-metric-card-title-wrap { min-width: 0; }
+    .article .json-metric-card-title { margin: 0; color: var(--ink); font-size: 15px; font-weight: 760; line-height: 1.45; overflow-wrap: anywhere; }
+    .json-metric-card-definition { min-width: 0; }
+    .json-metric-card-definition-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .json-metric-card-definition-text { margin: 0; color: var(--ink); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
     .article table {
       width: 100%;
       margin: 15px 0 19px;
@@ -542,15 +627,23 @@
 
     .inspector {
       min-width: 0;
+      position: sticky;
+      top: 72px;
+      height: calc(100vh - 72px);
+      max-height: calc(100vh - 72px);
       padding: 24px 18px;
       background: var(--inspector);
       border-left: 1px solid var(--line);
       overflow-y: auto;
+      overscroll-behavior: contain;
     }
     .inspector-title { margin: 0 0 6px; font-size: 12px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
     .inspector-copy { margin: 0 0 18px; color: var(--muted); font-size: 11px; line-height: 1.55; }
     .inspector-section { margin: 24px 0 0; }
     .inspector-section h3 { margin: 0 0 9px; color: var(--inspector-heading); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+    .inspector-count { display: inline; margin-left: 3px; color: var(--inspector-heading); letter-spacing: 0; white-space: nowrap; }
+    .inspector-count > span:last-child { display: inline; }
+    .inspector-separator { display: inline-block; width: 3px; height: 3px; margin-right: 6px; background: currentColor; border-radius: 50%; vertical-align: middle; transform: translateY(-1px); }
     .inspector-outline { display: grid; gap: 4px; }
     .inspector-outline button {
       padding: 5px 7px;
@@ -585,6 +678,20 @@
     .source-name { margin-top: 3px; color: var(--ink); font-size: 12px; font-weight: 690; line-height: 1.35; }
     .source-scope { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
     .source-empty { color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .source-card-row { display: flex; align-items: flex-start; gap: 8px; }
+    .source-card-copy { min-width: 0; flex: 1; }
+    .source-card-arrow { flex: 0 0 auto; color: var(--teal); font-size: 14px; line-height: 1.2; }
+    .source-toolbar { display: flex; align-items: center; gap: 12px; margin: 22px auto 0; max-width: 1000px; }
+    .source-filter { flex: 1; min-width: 0; height: 38px; padding: 0 12px; color: var(--ink); background: var(--soft); border: 1px solid var(--line); border-radius: 7px; }
+    .source-filter:focus { border-color: var(--teal); outline: 0; }
+    .source-filter-summary { flex: 0 0 auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .source-groups { max-width: 1000px; margin: 0 auto; }
+    .source-group { margin-top: 28px; }
+    .source-group:first-child { margin-top: 22px; }
+    .source-group-heading { display: flex; align-items: baseline; gap: 9px; margin: 0; padding-bottom: 9px; border-bottom: 1px solid var(--line); font-size: 15px; }
+    .source-group-count { color: var(--muted); font-size: 11px; font-weight: 500; }
+    .source-filter-empty { margin: 28px 0; padding: 28px 20px; border: 1px dashed var(--line-strong); border-radius: 7px; color: var(--muted); text-align: center; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
     .search-results { max-width: 900px; margin: 0 auto; }
     .search-summary { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
@@ -601,7 +708,18 @@
     .result-item:hover { border-color: var(--teal); box-shadow: var(--shadow-soft); }
     .result-title { margin: 5px 0; font-size: 15px; font-weight: 740; }
     .result-snippet { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .result-snippet mark { padding: 0 2px; color: var(--ink); background: var(--teal-soft); border-radius: 2px; }
     .empty-state { padding: 60px 20px; text-align: center; color: var(--muted); }
+
+    body.data-focus-view .workspace,
+    body.search-view .workspace,
+    body.source-view .workspace { grid-template-columns: 248px minmax(0, 1fr); }
+    body.data-focus-view .inspector,
+    body.search-view .inspector,
+    body.source-view .inspector { display: none; }
+    body.data-focus-view .content-width { max-width: 1000px; }
+    body.data-focus-view .article.json-article { max-width: 860px; }
+    body.data-focus-view .json-table-wrap { overflow-x: visible; }
 
     @media (max-width: 1120px) {
       .workspace { grid-template-columns: 220px minmax(0, 1fr); }
@@ -615,6 +733,7 @@
       .brand-subtitle { display: none; }
       .topbar-spacer { display: none; }
       .search-box { order: 3; width: 100%; }
+      .search-toggle { order: 2; }
       .source-toggle { order: 2; padding: 0 10px; }
       .workspace { display: block; min-height: calc(100vh - 112px); }
       .sidebar {
@@ -657,6 +776,9 @@
       .architecture-step:nth-child(3), .architecture-step:nth-child(4) { border-bottom: 0; }
       .architecture-step:nth-child(3)::after { display: none; }
       .module-grid, .boundary { grid-template-columns: 1fr; }
+      .json-metric-card-grid { display: block; }
+      .json-metric-card { grid-template-columns: 32px minmax(0, 1fr); column-gap: 12px; }
+      .json-metric-card-definition { grid-column: 2; margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--line); }
       .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
       .section-heading { display: block; }
       .section-heading p { margin-top: 3px; }
@@ -675,23 +797,23 @@
       <a class="brand" href="#overview" aria-label="回到 Skill 总览">
         <span class="brand-mark">IAA</span>
         <span>
-          <span class="brand-title">App Monetization Expert</span>
+          <span class="brand-title">Monety</span>
           <span class="brand-subtitle">Desktop Reference Browser</span>
         </span>
       </a>
       <div class="topbar-spacer"></div>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换到亮色主题" aria-pressed="false" title="切换到亮色主题">
-        <span class="theme-icon" aria-hidden="true">☾</span>
+        <span class="theme-icon" aria-hidden="true"></span>
       </button>
-      <label class="search-box">
-        <span class="search-label">搜索</span>
+      <button class="search-toggle" id="searchToggle" type="button" aria-controls="searchInput" title="聚焦搜索框">搜索</button>
+      <label class="search-box" aria-label="搜索内容">
         <input id="searchInput" type="search" placeholder="查找模块、指标、来源或关键词" autocomplete="off">
       </label>
       <button class="source-toggle" id="sourceToggle" type="button">来源库</button>
     </header>
 
     <div class="workspace">
-      <aside class="sidebar">
+      <aside class="sidebar" aria-label="Skill 内容导航">
         <div class="sidebar-head"><span>内容地图</span><span class="sidebar-count" id="docCount"></span></div>
         <nav class="nav" id="nav" aria-label="Skill 内容地图"></nav>
         <div class="sidebar-foot">
@@ -700,7 +822,7 @@
         </div>
       </aside>
       <main class="main" id="main"></main>
-      <aside class="inspector" id="inspector"></aside>
+      <aside class="inspector" id="inspector" aria-label="当前章节与来源"></aside>
     </div>
   </div>
 
@@ -714,17 +836,22 @@
       var docs = DATA.docs || [];
       var sources = DATA.sources || [];
       var sourceMap = {};
-      sources.forEach(function (source) { sourceMap[source.id] = source; });
+      var sourceUrlMap = {};
+      sources.forEach(function (source) {
+        sourceMap[source.id] = source;
+        sourceUrlMap[source.url] = source;
+      });
       var sourceIds = Object.keys(sourceMap).sort(function (a, b) { return b.length - a.length; });
       var sourceIdPattern = sourceIds.join("|");
       var fullCitationPattern = new RegExp("\\*\\*\\[(" + sourceIdPattern + ")-[^\\]]+\\]\\*\\*", "g");
       var bareCitationPattern = new RegExp("\\[(" + sourceIdPattern + ")\\]", "g");
       var GROUP_ORDER = ["入口", "IAA 核心", "TopOn 分析", "增长支持", "IAP 按需", "来源"];
-      var state = { view: "overview", query: "", sourceMode: false };
+      var state = { view: "overview", query: "", sourceMode: false, sourceFilter: "" };
       var searchInput = document.getElementById("searchInput");
       var main = document.getElementById("main");
       var nav = document.getElementById("nav");
       var inspector = document.getElementById("inspector");
+      var searchToggle = document.getElementById("searchToggle");
       var sourceToggle = document.getElementById("sourceToggle");
       var themeToggle = document.getElementById("themeToggle");
 
@@ -739,17 +866,28 @@
           .replace(/'/g, "&#39;");
       }
 
+      function escapeRegExp(value) {
+        return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function themeIcon(theme) {
+        if (theme === "light") {
+          return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>';
+        }
+        return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+      }
+
       function setTheme(theme, persist) {
         var normalized = theme === "light" ? "light" : "dark";
         var nextTheme = normalized === "dark" ? "light" : "dark";
         var nextLabel = nextTheme === "light" ? "亮色" : "暗色";
         document.documentElement.setAttribute("data-theme", normalized);
-        themeToggle.querySelector(".theme-icon").textContent = normalized === "light" ? "☼" : "☾";
+        themeToggle.querySelector(".theme-icon").innerHTML = themeIcon(normalized);
         themeToggle.setAttribute("aria-label", "切换到" + nextLabel + "主题");
         themeToggle.setAttribute("title", "切换到" + nextLabel + "主题");
         themeToggle.setAttribute("aria-pressed", normalized === "light" ? "true" : "false");
         if (persist) {
-          try { localStorage.setItem("app-monetization-theme", normalized); } catch (error) {}
+          try { localStorage.setItem("monety-theme", normalized); } catch (error) {}
         }
       }
 
@@ -808,6 +946,61 @@
         return lines.join("\n");
       }
 
+      function stripFrontmatter(markdown) {
+        var lines = String(markdown || "").replace(/\r/g, "").split("\n");
+        if (lines[0].trim() !== "---") { return lines.join("\n"); }
+        for (var i = 1; i < lines.length; i += 1) {
+          if (lines[i].trim() === "---") { return lines.slice(i + 1).join("\n"); }
+        }
+        return lines.join("\n");
+      }
+
+      function plainSearchText(value) {
+        var text = String(value || "")
+          .replace(/```[\s\S]*?```/g, " ")
+          .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+          .replace(/^\s*[-*+]\s+/gm, "")
+          .replace(/^\s*\d+\.\s+/gm, "")
+          .replace(/\|/g, " ")
+          .replace(/\*\*([^*]+)\*\*/g, "$1")
+          .replace(/__([^_]+)__/g, "$1")
+          .replace(/`([^`]+)`/g, "$1")
+          .replace(/\*([^*]+)\*/g, "$1")
+          .replace(/_([^_]+)_/g, "$1")
+          .replace(/\s+/g, " ")
+          .trim();
+        return text;
+      }
+
+      function highlightText(value, query) {
+        var safe = escapeHtml(value);
+        if (!query) { return safe; }
+        var pattern = new RegExp(escapeRegExp(query), "gi");
+        return safe.replace(pattern, function (match) { return "<mark>" + match + "</mark>"; });
+      }
+
+      function resetDocumentScroll() {
+        window.requestAnimationFrame(function () {
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        });
+      }
+
+      function applyViewClasses() {
+        document.body.classList.remove("data-focus-view", "search-view", "source-view");
+        if (state.query.trim()) {
+          document.body.classList.add("search-view");
+          return;
+        }
+        if (state.sourceMode || state.view === "public-sources") {
+          document.body.classList.add("source-view");
+          return;
+        }
+        var doc = docById(state.view);
+        if (doc && /\.json$/i.test(doc.path)) { document.body.classList.add("data-focus-view"); }
+      }
+
       function jsonKeyTitle(key) {
         var titles = {
           version: "版本",
@@ -844,7 +1037,41 @@
       function jsonScalar(value) {
         if (value === null) { return '<span class="json-empty">null</span>'; }
         var text = escapeHtml(String(value));
-        return text.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+        return text.replace(/(https?:\/\/[^\s<]+)/g, function (rawUrl) {
+          var cleanUrl = rawUrl.replace(/[),.;]+$/, "");
+          var source = sourceUrlMap[cleanUrl];
+          if (source) {
+            return '<a class="json-source-link" href="' + escapeHtml(cleanUrl) + '" target="_blank" rel="noopener"><strong>[' + escapeHtml(source.id + "-" + source.title) + ']</strong></a>' + escapeHtml(rawUrl.slice(cleanUrl.length));
+          }
+          return '<a href="' + escapeHtml(cleanUrl) + '" target="_blank" rel="noopener">' + escapeHtml(cleanUrl) + '</a>' + escapeHtml(rawUrl.slice(cleanUrl.length));
+        });
+      }
+
+      function jsonSourceLink(value) {
+        var source = sourceUrlMap[String(value || "")];
+        if (!source) { return jsonScalar(value); }
+        return '<a class="json-source-link" href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener"><strong>[' + escapeHtml(source.id + "-" + source.title) + ']</strong></a>';
+      }
+
+      function jsonTagList(values, sourceAware) {
+        var list = Array.isArray(values) ? values : [values];
+        if (!list.length) { return '<span class="json-empty">无</span>'; }
+        return '<div class="json-tags">' + list.map(function (value) {
+          var rendered = sourceAware && /^https?:\/\//.test(String(value || "")) ? jsonSourceLink(value) : jsonScalar(value);
+          return '<span class="json-tag">' + rendered + '</span>';
+        }).join("") + '</div>';
+      }
+
+      function jsonAttributeTable(rows, className, caption) {
+        var tableClass = className || "json-attribute-table";
+        var tableCaption = caption || "属性表";
+        return '<table class="' + tableClass + '"><caption class="sr-only">' + escapeHtml(tableCaption) + '</caption><tbody>' + rows.map(function (row) {
+          return '<tr><th scope="row">' + escapeHtml(row[0]) + '</th><td>' + row[1] + '</td></tr>';
+        }).join("") + '</tbody></table>';
+      }
+
+      function jsonRawBlock(parsed) {
+        return '<details class="json-raw"><summary>查看原始 JSON</summary><pre><code>' + escapeHtml(JSON.stringify(parsed, null, 2)) + '</code></pre></details>';
       }
 
       function jsonKeyBadge(key, label) {
@@ -912,20 +1139,94 @@
         }).join("") + '</div>';
       }
 
-      function renderJsonDocument(content) {
-        var raw = String(content || "").trim();
+      function renderReportType(item, index) {
+        var rows = [
+          ["标识", '<code>' + escapeHtml(item.id || "") + '</code>'],
+          ["文件名匹配", jsonTagList(item.filename_patterns)],
+          ["必需字段", jsonTagList(item.required_headers)],
+          ["特征字段", jsonTagList(item.signature_headers)],
+          ["数据粒度", jsonScalar(item.grain)],
+          ["分析处理", jsonScalar(item.analysis_rule)]
+        ];
+        rows[1] = ["文件名匹配", jsonTagList(item.filename_patterns)];
+        return '<section class="json-report"><div class="json-report-heading"><span class="json-report-number">' + String(index + 1).padStart(2, "0") + '</span><h3>' + escapeHtml(item.name || item.id || "未命名报表") + '</h3></div><div class="json-table-wrap">' + jsonAttributeTable(rows, "json-report-table", (item.name || item.id || "报表") + "字段") + '</div></section>';
+      }
+
+      function renderReportTypesDocument(parsed) {
+        var reports = Array.isArray(parsed.report_types) ? parsed.report_types : [];
+        var overviewRows = [
+          ["版本", jsonScalar(parsed.version)],
+          ["语义参考", '<code class="json-local-ref">' + escapeHtml(parsed.semantic_reference || "") + '</code>'],
+          ["报表数量", reports.length + " 种"]
+        ];
+        return '<div class="json-document json-report-document"><h2>登记概览</h2><div class="json-table-wrap">' + jsonAttributeTable(overviewRows, "json-overview-table", "报表类型登记概览") + '</div><h2>报表类型</h2><div class="json-report-list">' + reports.map(renderReportType).join("") + '</div>' + jsonRawBlock(parsed) + '</div>';
+      }
+
+      function metricKindTitle(kind) {
+        if (kind === "dimension") { return "维度"; }
+        if (kind === "metric") { return "指标"; }
+        return kind || "未分类";
+      }
+
+      function renderMetricRules(metric) {
+        var parts = [];
+        if (metric.semantic_name_en) { parts.push('<div class="json-metric-rule"><span class="json-metric-rule-label">英文语义</span><code>' + escapeHtml(metric.semantic_name_en) + '</code></div>'); }
+        if (metric.definition) { parts.push('<div class="json-metric-rule"><span class="json-metric-rule-label">定义</span><span>' + jsonScalar(metric.definition) + '</span></div>'); }
+        if (metric.formula) { parts.push('<div class="json-metric-rule"><span class="json-metric-rule-label">公式</span><code class="json-formula">' + escapeHtml(metric.formula) + '</code></div>'); }
+        if (metric.aggregation) { parts.push('<div class="json-metric-rule"><span class="json-metric-rule-label">聚合</span><code>' + escapeHtml(metric.aggregation) + '</code></div>'); }
+        if (metric.documentation_status) { parts.push('<div class="json-metric-rule"><span class="json-metric-rule-label">文档</span><span>' + jsonScalar(metric.documentation_status) + '</span></div>'); }
+        if (metric.validation_status) { parts.push('<div class="json-metric-rule"><span class="json-metric-rule-label">校验</span><span>' + jsonScalar(metric.validation_status) + '</span></div>'); }
+        if (metric.validation_note) { parts.push('<div class="json-metric-rule"><span class="json-metric-rule-label">说明</span><span>' + jsonScalar(metric.validation_note) + '</span></div>'); }
+        if (metric.sources) { parts.push('<div class="json-metric-rule"><span class="json-metric-rule-label">来源</span>' + jsonTagList(metric.sources, true) + '</div>'); }
+        return parts.join("");
+      }
+
+      function renderMetricCard(metric, key, index) {
+        var displayName = metric.display_name || key;
+        var definition = metric.definition ? jsonScalar(metric.definition) : '<span class="json-empty">暂无定义</span>';
+        return '<article class="json-metric-card"><span class="json-metric-card-number">' + String(index + 1).padStart(2, "0") + '</span><header class="json-metric-card-header"><div class="json-metric-card-title-wrap"><h4 class="json-metric-card-title">' + escapeHtml(displayName) + '</h4></div></header><div class="json-metric-card-definition"><span class="json-metric-card-definition-label">定义</span><p class="json-metric-card-definition-text">' + definition + '</p></div></article>';
+      }
+
+      function renderMetricGroup(title, entries) {
+        if (!entries.length) { return ""; }
+        return '<section class="json-metric-group"><div class="json-metric-group-heading"><h3>' + escapeHtml(title) + '</h3><span class="json-metric-group-count">' + entries.length + ' 项</span></div><div class="json-metric-card-grid">' + entries.map(function (entry) { return renderMetricCard(entry.metric, entry.key, entry.order); }).join("") + '</div></section>';
+      }
+
+      function renderMetricCatalogDocument(parsed) {
+        var metrics = parsed.metrics || {};
+        var entries = Object.keys(metrics).map(function (key, index) { return { key: key, metric: metrics[key] || {}, order: index }; });
+        var measures = entries.filter(function (entry) { return entry.metric.kind !== "dimension"; });
+        var dimensions = entries.filter(function (entry) { return entry.metric.kind === "dimension"; });
+        var orderedEntries = measures.concat(dimensions);
+        orderedEntries.forEach(function (entry, index) { entry.order = index; });
+        var overviewRows = [
+          ["版本", jsonScalar(parsed.version)],
+          ["语言", jsonScalar(parsed.language)],
+          ["指标数量", entries.length + " 项"],
+          ["用途", jsonScalar(parsed.purpose)]
+        ];
+        var precedence = '<ul class="json-source-list">' + (parsed.source_precedence || []).map(function (source) { return '<li>' + jsonSourceLink(source) + '</li>'; }).join("") + '</ul>';
+        var rules = '<ol class="json-rule-list">' + (parsed.global_rules || []).map(function (rule) { return '<li>' + jsonScalar(rule) + '</li>'; }).join("") + '</ol>';
+        var metricGroups = '<div class="json-metric-groups">' + renderMetricGroup("指标", measures) + renderMetricGroup("维度", dimensions) + '</div>';
+        return '<div class="json-document json-metric-document"><h2>目录概览</h2><div class="json-table-wrap">' + jsonAttributeTable(overviewRows, "json-overview-table", "TopOn 指标目录概览") + '</div><h2>来源优先级</h2>' + precedence + '<h2>全局规则</h2>' + rules + '<h2>数据属性</h2>' + metricGroups + '</div>';
+      }
+
+      function renderJsonDocument(doc) {
+        var raw = String(doc.content || "").trim();
         try {
           var parsed = JSON.parse(raw);
-          return '<div class="json-document">' + renderJsonNode(parsed, "", 0) +
-            '<details class="json-raw"><summary>查看原始 JSON</summary><pre><code>' + escapeHtml(JSON.stringify(parsed, null, 2)) + '</code></pre></details></div>';
+          if (doc.id === "topn-report-types" && parsed && parsed.report_types) { return renderReportTypesDocument(parsed); }
+          if (doc.id === "topn-metric-catalog" && parsed && parsed.metrics) { return renderMetricCatalogDocument(parsed); }
+          return '<div class="json-document">' + renderJsonNode(parsed, "", 0) + jsonRawBlock(parsed) + '</div>';
         } catch (error) {
           return '<pre><code>' + escapeHtml(raw) + '</code></pre>';
         }
       }
 
       function renderDocumentBody(doc) {
-        if (/\.json$/i.test(doc.path)) { return renderJsonDocument(doc.content); }
-        return renderMarkdown(doc.kind === "topn" ? stripViewerToc(doc.content) : doc.content);
+        if (/\.json$/i.test(doc.path)) { return renderJsonDocument(doc); }
+        var content = doc.kind === "entry" ? stripFrontmatter(doc.content) : doc.content;
+        return renderMarkdown(doc.kind === "topn" ? stripViewerToc(content) : content);
       }
 
       function visibleHeadings(doc) {
@@ -1004,8 +1305,8 @@
               i += 1;
             }
             i -= 1;
-            html += "<table><thead><tr>" + headers.map(function (cell) {
-              return "<th>" + inlineMarkdown(cell) + "</th>";
+            html += "<table><caption class=\"sr-only\">文档数据表</caption><thead><tr>" + headers.map(function (cell) {
+              return "<th scope=\"col\">" + inlineMarkdown(cell) + "</th>";
             }).join("") + "</tr></thead><tbody>";
             rows.forEach(function (row) {
               html += "<tr>" + headers.map(function (_, index) {
@@ -1036,10 +1337,23 @@
 
       function citationIds(content) {
         var matches = [];
+        var seen = {};
+        function add(id) {
+          if (id && !seen[id] && sourceMap[id]) {
+            seen[id] = true;
+            matches.push(id);
+          }
+        }
         var pattern = new RegExp("\\[(" + sourceIdPattern + ")(?:-[^\\]]+)?\\]", "g");
         var match;
         while ((match = pattern.exec(String(content || ""))) !== null) {
-          if (matches.indexOf(match[1]) === -1) { matches.push(match[1]); }
+          add(match[1]);
+        }
+        var urlPattern = /https?:\/\/[^\s"'<>]+/g;
+        while ((match = urlPattern.exec(String(content || ""))) !== null) {
+          var cleanUrl = match[0].replace(/[),.;\]}]+$/, "");
+          var source = sourceUrlMap[cleanUrl];
+          if (source) { add(source.id); }
         }
         return matches;
       }
@@ -1114,31 +1428,97 @@
       }
 
       function renderSearch() {
-        var query = state.query.trim().toLowerCase();
+        var rawQuery = state.query.trim();
+        var query = rawQuery.toLowerCase();
         var matches = docs.filter(function (doc) {
           return (doc.title + " " + doc.description + " " + doc.content).toLowerCase().indexOf(query) !== -1;
         });
         main.innerHTML = '<div class="search-results"><div class="eyebrow"><span class="eyebrow-line"></span>Search</div>' +
-          '<h1 class="doc-title">搜索结果</h1><p class="search-summary">“' + escapeHtml(state.query.trim()) + '”匹配 ' + matches.length + ' 个文件</p>' +
+          '<h1 class="doc-title">搜索结果</h1><p class="search-summary" aria-live="polite" aria-atomic="true">“' + escapeHtml(rawQuery) + '”匹配 ' + matches.length + ' 个文件</p>' +
           '<div class="result-list">' +
           (matches.length ? matches.map(function (doc) {
-            var lower = doc.content.toLowerCase();
+            var searchable = plainSearchText(doc.content);
+            var lower = searchable.toLowerCase();
             var position = lower.indexOf(query);
+            if (position < 0) { searchable = plainSearchText(doc.title + " " + doc.description); position = searchable.toLowerCase().indexOf(query); }
             var start = Math.max(0, position - 70);
-            var snippet = doc.content.slice(start, start + 190).replace(/\s+/g, " ");
+            var snippet = searchable.slice(start, start + 190).replace(/\s+/g, " ");
+            var suffix = start + 190 < searchable.length ? "…" : "";
             return '<a class="result-item" href="#module/' + doc.id + '" data-view="' + doc.id + '">' +
               '<span class="' + tagClass(doc.tag) + '">' + escapeHtml(doc.tag) + '</span>' +
               '<h2 class="result-title">' + escapeHtml(doc.title) + '</h2>' +
-              '<p class="result-snippet">' + escapeHtml(snippet) + '…</p></a>';
+              '<p class="result-snippet">' + highlightText(snippet, rawQuery) + suffix + '</p></a>';
           }).join("") : '<div class="empty-state">没有找到匹配内容。试试广告位、Waterfall、LTV、付费墙或来源编号。</div>') +
           '</div></div>';
       }
 
+      function sourcePlatform(source) {
+        var id = String(source.id || "");
+        if (id.indexOf("IAA-CSJ-") === 0) { return "穿山甲"; }
+        if (id.indexOf("IAA-MAX-") === 0) { return "AppLovin MAX"; }
+        if (id.indexOf("IAA-TOPON-") === 0) { return "TopOn"; }
+        if (id.indexOf("IAP-APPLE-") === 0) { return "Apple"; }
+        if (id.indexOf("IAP-GPLAY-") === 0) { return "Google Play"; }
+        if (id.indexOf("IAP-REVCAT-") === 0) { return "RevenueCat"; }
+        if (id.indexOf("IAP-ADAPTY-") === 0) { return "Adapty"; }
+        if (id.indexOf("UA-GOOGLE-") === 0) { return "Google Ads"; }
+        if (id.indexOf("UA-META-") === 0) { return "Meta"; }
+        if (id.indexOf("UA-TIKTOK-") === 0) { return "TikTok"; }
+        if (id.indexOf("UA-APPLEADS-") === 0) { return "Apple Ads"; }
+        if (id.indexOf("RESEARCH-APPMAGIC-") === 0) { return "AppMagic"; }
+        return "其他来源";
+      }
+
+      var SOURCE_GROUP_ORDER = ["穿山甲", "AppLovin MAX", "TopOn", "Apple", "Google Play", "RevenueCat", "Adapty", "Google Ads", "Meta", "TikTok", "Apple Ads", "AppMagic", "其他来源"];
+
+      function filteredSources() {
+        var query = state.sourceFilter.trim().toLowerCase();
+        if (!query) { return sources.slice(); }
+        return sources.filter(function (source) {
+          return [source.id, source.title, source.scope, source.url, sourcePlatform(source)].join(" ").toLowerCase().indexOf(query) !== -1;
+        });
+      }
+
+      function renderSourceGroups() {
+        var filtered = filteredSources();
+        if (!filtered.length) { return '<div class="source-filter-empty">没有匹配的公开来源。试试平台名称、来源编号或关键词。</div>'; }
+        var groups = {};
+        filtered.forEach(function (source) {
+          var platform = sourcePlatform(source);
+          if (!groups[platform]) { groups[platform] = []; }
+          groups[platform].push(source);
+        });
+        return SOURCE_GROUP_ORDER.filter(function (platform) { return groups[platform] && groups[platform].length; }).map(function (platform) {
+          var entries = groups[platform];
+          return '<section class="source-group"><h2 class="source-group-heading">' + escapeHtml(platform) + '<span class="source-group-count">' + entries.length + ' 个来源</span></h2><div class="source-grid">' + entries.map(renderSourceCard).join("") + '</div></section>';
+        }).join("");
+      }
+
+      function updateSourceResults() {
+        var summary = document.getElementById("sourceFilterSummary");
+        var groups = document.getElementById("sourceGroups");
+        if (summary) { summary.textContent = "显示 " + filteredSources().length + " / " + sources.length; }
+        if (groups) { groups.innerHTML = renderSourceGroups(); }
+      }
+
+      function renderSourceView() {
+        main.innerHTML = '<div class="content-width"><section class="doc-header"><div class="eyebrow"><span class="eyebrow-line"></span>公开来源</div><h1 class="doc-title">来源库</h1><p class="doc-description">公开页面、引用编号和原始 URL。按平台分组，点击任意卡片打开原始页面。</p><div class="doc-meta"><span class="pill orange">' + sources.length + ' 个来源</span><span class="doc-meta-item">页面核验由构建阶段完成</span></div></section><div class="source-toolbar"><label class="sr-only" for="sourceFilter">筛选公开来源</label><input class="source-filter" id="sourceFilter" type="search" value="' + escapeHtml(state.sourceFilter) + '" placeholder="按编号、平台、标题、范围或 URL 筛选" autocomplete="off"><span class="source-filter-summary" id="sourceFilterSummary" aria-live="polite" aria-atomic="true"></span></div><div class="source-groups" id="sourceGroups"></div></div>';
+        inspector.innerHTML = '<h2 class="inspector-title">来源说明</h2><p class="inspector-copy">官方平台文档优先；第三方报告只做方向性参考；原始 URL 是事实核对入口。</p>';
+        updateSourceResults();
+        var filter = document.getElementById("sourceFilter");
+        if (filter) {
+          filter.addEventListener("input", function (event) {
+            state.sourceFilter = event.target.value;
+            updateSourceResults();
+          });
+        }
+      }
+
       function renderSourceCard(source) {
-        return '<a class="source-card" href="' + source.url + '" target="_blank" rel="noopener">' +
-          '<div class="source-id">' + escapeHtml(source.id) + '</div>' +
+        return '<a class="source-card" href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener" title="在新窗口打开：' + escapeHtml(source.title) + '" aria-label="' + escapeHtml(source.id + " · " + source.title + "（在新窗口打开）") + '">' +
+          '<div class="source-card-row"><div class="source-card-copy"><div class="source-id">' + escapeHtml(source.id) + '</div>' +
           '<div class="source-name">' + escapeHtml(source.title) + '</div>' +
-          '<div class="source-scope">' + escapeHtml(source.scope) + '</div></a>';
+          '<div class="source-scope">' + escapeHtml(source.scope) + '</div></div><span class="source-card-arrow" aria-hidden="true">↗</span></div></a>';
       }
 
       function renderInspector(doc) {
@@ -1156,8 +1536,8 @@
           headings.slice(0, 18).map(function (heading) {
             return '<button type="button" data-heading="' + escapeHtml(heading) + '">' + escapeHtml(heading) + '</button>';
           }).join("") + '</div></div>' : '') +
-          '<div class="inspector-section"><h3>引用来源 · ' + cited.length + '</h3>' +
-          (cited.length ? cited.map(renderSourceCard).join("") : '<p class="source-empty">本章节以 GEN 结构性方法或 Skill 流程整理为主，没有单一公开来源。</p>') +
+          '<div class="inspector-section"><h3>引用来源 <span class="inspector-count"><span class="inspector-separator" aria-hidden="true"></span><span>' + cited.length + '</span></span></h3>' +
+          (cited.length ? cited.map(renderSourceCard).join("") : '<p class="source-empty">本页面未登记独立公开来源；如需核对事实，请以正文中的具体引用或来源库为准。</p>') +
           '</div>';
       }
 
@@ -1169,32 +1549,45 @@
         main.innerHTML = '<div class="content-width">' +
           '<section class="doc-header"><div class="eyebrow"><span class="eyebrow-line"></span>' + escapeHtml(doc.group) + '</div>' +
           '<h1 class="doc-title">' + escapeHtml(doc.title) + '</h1><p class="doc-description">' + escapeHtml(doc.description) + '</p>' +
-          '<div class="doc-meta"><span class="' + tagClass(doc.tag) + '">' + escapeHtml(doc.tag) + '</span><span class="doc-meta-item">' + doc.lines + ' 行</span><span class="doc-meta-item">' + ids.length + ' 个引用编号</span><span class="doc-meta-item">' + escapeHtml(doc.path) + '</span></div>' +
+          '<div class="doc-meta"><span class="' + tagClass(doc.tag) + '">' + escapeHtml(doc.tag) + '</span><span class="doc-meta-item">' + doc.lines + ' 行</span><span class="doc-meta-item">' + (ids.length ? ids.length + ' 个引用编号' : '未登记独立引用') + '</span><span class="doc-meta-item">' + escapeHtml(doc.path) + '</span></div>' +
           '<div class="outline-row">' + headings.slice(0, 12).map(function (heading) { return '<span class="outline-chip">' + escapeHtml(heading) + '</span>'; }).join("") + '</div></section>' +
           '<article class="' + articleClass + '">' + renderDocumentBody(doc) + '</article></div>';
         renderInspector(doc);
       }
 
       function render() {
+        applyViewClasses();
         renderNav();
         if (state.query.trim()) { renderSearch(); renderInspector(null); }
         else if (state.sourceMode || state.view === "public-sources") {
-          main.innerHTML = '<div class="content-width"><section class="doc-header"><div class="eyebrow"><span class="eyebrow-line"></span>公开来源</div><h1 class="doc-title">来源库</h1><p class="doc-description">公开页面、引用编号和原始 URL。点击任意卡片打开原始页面。</p><div class="doc-meta"><span class="pill orange">' + sources.length + ' 个来源</span><span class="doc-meta-item">页面核验由构建阶段完成</span></div></section><div class="source-grid">' + sources.map(renderSourceCard).join("") + '</div></div>';
-          inspector.innerHTML = '<h2 class="inspector-title">来源说明</h2><p class="inspector-copy">官方平台文档优先；第三方报告只做方向性参考；原始 URL 是事实核对入口。</p>';
+          renderSourceView();
         } else if (state.view === "overview") { renderOverview(); renderInspector(null); }
         else { renderDoc(docById(state.view)); }
       }
 
       function readHash() {
         var hash = window.location.hash.replace(/^#/, "");
-        if (hash.indexOf("module/") === 0) {
-          state.view = hash.slice(7) || "overview";
-          state.sourceMode = state.view === "public-sources";
-        } else {
+        if (hash.indexOf("search/") === 0) {
+          try { state.query = decodeURIComponent(hash.slice(7)); } catch (error) { state.query = hash.slice(7); }
           state.view = "overview";
           state.sourceMode = false;
+          state.sourceFilter = "";
+          searchInput.value = state.query;
+        } else if (hash.indexOf("module/") === 0) {
+          state.view = hash.slice(7) || "overview";
+          state.query = "";
+          searchInput.value = "";
+          state.sourceMode = state.view === "public-sources";
+          if (!state.sourceMode) { state.sourceFilter = ""; }
+        } else {
+          state.view = "overview";
+          state.query = "";
+          searchInput.value = "";
+          state.sourceMode = false;
+          state.sourceFilter = "";
         }
         render();
+        resetDocumentScroll();
       }
 
       nav.addEventListener("click", function (event) {
@@ -1236,11 +1629,20 @@
       });
       searchInput.addEventListener("input", function (event) {
         state.query = event.target.value;
+        state.sourceMode = false;
+        var trimmed = state.query.trim();
+        var nextHash = trimmed ? "#search/" + encodeURIComponent(trimmed) : "#overview";
+        window.history.replaceState(null, "", nextHash);
         render();
+        resetDocumentScroll();
+      });
+      searchToggle.addEventListener("click", function () {
+        searchInput.focus();
       });
       sourceToggle.addEventListener("click", function () {
         searchInput.value = "";
         state.query = "";
+        state.sourceFilter = "";
         window.location.hash = "module/public-sources";
       });
       themeToggle.addEventListener("click", function () {
@@ -1255,7 +1657,10 @@
         if (event.key === "Escape" && document.activeElement === searchInput) {
           searchInput.value = "";
           state.query = "";
+          state.sourceMode = false;
+          window.history.replaceState(null, "", "#overview");
           render();
+          resetDocumentScroll();
         }
       });
       window.addEventListener("hashchange", readHash);

@@ -7,10 +7,10 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($SkillRoot)) {
-    $SkillRoot = Join-Path $repoRoot "skill/app-monetization-expert"
+    $SkillRoot = Join-Path $repoRoot "skill/monety"
 }
 if ([string]::IsNullOrWhiteSpace($ViewerRoot)) {
-    $ViewerRoot = Join-Path $repoRoot "output/sites/app-monetization-viewer"
+    $ViewerRoot = Join-Path $repoRoot "output/sites/monety-viewer"
 }
 
 $templatePath = Join-Path $ViewerRoot "template.html"
@@ -88,7 +88,7 @@ $sourceEntries = @(
 $urlCount = @([regex]::Matches($sourceText, 'https?://')).Count
 $manifest = [pscustomobject]@{
     generatedAt = (Get-Date).ToString("yyyy-MM-dd HH:mm")
-    skillName = "app-monetization-expert"
+    skillName = "monety"
     docs = @($docs)
     sources = $sourceEntries
     meta = [pscustomobject]@{
