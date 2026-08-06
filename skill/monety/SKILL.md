@@ -1,9 +1,9 @@
 ---
-name: app-monetization-expert
+name: monety
 description: 以 IAA 为主线的应用商业化设计、广告聚合配置、上线验收、收益诊断、实验迭代、TopOn CSV/TSV/XLSX/XLSM 报表分析、买量回收和产品研究 Skill；按需保留 IAP 的订阅、付费墙、定价、续订、LTV 和退款常识。用户讨论应用内广告、广告位、填充、展示、eCPM、TopOn、MAX、AdMob、TopOn 报表、数据质量、漏斗诊断、商业化配置、收益波动或 IAA/IAP 混合变现时使用。
 ---
 
-# App Monetization Expert
+# Monety
 
 version: 1.1.0
 

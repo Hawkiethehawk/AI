@@ -1,4 +1,4 @@
 interface:
-  display_name: "App Monetization Expert"
+  display_name: "Monety"
   short_description: "以 IAA 为重点并支持 TopOn 报表分析的应用商业化诊断与优化"
-  default_prompt: "使用 $app-monetization-expert 分析这个应用的 IAA 或 TopOn 报表问题，先校验数据质量和证据等级，再给出可验证的调整方案。"
+  default_prompt: "使用 $monety 分析这个应用的 IAA 或 TopOn 报表问题，先校验数据质量和证据等级，再给出可验证的调整方案。"
