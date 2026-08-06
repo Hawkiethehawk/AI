@@ -55,6 +55,7 @@ description: Generate or update an AppMagic global market analysis in Feishu fro
 14.**元素间距：**不同元素之间保留足够距离，组合元素以整体边界计算中心，文字、分界线、图例和标签不得重合。示例：`图例组以整体边界居中，相邻图例项至少保留72px间距`
 15.**写入验收：**写入后必须API回读并进行浏览器可见检查，不能只依据接口成功返回。示例：`回读确认公式只在第二章，浏览器确认表头未换行且图例和分界线没有重合`
 16.**局部更新：**更新已有文档（demo或正式）时，只替换需要替换的内容：行内文本用`str_replace`，整块内容用`block_replace`/`block_insert_after`/`block_delete`，禁止用`overwrite`整篇清空重写；未变更的画板、图片、表格等资源块必须保留原token。示例：`只替换“近期信号”表格的某一格文字时用block_replace定位该格，其余表格和画板保持不变`
+17.**标题保留：**覆盖正式文档时只覆盖正文，不覆盖标题；正式文档必须保留原标题（如“AppMagic市场分析”），demo标题（如“AppMagic市场分析Demo20260806”）只用于demo文档。示例：`demo标题为AppMagic市场分析Demo20260806，覆盖正式文档时保留“AppMagic市场分析”，不写入Demo后缀；若误带demo标题，只用drive files patch改回正式标题，正文不动`
 
 ## 工作流
 
@@ -133,4 +134,4 @@ description: Generate or update an AppMagic global market analysis in Feishu fro
 
 ## 覆盖已有文档
 
-先读取本地配置绑定的数据工作簿和固定目标文档，并保存标题、画板、引用和表格结构。每次先在“我的文档库”根目录创建新的demo文档，写入后核对标题、7个一级章节、画板、高亮块和表格数量与回读一致；不得只以写入成功作为完成依据。更新已有文档（demo或正式）时只替换需要替换的内容：行内文本用`str_replace`，整块内容用`block_replace`/`block_insert_after`/`block_delete`，禁止用`overwrite`整篇清空重写，未变更的画板、图片、表格等资源块保留原token；只有新建文档或用户明确要求整篇重建时才使用`overwrite`。用户确认demo后，才更新固定目标文档；正式文档API回读和可见渲染复核通过后清理demo文档。
+先读取本地配置绑定的数据工作簿和固定目标文档，并保存标题、画板、引用和表格结构。每次先在“我的文档库”根目录创建新的demo文档，写入后核对标题、7个一级章节、画板、高亮块和表格数量与回读一致；不得只以写入成功作为完成依据。更新已有文档（demo或正式）时只替换需要替换的内容：行内文本用`str_replace`，整块内容用`block_replace`/`block_insert_after`/`block_delete`，禁止用`overwrite`整篇清空重写，未变更的画板、图片、表格等资源块保留原token；只有新建文档或用户明确要求整篇重建时才使用`overwrite`。覆盖正式文档时只覆盖正文，不覆盖标题：正式文档保留原标题（如“AppMagic市场分析”），demo标题只用于demo文档；如误带demo标题，覆盖后须用`drive files patch`改回正式标题，正文不动。用户确认demo后，才更新固定目标文档；正式文档API回读和可见渲染复核通过后清理demo文档。
