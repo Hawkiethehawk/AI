@@ -1,0 +1,59 @@
+<h3>4.1.1 地区事实基线</h3>
+<callout emoji="📍" background-color="light-gray">
+  <p><cite doc-id="NI9zwJEgBilM7PkkH4tczSXMnSg" file-type="wiki" title="AppMagic 分品类下载与收入地区占比分析" type="doc"></cite>覆盖 2026-06-08 至 2026-07-13，共 7 个品类。文档中的收入仅指 IAP 收入；IAA 方向来自下载地区规模与品类变现特点的判断，不能把 IAP 地区占比直接当作 IAA 收入事实。</p>
+</callout>
+<table>
+  <thead>
+    <tr>
+      <th vertical-align="middle"><p align="center">品类</p></th>
+      <th vertical-align="middle"><p align="center">下载地区事实</p></th>
+      <th vertical-align="middle"><p align="center">IAP 收入地区事实</p></th>
+      <th vertical-align="middle"><p align="center">广告投放中的用途</p></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th vertical-align="middle"><p align="center">Launcher</p></th>
+      <td vertical-align="middle"><p align="left">印度 15.47%、巴西 11.55%；新兴市场合计 55.48%</p></td>
+      <td vertical-align="middle"><p align="left">地区较分散；成熟市场 11.45%、新兴市场 17.48%</p></td>
+      <td vertical-align="middle"><p align="left">印度、巴西作为规模市场候选；IAP 不设单一核心国家假设</p></td>
+    </tr>
+    <tr>
+      <th vertical-align="middle"><p align="center">PDF 阅读器</p></th>
+      <td vertical-align="middle"><p align="left">印度 17.95%、巴西 9.70%、韩国 6.34%；成熟市场下载 23.43%</p></td>
+      <td vertical-align="middle"><p align="left">印度 9.10%、韩国 7.43%；成熟市场 26.16%、新兴市场 19.32%</p></td>
+      <td vertical-align="middle"><p align="left">同时测试新兴市场规模与成熟市场价值，不只押单一地区</p></td>
+    </tr>
+    <tr>
+      <th vertical-align="middle"><p align="center">休闲</p></th>
+      <td vertical-align="middle"><p align="left">印度 18.78%，印尼和巴西约 6.7%；美国 5.50%</p></td>
+      <td vertical-align="middle"><p align="left">美国 23.89%；成熟市场合计 36.93%</p></td>
+      <td vertical-align="middle"><p align="left">拆分规模市场与价值市场，分别验证用户质量和回收</p></td>
+    </tr>
+    <tr>
+      <th vertical-align="middle"><p align="center">壁纸</p></th>
+      <td vertical-align="middle"><p align="left">印度 20.50%；新兴市场合计 51.59%</p></td>
+      <td vertical-align="middle"><p align="left">美国 5.55%，其余国家较分散</p></td>
+      <td vertical-align="middle"><p align="left">优先验证新兴市场的免费用户规模，再用实际变现数据筛选地区</p></td>
+    </tr>
+    <tr>
+      <th vertical-align="middle"><p align="center">文件恢复</p></th>
+      <td vertical-align="middle"><p align="left">印度 16.25%；新兴市场合计 53.08%</p></td>
+      <td vertical-align="middle"><p align="left">成熟市场 20.62%、新兴市场 20.46%，结构接近</p></td>
+      <td vertical-align="middle"><p align="left">采用混合地区测试，同时观察 IAP 和 IAA 结果</p></td>
+    </tr>
+    <tr>
+      <th vertical-align="middle"><p align="center">杀毒软件、清理</p></th>
+      <td vertical-align="middle"><p align="left">巴西 9.95%、美国 9.71%、印度 7.45%</p></td>
+      <td vertical-align="middle"><p align="left">美国 19.49%；成熟市场合计 34.17%</p></td>
+      <td vertical-align="middle"><p align="left">巴西、印度测试规模，美国测试价值，分别设观察目标</p></td>
+    </tr>
+    <tr>
+      <th vertical-align="middle"><p align="center">超休闲</p></th>
+      <td vertical-align="middle"><p align="left">印度 19.30%、巴西 6.61%、美国 5.29%</p></td>
+      <td vertical-align="middle"><p align="left">美国 18.02%；成熟市场合计 32.73%</p></td>
+      <td vertical-align="middle"><p align="left">印度、巴西验证用户规模，美国验证价值与回收</p></td>
+    </tr>
+  </tbody>
+</table>
+<p>地区选择先形成三组假设：下载占比高的新兴市场用于验证规模，IAP 收入集中的成熟市场用于验证价值，下载与收入结构接近的品类采用混合测试。上述数据是品类样本的平均结构，不代表自有产品必然获得相同结果；真正的预算分配仍以自有产品的成本、核心任务完成和变现数据为准。</p>

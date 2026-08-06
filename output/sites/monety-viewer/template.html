@@ -100,7 +100,7 @@
     }
 
     * { box-sizing: border-box; }
-    html { min-width: 320px; background: var(--soft); }
+    html { min-width: 320px; background: var(--soft); scrollbar-gutter: stable; }
     body {
       margin: 0;
       color: var(--ink);
@@ -145,12 +145,13 @@
       color: var(--brand-ink);
       background: var(--teal);
       border-radius: 7px;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 800;
       letter-spacing: .05em;
     }
-    .brand-title { display: block; font-size: 15px; font-weight: 760; letter-spacing: .01em; }
-    .brand-subtitle { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; }
+    .brand-title { display: block; font-size: 16px; font-weight: 760; letter-spacing: .01em; }
+    .brand-version { margin-left: 7px; color: var(--muted); font-size: 13px; font-weight: 600; }
+    .brand-subtitle { display: block; color: var(--muted); font-size: 14px; margin-top: 1px; }
     .topbar-spacer { flex: 1; }
     .search-box {
       width: min(320px, 28vw);
@@ -218,17 +219,17 @@
       align-items: baseline;
       padding: 0 10px 13px;
       color: var(--muted);
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 760;
       letter-spacing: .09em;
       text-transform: uppercase;
     }
-    .sidebar-count { color: var(--teal); font-size: 12px; letter-spacing: 0; }
+    .sidebar-count { color: var(--teal); font-size: 14px; letter-spacing: 0; }
     .nav-group { margin: 16px 0 5px; }
     .nav-group-title {
       padding: 0 10px 7px;
       color: var(--sidebar-heading);
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 760;
       letter-spacing: .06em;
     }
@@ -250,14 +251,14 @@
     .nav-index {
       flex: 0 0 23px;
       color: var(--nav-index);
-      font-size: 11px;
+      font-size: 14px;
       font-variant-numeric: tabular-nums;
       padding-top: 1px;
     }
     .nav-item.active .nav-index { color: var(--teal); }
     .nav-copy { min-width: 0; }
-    .nav-title { display: block; font-size: 13px; font-weight: 650; }
-    .nav-meta { display: block; color: var(--nav-meta); font-size: 11px; margin-top: 2px; }
+    .nav-title { display: block; font-size: 14px; font-weight: 650; }
+    .nav-meta { display: block; color: var(--nav-meta); font-size: 14px; margin-top: 2px; }
     .sidebar-foot {
       margin: 26px 8px 0;
       padding: 12px 11px;
@@ -265,7 +266,7 @@
       background: var(--wash);
       border: 1px solid var(--line);
       border-radius: 6px;
-      font-size: 11px;
+      font-size: 14px;
       line-height: 1.55;
     }
     .sidebar-foot strong { color: var(--ink); display: block; margin-bottom: 3px; }
@@ -283,7 +284,7 @@
       align-items: center;
       gap: 8px;
       color: var(--teal);
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 760;
       letter-spacing: .1em;
       text-transform: uppercase;
@@ -317,7 +318,7 @@
       color: var(--teal);
       background: var(--teal-soft);
       border-radius: 5px;
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 700;
     }
     .pill.orange { color: var(--orange); background: var(--orange-soft); }
@@ -339,12 +340,12 @@
     .metric-value {
       display: block;
       color: var(--ink);
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 760;
       line-height: 1;
       font-variant-numeric: tabular-nums;
     }
-    .metric-label { display: block; color: var(--muted); font-size: 11px; margin-top: 8px; }
+    .metric-label { display: block; color: var(--muted); font-size: 14px; margin-top: 8px; }
 
     .section-heading {
       display: flex;
@@ -354,7 +355,7 @@
       margin: 38px 0 14px;
     }
     .section-heading h2 { margin: 0; font-size: 18px; letter-spacing: 0; }
-    .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+    .section-heading p { margin: 0; color: var(--muted); font-size: 14px; }
 
     .architecture {
       display: grid;
@@ -384,12 +385,12 @@
       background: var(--paper);
       text-align: center;
       line-height: 15px;
-      font-size: 15px;
+      font-size: 16px;
     }
     .architecture-step:last-child::after { display: none; }
-    .architecture-kicker { color: var(--teal); font-size: 11px; font-weight: 760; }
+    .architecture-kicker { color: var(--teal); font-size: 14px; font-weight: 760; }
     .architecture-title { margin: 8px 0 5px; font-size: 14px; font-weight: 760; }
-    .architecture-copy { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .architecture-copy { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 
     .module-grid {
       display: grid;
@@ -410,10 +411,10 @@
     }
     .module-card:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: var(--shadow-soft); }
     .module-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .module-card-title { margin: 11px 0 5px; font-size: 15px; font-weight: 740; }
-    .module-card-copy { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
-    .module-card-path { margin-top: 7px; color: var(--path); font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
-    .module-card-foot { display: flex; align-items: center; gap: 9px; margin-top: auto; padding-top: 14px; color: var(--foot); font-size: 11px; }
+    .module-card-title { margin: 11px 0 5px; font-size: 16px; font-weight: 740; }
+    .module-card-copy { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .module-card-path { margin-top: 7px; color: var(--path); font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+    .module-card-foot { display: flex; align-items: center; gap: 9px; margin-top: auto; padding-top: 14px; color: var(--foot); font-size: 14px; }
     .module-card-arrow { margin-left: auto; color: var(--teal); font-size: 16px; }
 
     .boundary {
@@ -429,9 +430,9 @@
       background: var(--paper);
     }
     .boundary-panel h3 { margin: 0 0 10px; font-size: 14px; }
-    .boundary-panel p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+    .boundary-panel p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
     .boundary-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-    .boundary-list li { display: flex; gap: 9px; color: var(--boundary-ink); font-size: 12px; line-height: 1.5; }
+    .boundary-list li { display: flex; gap: 9px; color: var(--boundary-ink); font-size: 14px; line-height: 1.5; }
     .boundary-list li::before { content: "•"; color: var(--teal); font-weight: 800; }
 
     .doc-header {
@@ -441,7 +442,7 @@
     .doc-title { margin: 10px 0 7px; font-size: 36px; line-height: 1.18; letter-spacing: 0; }
     .doc-description { max-width: 720px; margin: 0; color: var(--muted); font-size: 14px; }
     .doc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 15px; }
-    .doc-meta-item { color: var(--meta); font-size: 11px; }
+    .doc-meta-item { color: var(--meta); font-size: 14px; }
     .outline-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 15px; }
     .outline-chip {
       padding: 3px 7px;
@@ -449,17 +450,17 @@
       background: var(--soft);
       border: 1px solid var(--line);
       border-radius: 4px;
-      font-size: 10px;
+      font-size: 14px;
     }
 
     .article {
-      max-width: 860px;
+      max-width: 1000px;
       padding-top: 28px;
       color: var(--ink);
       font-size: 14px;
     }
     .article h1 { display: none; }
-    .article h2 { margin: 34px 0 12px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 21px; }
+    .article h2 { margin: 34px 0 12px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 24px; }
     .article > h1 + h2 { margin-top: 0; padding-top: 0; border-top: 0; }
     .article.json-article > .json-document > h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
     .article h3 { margin: 24px 0 9px; color: var(--ink); font-size: 16px; }
@@ -480,7 +481,7 @@
       color: var(--code-ink);
       background: var(--orange-soft);
       border-radius: 3px;
-      font-size: .92em;
+      font-size: 14px;
     }
     .article pre {
       overflow: auto;
@@ -489,16 +490,16 @@
       color: var(--pre-ink);
       background: var(--pre-bg);
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.6;
     }
     .article pre code { padding: 0; color: inherit; background: transparent; }
-    .article.json-article { max-width: 860px; }
+    .article.json-article { max-width: 1000px; }
     .json-document { margin-top: 0; }
     .json-object { min-width: 0; }
     .json-section { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--line); }
     .json-section:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-    .json-section-title { margin: 0 0 9px; color: var(--ink); font-size: 15px; }
+    .json-section-title { margin: 0 0 9px; color: var(--ink); font-size: 16px; }
     .json-section-title code,
     .json-key code,
     .json-entry-summary code {
@@ -508,7 +509,7 @@
       background: transparent;
       border: 1px solid var(--line);
       border-radius: 3px;
-      font-size: 10px;
+      font-size: 14px;
       font-weight: 500;
     }
     .json-field {
@@ -518,58 +519,58 @@
       padding: 9px 0;
       border-bottom: 1px solid var(--line);
     }
-    .json-key { color: var(--muted); font-size: 12px; font-weight: 700; }
-    .json-value { min-width: 0; color: var(--ink); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+    .json-key { color: var(--muted); font-size: 14px; font-weight: 700; }
+    .json-value { min-width: 0; color: var(--ink); font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
     .json-value a { color: var(--teal); text-decoration: underline; text-underline-offset: 2px; }
     .json-collection { display: grid; gap: 8px; }
     .json-entry { border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
     .json-entry summary { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; color: var(--ink); cursor: pointer; list-style-position: inside; }
     .json-entry summary:hover { color: var(--teal); }
-    .json-entry-summary { min-width: 0; font-size: 13px; font-weight: 740; }
+    .json-entry-summary { min-width: 0; font-size: 14px; font-weight: 740; }
     .json-entry-body { padding: 0 12px 12px; }
     .json-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0; }
-    .json-chip { max-width: 100%; padding: 3px 7px; color: var(--outline-ink); background: var(--soft); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; overflow-wrap: anywhere; }
+    .json-chip { max-width: 100%; padding: 3px 7px; color: var(--outline-ink); background: var(--soft); border: 1px solid var(--line); border-radius: 4px; font-size: 14px; overflow-wrap: anywhere; }
     .json-chip a { color: var(--teal); text-decoration: underline; text-underline-offset: 2px; }
-    .json-empty { color: var(--muted); font-size: 12px; }
+    .json-empty { color: var(--muted); font-size: 14px; }
     .json-raw { margin-top: 14px; border-top: 1px solid var(--line); }
-    .json-raw summary { padding: 10px 0; color: var(--muted); cursor: pointer; font-size: 12px; }
+    .json-raw summary { padding: 10px 0; color: var(--muted); cursor: pointer; font-size: 14px; }
     .json-raw pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; tab-size: 2; }
     .json-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; margin-bottom: 20px; }
     .json-overview-item { display: grid; grid-template-columns: 105px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-    .json-overview-label { color: var(--muted); font-size: 12px; font-weight: 700; }
-    .json-overview-value { min-width: 0; color: var(--ink); font-size: 13px; overflow-wrap: anywhere; }
+    .json-overview-label { color: var(--muted); font-size: 14px; font-weight: 700; }
+    .json-overview-value { min-width: 0; color: var(--ink); font-size: 14px; overflow-wrap: anywhere; }
     .json-overview-value code { color: var(--meta); background: transparent; }
-    .json-local-ref { padding: 0; font-size: 12px; }
+    .json-local-ref { padding: 0; font-size: 14px; }
     .json-source-link { color: var(--teal); text-decoration: none; }
     .json-source-link:hover { text-decoration: underline; }
-    .json-report-index-title { margin: 34px 0 12px; padding-top: 7px; border-top: 1px solid var(--line); color: var(--ink); font-size: 21px; }
+    .json-report-index-title { margin: 34px 0 12px; padding-top: 7px; border-top: 1px solid var(--line); color: var(--ink); font-size: 24px; }
     .json-report-list { display: block; }
     .json-report { padding: 0; border: 0; }
     .json-report + .json-report { margin-top: 28px; }
     .json-report-heading { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 9px; }
-    .json-report-number { color: var(--teal); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; font-weight: 760; }
+    .json-report-number { color: var(--teal); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 14px; font-weight: 760; }
     .json-report-heading h3 { margin: 0; color: var(--ink); font-size: 16px; }
-    .json-report-id { color: var(--meta); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; }
+    .json-report-id { color: var(--meta); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 14px; }
     .json-definition-list { margin: 0; border-top: 1px solid var(--line); }
     .json-definition-row { display: grid; grid-template-columns: 145px minmax(0, 1fr); gap: 18px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-    .json-definition-key { color: var(--muted); font-size: 12px; font-weight: 700; }
-    .json-definition-value { min-width: 0; color: var(--ink); font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+    .json-definition-key { color: var(--muted); font-size: 14px; font-weight: 700; }
+    .json-definition-value { min-width: 0; color: var(--ink); font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; }
     .json-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .json-tag { padding: 3px 7px; color: var(--outline-ink); background: var(--soft); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; line-height: 1.35; }
+    .json-tag { padding: 3px 7px; color: var(--outline-ink); background: var(--soft); border: 1px solid var(--line); border-radius: 4px; font-size: 14px; line-height: 1.35; }
     .json-tag a { color: var(--teal); text-decoration: underline; text-underline-offset: 2px; }
     .json-catalog-meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 28px; margin: 0; }
     .json-catalog-block { min-width: 0; }
     .json-catalog-block .json-metric-heading { margin-top: 0; }
-    .json-rule-list { margin: 0; padding-left: 22px; color: var(--ink); font-size: 13px; }
+    .json-rule-list { margin: 0; padding-left: 22px; color: var(--ink); font-size: 14px; }
     .json-rule-list li { margin: 5px 0; padding-left: 4px; }
-    .json-source-list { margin: 0 0 14px; padding-left: 22px; color: var(--ink); font-size: 13px; }
+    .json-source-list { margin: 0 0 14px; padding-left: 22px; color: var(--ink); font-size: 14px; }
     .json-source-list li { margin: 5px 0; padding-left: 4px; }
-    .json-metric-count { color: var(--meta); font-size: 12px; }
+    .json-metric-count { color: var(--meta); font-size: 14px; }
     .json-metric-heading { margin: 24px 0 10px; color: var(--ink); font-size: 18px; }
     .json-table-wrap { overflow-x: auto; margin: 15px 0 19px; }
     .json-table-wrap table { min-width: 0; margin: 0; }
-    .json-attribute-table th { width: 150px; color: var(--muted); background: transparent; font-weight: 700; }
-    .json-attribute-table td { color: var(--ink); line-height: 1.6; }
+    .json-report-table th, .json-attribute-table th { min-width: 120px; max-width: 220px; color: var(--muted); background: transparent; font-weight: 700; }
+    .json-report-table td, .json-attribute-table td { color: var(--ink); line-height: 1.6; }
     .json-metric-index { width: 100%; min-width: 0; table-layout: fixed; }
     .json-metric-index th, .json-metric-index td { vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
     .json-metric-index thead th { position: sticky; top: 72px; z-index: 2; color: var(--ink); background: var(--soft); box-shadow: 0 1px 0 var(--line); }
@@ -578,40 +579,43 @@
     .json-metric-index th:nth-child(3), .json-metric-index td:nth-child(3) { width: 22%; }
     .json-metric-index th:nth-child(4), .json-metric-index td:nth-child(4) { width: 41%; }
     .json-metric-index .metric-name-cell, .json-metric-index .metric-source-cell { min-width: 0; }
-    .json-metric-index .metric-name-cell strong { display: block; color: var(--ink); font-size: 13px; }
+    .json-metric-index .metric-name-cell strong { display: block; color: var(--ink); font-size: 14px; }
     .json-metric-index .metric-name-cell code { display: block; margin-top: 4px; color: var(--meta); background: transparent; overflow-wrap: anywhere; }
-    .json-metric-type-line { margin: 0 0 4px; color: var(--ink); font-size: 12px; overflow-wrap: anywhere; }
-    .json-metric-type-label { margin-right: 5px; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .json-metric-type-line { margin: 0 0 4px; color: var(--ink); font-size: 14px; overflow-wrap: anywhere; }
+    .json-metric-type-label { margin-right: 5px; color: var(--muted); font-size: 14px; font-weight: 700; }
     .json-metric-rules-cell { line-height: 1.55; }
     .json-metric-row:nth-child(even) td { background: var(--wash); }
     .json-metric-rule { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; margin: 0 0 7px; }
     .json-metric-rule:last-child { margin-bottom: 0; }
-    .json-metric-rule-label { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .json-metric-rule-label { color: var(--muted); font-size: 14px; font-weight: 700; }
     .json-metric-index .json-tags { display: inline; }
-    .json-metric-index .json-tag { display: inline; padding: 0; color: var(--outline-ink); background: transparent; border: 0; border-radius: 0; font-size: 12px; }
+    .json-metric-index .json-tag { display: inline; padding: 0; color: var(--outline-ink); background: transparent; border: 0; border-radius: 0; font-size: 14px; }
     .json-metric-index .json-tag + .json-tag::before { content: "、"; color: var(--muted); }
-    .json-metric-group-row th { color: var(--teal); background: var(--soft); font-size: 13px; }
+    .json-metric-group-row th { color: var(--teal); background: var(--soft); font-size: 14px; }
     .json-formula { display: inline-block; max-width: 100%; padding: 2px 6px; color: var(--code-ink); background: var(--orange-soft); border-radius: 3px; overflow-wrap: anywhere; white-space: pre-wrap; }
     .json-metric-groups { display: grid; gap: 42px; margin-top: 18px; }
     .json-metric-group { min-width: 0; }
     .json-metric-group-heading { display: flex; align-items: baseline; gap: 10px; margin: 0; padding: 0 0 10px; border-bottom: 2px solid var(--line-strong); }
-    .json-metric-group-heading h3 { margin: 0; color: var(--ink); font-size: 17px; }
-    .json-metric-group-count { color: var(--muted); font-size: 11px; }
+    .json-metric-group-heading h3 { margin: 0; color: var(--ink); font-size: 18px; }
+    .json-metric-group-count { color: var(--muted); font-size: 14px; }
     .json-metric-card-grid { display: block; }
     .json-metric-card { display: grid; grid-template-columns: 42px minmax(140px, .4fr) minmax(0, 1.6fr); column-gap: 18px; min-width: 0; padding: 18px 0 19px; color: var(--ink); background: transparent; border-bottom: 1px solid var(--line); }
     .json-metric-card:first-child { border-top: 1px solid var(--line); }
-    .json-metric-card-number { padding-top: 2px; color: var(--teal); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; font-weight: 760; line-height: 1.6; font-variant-numeric: tabular-nums; }
+    .json-metric-card-number { padding-top: 2px; color: var(--teal); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 14px; font-weight: 760; line-height: 1.6; font-variant-numeric: tabular-nums; }
     .json-metric-card-header { min-width: 0; }
     .json-metric-card-title-wrap { min-width: 0; }
-    .article .json-metric-card-title { margin: 0; color: var(--ink); font-size: 15px; font-weight: 760; line-height: 1.45; overflow-wrap: anywhere; }
+    .article .json-metric-card-title { margin: 0; color: var(--ink); font-size: 16px; font-weight: 760; line-height: 1.45; overflow-wrap: anywhere; }
     .json-metric-card-definition { min-width: 0; }
-    .json-metric-card-definition-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; font-weight: 700; }
-    .json-metric-card-definition-text { margin: 0; color: var(--ink); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+    .json-metric-card-definition-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 14px; font-weight: 700; }
+    .json-metric-card-definition-text { margin: 0; color: var(--ink); font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+    .json-metric-card-formula { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; margin-top: 8px; }
+    .json-metric-card-formula-label { color: var(--muted); font-size: 14px; font-weight: 700; }
+    .json-metric-card-formula .json-formula { font-size: 14px; }
     .article table {
       width: 100%;
       margin: 15px 0 19px;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 14px;
     }
     .article th, .article td {
       padding: 9px 10px;
@@ -637,10 +641,10 @@
       overflow-y: auto;
       overscroll-behavior: contain;
     }
-    .inspector-title { margin: 0 0 6px; font-size: 12px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
-    .inspector-copy { margin: 0 0 18px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .inspector-title { margin: 0 0 6px; font-size: 14px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+    .inspector-copy { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.55; }
     .inspector-section { margin: 24px 0 0; }
-    .inspector-section h3 { margin: 0 0 9px; color: var(--inspector-heading); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+    .inspector-section h3 { margin: 0 0 9px; color: var(--inspector-heading); font-size: 14px; letter-spacing: .07em; text-transform: uppercase; }
     .inspector-count { display: inline; margin-left: 3px; color: var(--inspector-heading); letter-spacing: 0; white-space: nowrap; }
     .inspector-count > span:last-child { display: inline; }
     .inspector-separator { display: inline-block; width: 3px; height: 3px; margin-right: 6px; background: currentColor; border-radius: 50%; vertical-align: middle; transform: translateY(-1px); }
@@ -652,7 +656,7 @@
       background: transparent;
       border: 0;
       border-left: 2px solid transparent;
-      font-size: 11px;
+      font-size: 14px;
     }
     .inspector-outline button:hover { color: var(--teal); border-left-color: var(--teal); }
     .source-card {
@@ -674,27 +678,27 @@
       margin: 22px auto 0;
     }
     .source-grid .source-card { margin: 0; min-width: 0; }
-    .source-id { color: var(--teal); font-size: 10px; font-weight: 780; letter-spacing: .04em; }
-    .source-name { margin-top: 3px; color: var(--ink); font-size: 12px; font-weight: 690; line-height: 1.35; }
-    .source-scope { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
-    .source-empty { color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .source-id { color: var(--teal); font-size: 14px; font-weight: 780; letter-spacing: .04em; }
+    .source-name { margin-top: 3px; color: var(--ink); font-size: 14px; font-weight: 690; line-height: 1.35; }
+    .source-scope { margin-top: 4px; color: var(--muted); font-size: 14px; line-height: 1.4; }
+    .source-empty { color: var(--muted); font-size: 14px; line-height: 1.55; }
     .source-card-row { display: flex; align-items: flex-start; gap: 8px; }
     .source-card-copy { min-width: 0; flex: 1; }
     .source-card-arrow { flex: 0 0 auto; color: var(--teal); font-size: 14px; line-height: 1.2; }
     .source-toolbar { display: flex; align-items: center; gap: 12px; margin: 22px auto 0; max-width: 1000px; }
     .source-filter { flex: 1; min-width: 0; height: 38px; padding: 0 12px; color: var(--ink); background: var(--soft); border: 1px solid var(--line); border-radius: 7px; }
     .source-filter:focus { border-color: var(--teal); outline: 0; }
-    .source-filter-summary { flex: 0 0 auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .source-filter-summary { flex: 0 0 auto; color: var(--muted); font-size: 14px; white-space: nowrap; }
     .source-groups { max-width: 1000px; margin: 0 auto; }
     .source-group { margin-top: 28px; }
     .source-group:first-child { margin-top: 22px; }
-    .source-group-heading { display: flex; align-items: baseline; gap: 9px; margin: 0; padding-bottom: 9px; border-bottom: 1px solid var(--line); font-size: 15px; }
-    .source-group-count { color: var(--muted); font-size: 11px; font-weight: 500; }
+    .source-group-heading { display: flex; align-items: baseline; gap: 9px; margin: 0; padding-bottom: 9px; border-bottom: 1px solid var(--line); font-size: 16px; }
+    .source-group-count { color: var(--muted); font-size: 14px; font-weight: 500; }
     .source-filter-empty { margin: 28px 0; padding: 28px 20px; border: 1px dashed var(--line-strong); border-radius: 7px; color: var(--muted); text-align: center; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
     .search-results { max-width: 900px; margin: 0 auto; }
-    .search-summary { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+    .search-summary { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
     .result-list { display: grid; gap: 10px; }
     .result-item {
       display: block;
@@ -706,8 +710,8 @@
       text-decoration: none;
     }
     .result-item:hover { border-color: var(--teal); box-shadow: var(--shadow-soft); }
-    .result-title { margin: 5px 0; font-size: 15px; font-weight: 740; }
-    .result-snippet { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .result-title { margin: 5px 0; font-size: 16px; font-weight: 740; }
+    .result-snippet { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
     .result-snippet mark { padding: 0 2px; color: var(--ink); background: var(--teal-soft); border-radius: 2px; }
     .empty-state { padding: 60px 20px; text-align: center; color: var(--muted); }
 
@@ -718,7 +722,7 @@
     body.search-view .inspector,
     body.source-view .inspector { display: none; }
     body.data-focus-view .content-width { max-width: 1000px; }
-    body.data-focus-view .article.json-article { max-width: 860px; }
+    body.data-focus-view .article.json-article { max-width: 1000px; }
     body.data-focus-view .json-table-wrap { overflow-x: visible; }
 
     @media (max-width: 1120px) {
@@ -761,7 +765,7 @@
       }
       .nav-item.active { border-color: var(--teal); }
       .nav-index, .nav-meta { display: none; }
-      .nav-title { font-size: 11px; white-space: nowrap; }
+      .nav-title { font-size: 14px; white-space: nowrap; }
       .sidebar-foot { display: none; }
       .main { padding: 27px 17px 60px; }
       .hero-title { font-size: 31px; }
@@ -782,7 +786,7 @@
       .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
       .section-heading { display: block; }
       .section-heading p { margin-top: 3px; }
-      .article { font-size: 13px; }
+      .article { font-size: 14px; }
       .article table { display: block; overflow-x: auto; white-space: nowrap; }
       .doc-title { font-size: 28px; }
     }
@@ -797,7 +801,7 @@
       <a class="brand" href="#overview" aria-label="回到 Skill 总览">
         <span class="brand-mark">IAA</span>
         <span>
-          <span class="brand-title">Monety</span>
+          <span class="brand-title">Monety<span class="brand-version" id="brandVersion"></span></span>
           <span class="brand-subtitle">Desktop Reference Browser</span>
         </span>
       </a>
@@ -856,6 +860,10 @@
       var themeToggle = document.getElementById("themeToggle");
 
       document.getElementById("docCount").textContent = docs.length + " 个文件";
+      var brandVersion = document.getElementById("brandVersion");
+      if (brandVersion && DATA.meta && DATA.meta.version) {
+        brandVersion.textContent = "v" + DATA.meta.version;
+      }
 
       function escapeHtml(value) {
         return String(value || "")
@@ -997,8 +1005,6 @@
           document.body.classList.add("source-view");
           return;
         }
-        var doc = docById(state.view);
-        if (doc && /\.json$/i.test(doc.path)) { document.body.classList.add("data-focus-view"); }
       }
 
       function jsonKeyTitle(key) {
@@ -1068,6 +1074,12 @@
         return '<table class="' + tableClass + '"><caption class="sr-only">' + escapeHtml(tableCaption) + '</caption><tbody>' + rows.map(function (row) {
           return '<tr><th scope="row">' + escapeHtml(row[0]) + '</th><td>' + row[1] + '</td></tr>';
         }).join("") + '</tbody></table>';
+      }
+
+      function renderOverviewGrid(rows) {
+        return '<div class="json-overview">' + rows.map(function (row) {
+          return '<div class="json-overview-item"><span class="json-overview-label">' + escapeHtml(row[0]) + '</span><span class="json-overview-value">' + row[1] + '</span></div>';
+        }).join("") + '</div>';
       }
 
       function jsonRawBlock(parsed) {
@@ -1149,7 +1161,7 @@
           ["分析处理", jsonScalar(item.analysis_rule)]
         ];
         rows[1] = ["文件名匹配", jsonTagList(item.filename_patterns)];
-        return '<section class="json-report"><div class="json-report-heading"><span class="json-report-number">' + String(index + 1).padStart(2, "0") + '</span><h3>' + escapeHtml(item.name || item.id || "未命名报表") + '</h3></div><div class="json-table-wrap">' + jsonAttributeTable(rows, "json-report-table", (item.name || item.id || "报表") + "字段") + '</div></section>';
+        return '<section class="json-report"><div class="json-report-heading"><h3>' + escapeHtml(item.name || item.id || "未命名报表") + '</h3><span class="json-report-number">' + String(index + 1).padStart(2, "0") + '</span></div><div class="json-table-wrap">' + jsonAttributeTable(rows, "json-report-table", (item.name || item.id || "报表") + "字段") + '</div></section>';
       }
 
       function renderReportTypesDocument(parsed) {
@@ -1159,7 +1171,7 @@
           ["语义参考", '<code class="json-local-ref">' + escapeHtml(parsed.semantic_reference || "") + '</code>'],
           ["报表数量", reports.length + " 种"]
         ];
-        return '<div class="json-document json-report-document"><h2>登记概览</h2><div class="json-table-wrap">' + jsonAttributeTable(overviewRows, "json-overview-table", "报表类型登记概览") + '</div><h2>报表类型</h2><div class="json-report-list">' + reports.map(renderReportType).join("") + '</div>' + jsonRawBlock(parsed) + '</div>';
+        return '<div class="json-document json-report-document"><h2>登记概览</h2>' + renderOverviewGrid(overviewRows) + '<h2>报表类型</h2><div class="json-report-list">' + reports.map(renderReportType).join("") + '</div>' + jsonRawBlock(parsed) + '</div>';
       }
 
       function metricKindTitle(kind) {
@@ -1184,7 +1196,8 @@
       function renderMetricCard(metric, key, index) {
         var displayName = metric.display_name || key;
         var definition = metric.definition ? jsonScalar(metric.definition) : '<span class="json-empty">暂无定义</span>';
-        return '<article class="json-metric-card"><span class="json-metric-card-number">' + String(index + 1).padStart(2, "0") + '</span><header class="json-metric-card-header"><div class="json-metric-card-title-wrap"><h4 class="json-metric-card-title">' + escapeHtml(displayName) + '</h4></div></header><div class="json-metric-card-definition"><span class="json-metric-card-definition-label">定义</span><p class="json-metric-card-definition-text">' + definition + '</p></div></article>';
+        var formulaHtml = metric.formula ? '<div class="json-metric-card-formula"><span class="json-metric-card-formula-label">计算方式</span><code class="json-formula">' + escapeHtml(metric.formula) + '</code></div>' : '';
+        return '<article class="json-metric-card"><span class="json-metric-card-number">' + String(index + 1).padStart(2, "0") + '</span><header class="json-metric-card-header"><div class="json-metric-card-title-wrap"><h4 class="json-metric-card-title">' + escapeHtml(displayName) + '</h4></div></header><div class="json-metric-card-definition"><span class="json-metric-card-definition-label">定义</span><p class="json-metric-card-definition-text">' + definition + '</p>' + formulaHtml + '</div></article>';
       }
 
       function renderMetricGroup(title, entries) {
@@ -1208,10 +1221,10 @@
         var precedence = '<ul class="json-source-list">' + (parsed.source_precedence || []).map(function (source) { return '<li>' + jsonSourceLink(source) + '</li>'; }).join("") + '</ul>';
         var rules = '<ol class="json-rule-list">' + (parsed.global_rules || []).map(function (rule) { return '<li>' + jsonScalar(rule) + '</li>'; }).join("") + '</ol>';
         var metricGroups = '<div class="json-metric-groups">' + renderMetricGroup("指标", measures) + renderMetricGroup("维度", dimensions) + '</div>';
-        return '<div class="json-document json-metric-document"><h2>目录概览</h2><div class="json-table-wrap">' + jsonAttributeTable(overviewRows, "json-overview-table", "TopOn 指标目录概览") + '</div><h2>来源优先级</h2>' + precedence + '<h2>全局规则</h2>' + rules + '<h2>数据属性</h2>' + metricGroups + '</div>';
+        return '<div class="json-document json-metric-document"><h2>目录概览</h2>' + renderOverviewGrid(overviewRows) + '<h2>来源优先级</h2>' + precedence + '<h2>全局规则</h2>' + rules + '<h2>数据属性</h2>' + metricGroups + '</div>';
       }
 
-      function renderJsonDocument(doc) {
+            function renderJsonDocument(doc) {
         var raw = String(doc.content || "").trim();
         try {
           var parsed = JSON.parse(raw);
@@ -1367,6 +1380,13 @@
 
       function docById(id) {
         return docs.filter(function (doc) { return doc.id === id; })[0];
+      }
+
+      function docIndexById(id) {
+        for (var i = 0; i < docs.length; i += 1) {
+          if (docs[i].id === id) { return i; }
+        }
+        return -1;
       }
 
       function renderNav() {
@@ -1661,6 +1681,18 @@
           window.history.replaceState(null, "", "#overview");
           render();
           resetDocumentScroll();
+        }
+        if ((event.key === "ArrowLeft" || event.key === "ArrowRight") &&
+            document.activeElement !== searchInput &&
+            !state.query.trim()) {
+          var currentIndex = docIndexById(state.view);
+          if (currentIndex >= 0) {
+            var nextIndex = event.key === "ArrowRight" ? currentIndex + 1 : currentIndex - 1;
+            if (nextIndex >= 0 && nextIndex < docs.length) {
+              event.preventDefault();
+              window.location.hash = "module/" + docs[nextIndex].id;
+            }
+          }
         }
       });
       window.addEventListener("hashchange", readHash);

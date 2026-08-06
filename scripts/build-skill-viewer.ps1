@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($SkillRoot)) {
-    $SkillRoot = Join-Path $repoRoot "skill/monety"
+    $SkillRoot = "F:\Monety\monety"
 }
 if ([string]::IsNullOrWhiteSpace($ViewerRoot)) {
     $ViewerRoot = Join-Path $repoRoot "output/sites/monety-viewer"
@@ -41,6 +41,7 @@ $docSpecs = @(
     @{ id = "public-sources"; path = "references/public-sources.md"; title = "公开来源与引用注册表"; group = "来源"; tag = "Sources"; description = "公开 URL、来源层级、引用编号和原始页面"; kind = "source" }
 )
 
+$skillVersion = ""
 $docs = foreach ($spec in $docSpecs) {
     $fullPath = Join-Path $SkillRoot $spec.path
     if (-not (Test-Path -LiteralPath $fullPath)) {
@@ -48,6 +49,12 @@ $docs = foreach ($spec in $docSpecs) {
     }
 
     $content = [System.IO.File]::ReadAllText($fullPath, [System.Text.Encoding]::UTF8)
+    if ($spec.id -eq "skill") {
+        $versionMatch = [regex]::Match($content, '(?m)^version:\s*([^\r\n]+)\s*$')
+        if ($versionMatch.Success) {
+            $skillVersion = $versionMatch.Groups[1].Value.Trim()
+        }
+    }
     $lines = @($content -split '\r?\n').Count
     if ($spec.path -like "*.json") {
         try {
@@ -107,6 +114,7 @@ $manifest = [pscustomobject]@{
     docs = @($docs)
     sources = $sourceEntries
     meta = [pscustomobject]@{
+        version = $skillVersion
         fileCount = @($docs).Count
         lineCount = (@($docs) | Measure-Object -Property lines -Sum).Sum
         iaaCount = @($docs | Where-Object { $_.kind -eq "iaa" }).Count

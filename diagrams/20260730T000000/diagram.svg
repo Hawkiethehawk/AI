@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<rect x="0" y="0" width="1600" height="900" fill="#FFFFFF"/>
+<text x="120" y="76" font-family="Noto Sans SC, Arial, sans-serif" font-size="30" font-weight="700" fill="#1F2937">全部周期重点分组变化</text>
+<text x="120" y="112" font-family="Noto Sans SC, Arial, sans-serif" font-size="16" fill="#6B7280">2026/02/23–2026/07/20 · 按周统计 · 单位：%</text>
+<line x1="120" y1="142" x2="1480" y2="142" stroke="#E5E7EB" stroke-width="1"/>
+<line x1="594.0" y1="188" x2="620.0" y2="188" stroke="#2F67E8" stroke-width="3" stroke-linecap="round"/>
+<circle cx="607.0" cy="188" r="3.5" fill="#FFFFFF" stroke="#2F67E8" stroke-width="2"/>
+<text x="630.0" y="193" font-family="Noto Sans SC, Arial, sans-serif" font-size="16" fill="#374151">下载侧 T3</text>
+<line x1="716.0" y1="188" x2="742.0" y2="188" stroke="#F05A00" stroke-width="3" stroke-linecap="round"/>
+<circle cx="729.0" cy="188" r="3.5" fill="#FFFFFF" stroke="#F05A00" stroke-width="2"/>
+<text x="752.0" y="193" font-family="Noto Sans SC, Arial, sans-serif" font-size="16" fill="#374151">收入侧 US+T1</text>
+<line x1="862.0" y1="188" x2="888.0" y2="188" stroke="#0F766E" stroke-width="3" stroke-linecap="round"/>
+<circle cx="875.0" cy="188" r="3.5" fill="#FFFFFF" stroke="#0F766E" stroke-width="2"/>
+<text x="898.0" y="193" font-family="Noto Sans SC, Arial, sans-serif" font-size="16" fill="#374151">收入数据覆盖率</text>
+<text x="138" y="234" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" font-weight="600" fill="#4B5563">占比（%）</text>
+<line x1="138" y1="658.00" x2="1338" y2="658.00" stroke="#E5E7EB" stroke-width="1"/>
+<text x="112" y="663.00" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">30</text>
+<line x1="138" y1="601.71" x2="1338" y2="601.71" stroke="#E5E7EB" stroke-width="1"/>
+<text x="112" y="606.71" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">35</text>
+<line x1="138" y1="545.43" x2="1338" y2="545.43" stroke="#E5E7EB" stroke-width="1"/>
+<text x="112" y="550.43" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">40</text>
+<line x1="138" y1="489.14" x2="1338" y2="489.14" stroke="#E5E7EB" stroke-width="1"/>
+<text x="112" y="494.14" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">45</text>
+<line x1="138" y1="432.86" x2="1338" y2="432.86" stroke="#E5E7EB" stroke-width="1"/>
+<text x="112" y="437.86" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">50</text>
+<line x1="138" y1="376.57" x2="1338" y2="376.57" stroke="#E5E7EB" stroke-width="1"/>
+<text x="112" y="381.57" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">55</text>
+<line x1="138" y1="320.29" x2="1338" y2="320.29" stroke="#E5E7EB" stroke-width="1"/>
+<text x="112" y="325.29" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">60</text>
+<line x1="138" y1="264.00" x2="1338" y2="264.00" stroke="#E5E7EB" stroke-width="1"/>
+<text x="112" y="269.00" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">65</text>
+<line x1="138" y1="264" x2="138" y2="658" stroke="#D1D5DB" stroke-width="1.2"/>
+<line x1="138" y1="658" x2="1338" y2="658" stroke="#D1D5DB" stroke-width="1.2"/>
+<line x1="138.00" y1="658" x2="138.00" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="138.00" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">02/23</text>
+<line x1="252.29" y1="658" x2="252.29" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="252.29" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">03/09</text>
+<line x1="366.57" y1="658" x2="366.57" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="366.57" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">03/23</text>
+<line x1="480.86" y1="658" x2="480.86" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="480.86" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">04/06</text>
+<line x1="595.14" y1="658" x2="595.14" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="595.14" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">04/20</text>
+<line x1="709.43" y1="658" x2="709.43" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="709.43" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">05/04</text>
+<line x1="823.71" y1="658" x2="823.71" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="823.71" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">05/18</text>
+<line x1="938.00" y1="658" x2="938.00" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="938.00" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">06/01</text>
+<line x1="1052.29" y1="658" x2="1052.29" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="1052.29" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">06/15</text>
+<line x1="1166.57" y1="658" x2="1166.57" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="1166.57" y="689" text-anchor="middle" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">06/29</text>
+<line x1="1280.86" y1="658" x2="1280.86" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="1277.86" y="689" text-anchor="end" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">07/13</text>
+<line x1="1338.00" y1="658" x2="1338.00" y2="664" stroke="#D1D5DB" stroke-width="1"/>
+<text x="1341.00" y="689" text-anchor="start" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#6B7280">07/20</text>
+<polyline points="138.00,351.81 195.14,412.59 252.29,419.35 309.43,424.98 366.57,393.46 423.71,420.47 480.86,342.80 538.00,435.11 595.14,410.34 652.29,373.19 709.43,415.97 766.57,484.64 823.71,397.96 880.86,361.94 938.00,474.51 995.14,423.85 1052.29,423.85 1109.43,422.73 1166.57,438.49 1223.71,421.60 1280.86,359.69 1338.00,400.21" fill="none" stroke="#2F67E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="1338.00" cy="400.21" r="4.8" fill="#FFFFFF" stroke="#2F67E8" stroke-width="2.2"/>
+<polyline points="138.00,445.24 195.14,482.39 252.29,547.68 309.43,421.60 366.57,382.20 423.71,465.50 480.86,418.22 538.00,645.62 595.14,461.00 652.29,350.68 709.43,457.62 766.57,386.70 823.71,397.96 880.86,495.90 938.00,479.01 995.14,540.93 1052.29,444.11 1109.43,480.14 1166.57,529.67 1223.71,329.29 1280.86,462.13 1338.00,476.76" fill="none" stroke="#F05A00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="1338.00" cy="476.76" r="4.8" fill="#FFFFFF" stroke="#F05A00" stroke-width="2.2"/>
+<polyline points="138.00,391.21 195.14,418.22 252.29,432.86 309.43,463.25 366.57,382.20 423.71,400.21 480.86,288.77 538.00,405.84 595.14,385.58 652.29,392.33 709.43,401.34 766.57,482.39 823.71,397.96 880.86,404.71 938.00,444.11 995.14,409.22 1052.29,413.72 1109.43,345.05 1166.57,518.41 1223.71,397.96 1280.86,378.82 1338.00,467.75" fill="none" stroke="#0F766E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="1338.00" cy="467.75" r="4.8" fill="#FFFFFF" stroke="#0F766E" stroke-width="2.2"/>
+<polyline points="1338.00,400.21 1362,400.21 1362,377" fill="none" stroke="#2F67E8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1392" y="382" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" font-weight="600" fill="#2F67E8">下载侧 T3 52.9%</text>
+<polyline points="1338.00,467.75 1362,467.75 1362,453" fill="none" stroke="#0F766E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1392" y="458" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" font-weight="600" fill="#0F766E">收入数据覆盖率 46.9%</text>
+<polyline points="1338.00,476.76 1362,476.76 1362,495" fill="none" stroke="#F05A00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1392" y="500" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" font-weight="600" fill="#F05A00">收入侧 US+T1 46.1%</text>
+<line x1="120" y1="750" x2="1480" y2="750" stroke="#E5E7EB" stroke-width="1"/>
+<text x="120" y="790" font-family="Noto Sans SC, Arial, sans-serif" font-size="14" fill="#4B5563">口径：下载侧 T3、收入侧 US+T1 与收入数据覆盖率；按周等权聚合的 Top5 国家地区份额结构。</text>
+</svg>

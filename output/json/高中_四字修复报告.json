@@ -1,0 +1,10 @@
+{
+  "input": "E:\\LLM-Sandbox\\Codex\\output\\text\\高中.txt",
+  "changed": 183,
+  "remaining_west": 1640,
+  "four_after_restore": 4700,
+  "reasons": {
+    "counter_or_structure": 183
+  },
+  "dry_run": false
+}

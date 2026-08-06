@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect x="0" y="0" width="1600" height="900" fill="#FFFFFF"/>
+
+  <g font-family="Noto Sans SC, Arial, sans-serif">
+    <!-- Header -->
+    <text x="100" y="82" fill="#0F172A" font-size="34" font-weight="700">全球主分组结构</text>
+    <text x="100" y="116" fill="#64748B" font-size="16" font-weight="400">下载侧与收入侧的 Top5 国家地区份额结构 · 单位：%</text>
+    <line x1="100" y1="152" x2="1500" y2="152" stroke="#E2E8F0" stroke-width="2"/>
+
+    <!-- Centered legend -->
+    <g font-size="16" font-weight="500" fill="#334155">
+      <rect x="535" y="184" width="16" height="16" rx="2" fill="#5B5CE2"/>
+      <text x="561" y="198">US</text>
+      <rect x="650" y="184" width="16" height="16" rx="2" fill="#20A7A0"/>
+      <text x="676" y="198">T1</text>
+      <rect x="765" y="184" width="16" height="16" rx="2" fill="#63BCE3"/>
+      <text x="791" y="198">T2</text>
+      <rect x="880" y="184" width="16" height="16" rx="2" fill="#3867B9"/>
+      <text x="906" y="198">T3</text>
+      <rect x="995" y="184" width="16" height="16" rx="2" fill="#CBD5E1"/>
+      <text x="1021" y="198">其他</text>
+    </g>
+
+    <!-- Chart guides -->
+    <line x1="300" y1="324" x2="1300" y2="324" stroke="#E2E8F0" stroke-width="1"/>
+    <line x1="300" y1="744" x2="1300" y2="744" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="300" y="319" fill="#94A3B8" font-size="14" text-anchor="end">100%</text>
+    <text x="300" y="749" fill="#94A3B8" font-size="14" text-anchor="end">0%</text>
+
+    <!-- Download column heading -->
+    <text x="520" y="276" fill="#0F172A" font-size="20" font-weight="600" text-anchor="middle">下载侧</text>
+    <text x="520" y="300" fill="#64748B" font-size="14" text-anchor="middle">100% 堆叠</text>
+
+    <!-- Download 100% stacked bar: T3 52.1, T2 30.5, T1 7.8, US 9.3, Other 0.3 -->
+    <rect x="420" y="525.18" width="200" height="218.82" fill="#3867B9"/>
+    <rect x="420" y="397.08" width="200" height="128.10" fill="#63BCE3"/>
+    <rect x="420" y="364.32" width="200" height="32.76" fill="#20A7A0"/>
+    <rect x="420" y="325.26" width="200" height="39.06" fill="#5B5CE2"/>
+    <rect x="420" y="324" width="200" height="1.26" fill="#CBD5E1"/>
+    <rect x="420" y="324" width="200" height="420" fill="none" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="520" y="638" fill="#FFFFFF" font-size="18" font-weight="600" text-anchor="middle">T3 52.1%</text>
+    <text x="520" y="466" fill="#FFFFFF" font-size="18" font-weight="600" text-anchor="middle">T2 30.5%</text>
+    <text x="520" y="386" fill="#FFFFFF" font-size="16" font-weight="600" text-anchor="middle">T1 7.8%</text>
+    <text x="520" y="350" fill="#FFFFFF" font-size="16" font-weight="600" text-anchor="middle">US 9.3%</text>
+    <path d="M 620 324.63 H 640" fill="none" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="650" y="330" fill="#475569" font-size="14" font-weight="500">其他 0.3%</text>
+    <text x="520" y="794" fill="#0F172A" font-size="20" font-weight="600" text-anchor="middle">下载侧</text>
+
+    <!-- Revenue column heading -->
+    <text x="1080" y="276" fill="#0F172A" font-size="20" font-weight="600" text-anchor="middle">收入侧</text>
+    <text x="1080" y="300" fill="#64748B" font-size="14" text-anchor="middle">100% 堆叠</text>
+
+    <!-- Revenue 100% stacked bar: T3 31.8, T2 19.6, T1 23.9, US 24.0, Other 0.7 -->
+    <rect x="980" y="610.44" width="200" height="133.56" fill="#3867B9"/>
+    <rect x="980" y="528.12" width="200" height="82.32" fill="#63BCE3"/>
+    <rect x="980" y="427.74" width="200" height="100.38" fill="#20A7A0"/>
+    <rect x="980" y="326.94" width="200" height="100.80" fill="#5B5CE2"/>
+    <rect x="980" y="324" width="200" height="2.94" fill="#CBD5E1"/>
+    <rect x="980" y="324" width="200" height="420" fill="none" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="1080" y="681" fill="#FFFFFF" font-size="18" font-weight="600" text-anchor="middle">T3 31.8%</text>
+    <text x="1080" y="575" fill="#FFFFFF" font-size="18" font-weight="600" text-anchor="middle">T2 19.6%</text>
+    <text x="1080" y="483" fill="#FFFFFF" font-size="18" font-weight="600" text-anchor="middle">T1 23.9%</text>
+    <text x="1080" y="381" fill="#FFFFFF" font-size="18" font-weight="600" text-anchor="middle">US 24.0%</text>
+    <path d="M 1180 325.47 H 1200" fill="none" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="1210" y="330" fill="#475569" font-size="14" font-weight="500">其他 0.7%</text>
+    <text x="1080" y="794" fill="#0F172A" font-size="20" font-weight="600" text-anchor="middle">收入侧</text>
+  </g>
+</svg>

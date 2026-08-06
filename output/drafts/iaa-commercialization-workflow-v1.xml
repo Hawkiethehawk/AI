@@ -1,0 +1,313 @@
+<title>IAA 商业化工作流程（V1）</title>
+<callout emoji="📌" background-color="light-blue">
+  <p>本文用于串联 IAA 商业化从产品设计到结果反馈的完整工作。执行顺序为：埋点设计 → 需求跟进 → 广告配置与验收 → 投放 → 数据复盘与反馈。</p>
+  <p>投放分为广告投放和广告变现。广告投放通过买量获取用户，广告变现让产品承接广告流量并产生收入。两条链路必须使用能够对齐的应用、版本、国家和时间口径，才能判断成本与收益是否来自同一批用户。</p>
+</callout>
+<callout emoji="📚" background-color="light-gray">
+  <p><b>学习材料引用说明：</b><cite doc-id="Mkgnwj4IOi6IWzkWbpKcUupPn9g" file-type="wiki" title="Month 1 产出内容" type="doc"></cite>第一部分及其中列出的<cite doc-id="KthHwd1jgiUP0wkx1Uyc60Konkh" file-type="wiki" title="Week 1 学习内容" type="doc"></cite>、<cite doc-id="PdWswYVEqiRU1UkzQnpcsB66npc" file-type="wiki" title="SOP学习文档" type="doc"></cite>仅用于说明学习过程；<cite doc-id="MWQVdsM2cozhP5xf39xcDOoCnEf" file-type="docx" title="海外广告聚合配置新人指引 - 工作流程与SOP" type="doc"></cite>仅用于参考行文框架。上述材料及 Week 1 下的文档不作为本文事实、经验或结论来源。</p>
+</callout>
+<whiteboard type="mermaid">flowchart LR
+  A[埋点设计] --&gt; B[需求跟进]
+  B --&gt; C[广告配置与验收]
+  C --&gt; D{投放}
+  D --&gt; D1[广告投放]
+  D --&gt; D2[广告变现]
+  D1 --&gt; E[数据复盘与反馈]
+  D2 --&gt; E
+  E -.问题与新判断.-> A
+  E -.调整项.-> B
+  E -.配置实验.-> C</whiteboard>
+
+<h1>一、埋点设计</h1>
+<h2>1.1 先记录产品链路，再记录广告链路</h2>
+<p>广告数据只有放回用户路径里才有解释力。埋点不能只记录请求、展示和点击，还要记录用户是否到达广告场景、是否完成核心任务，以及广告前后是否出现中断、遮挡或返回异常。否则广告展示下降时，无法区分是用户没有到达、广告没有加载，还是产品功能本身没有完成。</p>
+<p>现有产品拆解采用“产品功能—IAA/IAP—用户操作流程—广告类型—产品理解”的结构，广告类型表进一步记录广告样式、展示时机和冷却。埋点设计沿用同一套观察方式，使需求、配置、验收和复盘能围绕同一条链路沟通。</p>
+
+<h2>1.2 用自有产品链路确定埋点范围</h2>
+<p><cite doc-id="WJKSwAVtBiecIdkYOafcoSuhnnh" file-type="wiki" title="Zipper Wallpaper 优化建议" type="doc"></cite>是对自有产品的链路分析。文档记录了首启语言选择、引导页广告、主页内容、拉链锁屏、订阅入口、设置页和再次启动等环节的问题，因此这些节点需要同时记录产品行为、广告行为和结果。</p>
+<table>
+  <thead>
+    <tr><th><p>链路节点</p></th><th><p>产品侧要记录</p></th><th><p>商业化侧要记录</p></th><th><p>希望回答的问题</p></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><p>首启与语言选择</p></td><td><p>页面曝光、语言选择、完成或退出</p></td><td><p>Banner 加载、展示、关闭、是否遮挡选项</p></td><td><p>用户是否因为广告无法完成首启设置</p></td></tr>
+    <tr><td><p>新手引导</p></td><td><p>每页曝光、下一步、跳过、到达主页</p></td><td><p>广告在哪两步之间触发、关闭后落到哪里</p></td><td><p>广告是否增加引导流失或改变正常路径</p></td></tr>
+    <tr><td><p>主页与壁纸内容</p></td><td><p>分类曝光、内容点击、预览、应用结果</p></td><td><p>广告形式、触发动作、关闭和返回结果</p></td><td><p>用户是否理解内容并完成壁纸设置</p></td></tr>
+    <tr><td><p>拉链锁屏</p></td><td><p>预览、启用、系统锁屏接管、解锁成功</p></td><td><p>该路径中的广告触发和中断</p></td><td><p>双重解锁发生在哪一步，是否影响核心价值</p></td></tr>
+    <tr><td><p>订阅入口</p></td><td><p>入口曝光、来源、付费墙曝光、购买结果</p></td><td><p>去广告权益及付费前后的广告变化</p></td><td><p>入口是否只在首启出现，用户能否再次找到</p></td></tr>
+    <tr><td><p>设置页</p></td><td><p>页面曝光、功能项点击和执行结果</p></td><td><p>订阅或广告相关入口</p></td><td><p>空页面或缺失功能是否造成路径断点</p></td></tr>
+    <tr><td><p>再次启动与返回应用</p></td><td><p>冷启动、热启动、后台恢复、当前页面</p></td><td><p>广告加载结果、触发频率和冷却</p></td><td><p>同一环境下广告时有时无的原因是什么</p></td></tr>
+  </tbody>
+</table>
+
+<h2>1.3 最小记录单元</h2>
+<table>
+  <thead>
+    <tr><th><p>记录对象</p></th><th><p>需要写清的内容</p></th><th><p>后续用途</p></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><p>用户节点</p></td><td><p>页面、功能、进入方式、前后步骤</p></td><td><p>还原用户路径，判断问题发生在哪一步</p></td></tr>
+    <tr><td><p>广告节点</p></td><td><p>广告形式、广告位、触发条件、展示结果</p></td><td><p>配置和验收逐项对应</p></td></tr>
+    <tr><td><p>频率条件</p></td><td><p>首次启动、冷/热启动、操作次数、间隔或冷却</p></td><td><p>解释同一路径为什么出现不同结果</p></td></tr>
+    <tr><td><p>商业化结果</p></td><td><p>请求、响应、展示、点击、收益及其原始口径</p></td><td><p>形成广告漏斗和收入复盘基础</p></td></tr>
+    <tr><td><p>分析维度</p></td><td><p>应用、版本、广告位、广告形式、平台、国家、日期</p></td><td><p>支持拆分和对账</p></td></tr>
+    <tr><td><p>异常信息</p></td><td><p>失败阶段、错误信息、耗时、当时配置和网络环境</p></td><td><p>区分实现问题、平台问题与数据问题</p></td></tr>
+  </tbody>
+</table>
+
+<h2>1.4 事件和口径设计</h2>
+<p>每个关键节点至少形成“进入场景—执行动作—得到结果”三段记录；如果中间有广告，再插入请求、加载、展示、点击、关闭或激励结果。事件名不追求多，重点是顺序稳定、字段可复算，并能从异常结果回到具体页面和配置。</p>
+<ul>
+  <li><b>产品结果和广告结果分开：</b>广告成功展示不等于用户成功完成任务。</li>
+  <li><b>首次与非首次分开：</b>首启引导、订阅入口和广告策略通常不同，不能混在一个整体指标里。</li>
+  <li><b>原始值优先：</b>请求、响应、展示、收益等保留分子和分母；比例在分析阶段重算。</li>
+  <li><b>关键维度统一：</b>应用、版本、国家、广告位、广告形式、聚合平台、广告源和时间必须能对齐。</li>
+  <li><b>异常留上下文：</b>记录失败阶段、耗时、错误信息、网络环境和当时配置，不只上传“失败”状态。</li>
+</ul>
+
+<h2>1.5 交付物与完成标准</h2>
+<checkbox done="false">用户操作路径已经画清，广告节点能落到具体页面和动作。</checkbox>
+<checkbox done="false">每个广告位都有唯一名称或 ID，并能对应到广告形式和配置对象。</checkbox>
+<checkbox done="false">展示时机、间隔、冷却、首次用户和返回应用等条件已经记录。</checkbox>
+<checkbox done="false">后续复盘需要的分子、分母和拆分维度已经确认。</checkbox>
+<checkbox done="false">异常路径有记录位置，不能只留下“广告没出”的结论。</checkbox>
+<callout emoji="✅" background-color="light-green">
+  <p><b>核心观点：</b>先证明用户能够完成产品核心任务，再判断广告是否正常。任何会遮挡关键选项、打断设置结果、造成重复解锁或让用户找不到订阅入口的问题，都应优先于收入优化处理。不同产品可以共用事件结构，但必须按真实用户路径定义节点，不能直接复制另一类产品的埋点表。</p>
+</callout>
+
+<h1>二、需求跟进</h1>
+<p>这一部分只保留必要骨架。现有工作中，AppMagic 周任务会明确采集范围、周次、账号、品类和交付结果；MAX 配置流程则从配置需求中取得应用、广告形式和平台参数，完成配置后再回填结果。需求跟进的重点是让输入和交付物能对应，不在本文展开沟通工具或消息流转。</p>
+<h2>2.1 需求进入时</h2>
+<table>
+  <thead>
+    <tr><th><p>项目</p></th><th><p>最低要求</p></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><p>目标</p></td><td><p>这次要解决的商业化问题，以及希望观察的结果</p></td></tr>
+    <tr><td><p>范围</p></td><td><p>应用、平台、版本、国家、广告形式和广告位</p></td></tr>
+    <tr><td><p>依赖</p></td><td><p>产品路径、埋点、SDK、账号权限、平台参数和测试环境</p></td></tr>
+    <tr><td><p>负责人</p></td><td><p>需求、开发、配置、验收、投放和复盘分别由谁负责</p></td></tr>
+    <tr><td><p>完成标准</p></td><td><p>需要交付什么，以及由谁确认可以进入下一阶段</p></td></tr>
+  </tbody>
+</table>
+<h2>2.2 变更发生时</h2>
+<p>广告位、触发逻辑、平台参数或投放范围发生变化时，要同步更新埋点设计、配置记录、验收用例和复盘口径。变更记录至少包含修改对象、修改前后值、原因、负责人、时间、影响范围和回滚方式。</p>
+<h2>2.3 变更分级与放行</h2>
+<ul>
+  <li><b>必须完整回归：</b>新增或删除广告位，修改广告形式、触发节点、首次用户策略、频率、付费权益或核心任务路径。</li>
+  <li><b>定向验收后放行：</b>调整国家分组、Bid Floor、广告源、超时或兜底，且客户端逻辑没有变化。</li>
+  <li><b>不允许直接上线：</b>关键参数缺失、埋点未完成、正式 ID 无法确认、核心路径仍有阻断、没有回滚方式。</li>
+</ul>
+<p>商业化负责人确认配置与策略，产品负责人确认核心路径和体验，研发或测试确认实现结果。涉及核心功能或用户体验的问题，不能由单一商业化指标替代联合放行。</p>
+<callout emoji="✅" background-color="light-green">
+  <p><b>核心观点：</b>需求跟进不是催进度，而是控制信息版本。任何上线结果都必须能追溯到一份明确需求和一次明确验收；跨团队卡点如果会影响放行条件，应直接标记为阻塞，而不是把不确定项带到线上。</p>
+</callout>
+
+<h1>三、广告配置与验收</h1>
+<h2>3.1 当前已有的 MAX 配置流程</h2>
+<p>现有记录中的实际流程是：从配置需求取得信息，在 MAX 创建应用和广告单元；使用 TopOn 生成部分 ADN 配置，其他 ADN 仍需到对应后台手动获取；把完整参数填入 MAX，设置 Bid Floor 分层；最后回填 Unit ID 和配置结果，并更新需求状态。<cite doc-id="GM3mwRivziFocUktedIcunornKf" file-type="wiki" title="Max聚合配置" type="doc"></cite></p>
+<ol>
+  <li>核对应用、平台、广告形式、命名和所需 ADN。</li>
+  <li>创建 MAX App 和 Ad Unit，记录返回的 Unit ID。</li>
+  <li>生成或手动取得各 ADN 所需参数。</li>
+  <li>按广告单元检查参数对应关系，再写入 MAX。</li>
+  <li>设置 Bid Floor、国家分组和全局兜底。</li>
+  <li>回填参数和状态，进入测试包验收。</li>
+</ol>
+<callout emoji="⚠️" background-color="light-red">
+  <p><cite doc-id="ST2fwyRSxiAnxekdOuxcljahnAd" file-type="wiki" title="Max配置自动化方案" type="doc"></cite>描述的是自动创建 Unit、生成部分 ADN、批量写入配置和 Bid Floor 的设想。它不是已有成果，API、字段映射和完整链路尚未经过真实账号验证。本版只把它保留为后续探索方向。</p>
+</callout>
+
+<h2>3.2 验收不只检查“广告能不能出”</h2>
+<table>
+  <thead>
+    <tr><th><p>验收面</p></th><th><p>检查内容</p></th><th><p>主要证据</p></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><p>配置</p></td><td><p>包名、平台、广告形式、Unit、ADN 参数、国家分组、Bid Floor、兜底</p></td><td><p>后台配置与需求记录</p></td></tr>
+    <tr><td><p>显示</p></td><td><p>尺寸、位置、遮挡、关闭入口、横竖屏和主要机型</p></td><td><p>截图、录屏、测试记录</p></td></tr>
+    <tr><td><p>用户路径</p></td><td><p>首次启动、功能前后、返回应用、锁屏恢复、连续操作</p></td><td><p>逐路径录屏和广告类型表</p></td></tr>
+    <tr><td><p>产品功能</p></td><td><p>核心任务能否完成；广告是否打断、延迟或改变操作结果</p></td><td><p>正常路径与异常路径对照</p></td></tr>
+    <tr><td><p>IAA/IAP</p></td><td><p>广告与付费入口是否冲突，订阅权益和实际功能是否一致</p></td><td><p>付费墙、功能限制和广告行为</p></td></tr>
+    <tr><td><p>数据</p></td><td><p>请求、展示、收益、耗时和错误信息是否能对上</p></td><td><p>埋点、聚合平台与 ADN 数据</p></td></tr>
+    <tr><td><p>合规</p></td><td><p>广告遮挡、广告占比、误触风险及整改后的复测</p></td><td><p>问题截图、整改版本和复测结果</p></td></tr>
+  </tbody>
+</table>
+
+<h2>3.3 自有产品与外部案例提供的验收提醒</h2>
+<ul>
+  <li>自有产品 Zipper Wallpaper 的链路分析发现过双重解锁、设置页为空、订阅入口只在首启出现、语言选项被 Banner 遮挡等问题。这些都应进入固定回归用例。<cite doc-id="WJKSwAVtBiecIdkYOafcoSuhnnh" file-type="wiki" title="Zipper Wallpaper 优化建议" type="doc"></cite></li>
+  <li>PDF Converter 的案例记录了功能操作和返回动作中多次触发广告、订阅权益与实际功能差异、部分 PDF 功能异常等情况。验收时需要把广告频率和功能可用性放在同一条路径里看。<cite doc-id="DRtfwC3wmibAgckzaP1cgiamnrb" file-type="wiki" title="PDF Converter - Compress PDF" type="doc"></cite></li>
+  <li>PDF Reader 案例显示，冷启动付费墙、功能内广告和设置页入口都可能影响用户对会员价值的判断。<cite doc-id="QRHHwzEbNizCaakIMD8ckWHjnzd" file-type="wiki" title="PDF阅读器 - 查看、编辑" type="doc"></cite></li>
+  <li>清理类、Launcher 和游戏案例说明，不同产品的广告触发位置差异很大，不能只按广告形式复用验收用例。</li>
+</ul>
+
+<h2>3.4 当前配置笔记中的经验项</h2>
+<p>以下内容来自现有配置笔记，只按“当前经验”记录，不作为行业标准：出现异常时先检查后台配置、平台状态和地区网络；统一检查超时和并行请求；每个流量分组保留兜底；耗时和收益先观察一段周期，笔记中暂定最小单位为 3 天；预估 eCPM 与 API 数据差异明显时回到平台检查配置和口径。<cite doc-id="Jz3lwRjY0i1wsckwXLQc2sMEnye" file-type="wiki" title="商业化配置 笔记+思路" type="doc"></cite></p>
+<p>AdMob 申诉记录进一步补充了合规闭环：先完成整改和版本测试，再围绕广告遮挡、广告占比和误点击风险说明整改结果。<cite doc-id="LDcbwCBxqiScDEkBV0ecrTpanCh" file-type="wiki" title="Admob申诉" type="doc"></cite></p>
+
+<h2>3.5 放行原则</h2>
+<ul>
+  <li>核心任务无法完成、广告遮挡操作、关闭入口异常、存在明显误触风险或订阅权益与实际不一致时，不通过验收。</li>
+  <li>广告加载失败可以有兜底，但不能让产品流程卡死；无填充和功能失败必须分开记录。</li>
+  <li>每个国家或流量分组都要知道最终落到哪个兜底，不能只验证高价层。</li>
+  <li>体验和收入冲突时，先保护核心任务完成，再通过频率、触发位置、用户分层或可回滚实验寻找收益空间。</li>
+  <li>正式环境上线后仍要做一次小流量核验，测试环境通过不代表真实流量一定正常。</li>
+</ul>
+<callout emoji="✅" background-color="light-green">
+  <p><b>核心观点：</b>验收对象不是单个广告，而是“用户路径 + 广告配置 + 数据回传”的组合。只有三者同时成立，配置才算完成。Bid Floor、并行请求、超时和广告源调整都应被视为实验参数，保留基线、观察窗口和回滚条件后再修改。</p>
+</callout>
+
+<h1>四、投放</h1>
+<h2>4.1 广告投放：通过买量获取用户</h2>
+<callout emoji="ℹ️" background-color="light-blue">
+  <p>Month 1 现有产出没有完整的真实买量账户、预算、素材、出价和优化结果。本节给出首轮执行和验证方法，但不把渠道选择或预算分配写成已经验证的经验。</p>
+</callout>
+<table>
+  <thead>
+    <tr><th><p>记录项</p></th><th><p>执行要求</p></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><p>投放目标</p></td><td><p>希望获得什么用户或验证什么假设</p></td></tr>
+    <tr><td><p>投放范围</p></td><td><p>平台、国家、应用版本和用户范围</p></td></tr>
+    <tr><td><p>Campaign 与素材</p></td><td><p>命名、素材主题、落地页和版本对应关系</p></td></tr>
+    <tr><td><p>成本条件</p></td><td><p>预算、出价、计费方式和止损条件</p></td></tr>
+    <tr><td><p>回传条件</p></td><td><p>归因口径、事件、收入数据和观察窗口</p></td></tr>
+    <tr><td><p>复盘结果</p></td><td><p>成本、用户质量、变现表现、异常和下一步动作</p></td></tr>
+  </tbody>
+</table>
+<h3>4.1.1 投放前</h3>
+<ul>
+  <li>先写清本轮假设：准备在哪个国家、用什么素材表达、获取哪类用户、希望用户完成什么产品动作。</li>
+  <li>Campaign、素材、商店页和应用版本保持可追溯，避免投放结果找不到对应产品状态。</li>
+  <li>确认安装、首启、核心任务完成、广告场景到达和收入数据能够按相同时间与国家口径查看。</li>
+  <li>在启动前确定预算上限、止损条件和最短观察窗口，不能投放后再选择对自己有利的判断方式。</li>
+</ul>
+<h3>4.1.2 首轮测试</h3>
+<p>首轮测试的目标是验证链路和用户质量，不是立即追求规模。先检查花费和安装是否正常，再看用户是否完成首启和核心任务、是否到达广告场景、是否产生可用的变现数据。成本便宜但无法进入核心路径的用户，不应被视为有效结果。</p>
+<h3>4.1.3 放大、调整或停止</h3>
+<ul>
+  <li>数据链路异常时先暂停结论，修复回传或口径后再评估素材和渠道。</li>
+  <li>达到观察窗口后，按国家、Campaign、素材和版本拆分，不用整体平均值掩盖局部差异。</li>
+  <li>只有成本、用户质量和广告变现同时没有触发护栏时，才考虑逐步放大。</li>
+  <li>调整时尽量保持单一主要变量，并记录调整时间，以便和广告变现侧的数据对齐。</li>
+</ul>
+<p>AppMagic 周数据已经持续记录品类、排名轨迹、下载/收入国家、市场属性、上线日期和发行商等信息，可作为产品与市场样本池，但不能替代真实买量数据。<cite doc-id="DfTTw05PwiOvRLkK1akc7u3enLb" file-type="wiki" title="AppMagic每周数据采集" type="doc"></cite><cite doc-id="BUi6wWaKUiK1Zkk1yOYcrE0Anld" file-type="wiki" title="AppMagic数据" type="doc"></cite></p>
+
+<h2>4.2 广告变现：开始承接广告流量</h2>
+<p>广告变现以“配置已经通过验收、广告开始承接真实流量”为起点。首轮重点是确认真实环境与测试环境是否一致，并留下版本、国家、广告位、广告形式、流量分组、Bid Floor、兜底和变更时间。</p>
+<table>
+  <thead>
+    <tr><th><p>放量前</p></th><th><p>开始放量后</p></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><p>确认正式 ID、国家和用户范围</p></td><td><p>检查请求、响应、展示、耗时和收益是否进入正常记录</p></td></tr>
+    <tr><td><p>记录 Bid Floor、流量分组和兜底配置</p></td><td><p>按广告位、国家、平台和广告源拆分观察</p></td></tr>
+    <tr><td><p>明确异常联系人和回滚方式</p></td><td><p>记录每次调整的时间、对象和原因</p></td></tr>
+    <tr><td><p>保留上线前基线</p></td><td><p>达到观察窗口后再判断是否继续、扩大或回退</p></td></tr>
+  </tbody>
+</table>
+<h3>4.2.1 首轮观察顺序</h3>
+<ol>
+  <li>先确认用户能够到达广告场景，避免把产品流量变化误判为平台问题。</li>
+  <li>再看请求、响应、展示和耗时，定位损失发生在哪一层。</li>
+  <li>最后看 eCPM、收益和广告源结构，判断收入变化来自流量、填充还是价格。</li>
+  <li>同时检查核心任务完成、广告遮挡和连续操作，确保收入变化没有建立在明显体验故障上。</li>
+</ol>
+<h3>4.2.2 调整方式</h3>
+<p>Bid Floor、国家分组、广告源、并行数量、超时、频率和触发节点每次只选择少量主要变量调整。当前配置笔记以至少 3 天作为阶段性观察经验；实际窗口仍要根据样本量、波动和版本变化决定。发现严重体验或合规问题时不等待窗口结束，直接停止相关广告位或回滚配置。</p>
+
+<h2>4.3 广告投放与广告变现如何接到同一次复盘</h2>
+<p>同一批买量用户最终会进入产品广告位，因此两边至少按应用、版本、国家和时间对齐。广告投放记录获取用户付出的成本及其产品行为，广告变现记录这些用户到达的广告场景、展示和收益。两边口径无法对齐时，只能分别描述变化，不能直接计算回收或下结论。</p>
+<callout emoji="✅" background-color="light-green">
+  <p><b>核心观点：</b>广告投放负责“买来什么用户”，广告变现负责“这些用户能产生什么收入”。不能只因获客便宜就放量，也不能只因短期广告收入高就增加广告强度。放量前必须同时检查成本、核心任务完成、变现场景到达、收入和体验护栏。</p>
+</callout>
+
+<h1>五、数据复盘与反馈</h1>
+<h2>5.1 先确认数据能不能回答问题</h2>
+<p>复盘开始前由人工确认数据范围、时间、版本、筛选条件、缺失情况和指标口径。比例、eCPM、ARPDAU 和人均次数尽量使用原始分子、分母复算；缺少关键字段、混合不同粒度或无法解释口径差异时，先补数据和对账，不进入原因判断。</p>
+<callout emoji="⚠️" background-color="light-red">
+  <p><cite doc-id="BjMCwgbZpiBgmtkL8l5cuy6Xnbm" file-type="wiki" title="Topn Skill" type="doc"></cite>仍处于构建初期，只能作为字段整理、数据检查和流程试验工具。它不参与观点生成、原因归因、策略选择或配置决策；所有分析结论和调整动作以人工复核、人工判断为准。</p>
+</callout>
+<h2>5.2 分开看两条链路</h2>
+<table>
+  <thead>
+    <tr><th><p>链路</p></th><th><p>先回答的问题</p></th><th><p>主要拆分维度</p></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><p>广告投放</p></td><td><p>成本买来了哪些用户；这些用户是否完成核心操作并进入变现场景</p></td><td><p>平台、Campaign、素材、国家、版本、日期</p></td></tr>
+    <tr><td><p>广告变现</p></td><td><p>用户是否到达广告场景；是否有请求、响应和展示；收入变化发生在哪一段</p></td><td><p>广告位、形式、平台、广告源、国家、版本、日期</p></td></tr>
+    <tr><td><p>联动</p></td><td><p>成本变化和广告收益变化是否来自同一批用户、同一版本和同一观察窗口</p></td><td><p>应用、版本、国家、时间及可用的归因标识</p></td></tr>
+  </tbody>
+</table>
+
+<h2>5.3 复盘节奏与输出</h2>
+<table>
+  <thead>
+    <tr><th><p>节奏</p></th><th><p>主要目的</p></th><th><p>输出</p></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><p>上线当天</p></td><td><p>确认版本、埋点、归因、广告请求和收入回传没有严重异常</p></td><td><p>上线检查记录、异常和处理人</p></td></tr>
+    <tr><td><p>日常监控</p></td><td><p>发现花费、流量、展示、耗时、收益或核心任务的突变</p></td><td><p>异常说明；需要立即处理时附回滚动作</p></td></tr>
+    <tr><td><p>周期复盘</p></td><td><p>按国家、版本、Campaign、素材、广告位和广告源拆分原因</p></td><td><p>数据质量、主要变化、支持证据和下一轮实验</p></td></tr>
+    <tr><td><p>实验复盘</p></td><td><p>判断变更是否生效、是否触发护栏、是否值得保留</p></td><td><p>基线、变量、窗口、结果、回滚和可复用结论</p></td></tr>
+  </tbody>
+</table>
+<p>复盘窗口不使用固定天数替代证据判断。高流量项目可以较快获得稳定结果；低流量或强波动项目需要延长窗口、合并稀疏维度。版本发布、投放和配置变更重叠时，应先把时间点标出来，避免把多个变化归因给同一个动作。</p>
+
+<h2>5.4 复盘结论的写法</h2>
+<p>每条建议都应由人工写明：支持证据、其他可能解释、调整对象、单变量验证方案、护栏指标和回滚条件。没有实验或因果证据时，写成“建议测试”，不写成已经证明有效。工具可以帮助整理字段和发现明显数据问题，但不能代替业务判断，也不能自动生成线上调整结论。</p>
+<h2>5.5 反馈回到哪里</h2>
+<ul>
+  <li>埋点：补字段、修正口径或增加异常记录。</li>
+  <li>需求：明确遗漏范围、责任人和完成标准。</li>
+  <li>配置：调整广告位、频率、流量分组、Bid Floor、兜底或平台参数。</li>
+  <li>广告投放：调整 Campaign、素材、国家、预算或出价。</li>
+  <li>广告变现：调整承接范围和配置实验。</li>
+  <li>案例库：记录有效结果、无效实验、异常和回滚原因。</li>
+</ul>
+<callout emoji="✅" background-color="light-green">
+  <p><b>核心观点：</b>复盘不是汇总报表，而是决定下一步改什么。顺序固定为：检查数据质量 → 找到变化发生的链路 → 列出其他可能解释 → 设计可回滚验证 → 回收真实结果。成功和失败的实验都要记录，只有经过重复验证且边界清楚的结果，才能沉淀为下一轮经验。</p>
+</callout>
+
+<h1>附录：本版使用的经验与案例来源</h1>
+<h2>A. AppMagic 数据采集</h2>
+<ul>
+  <li><cite doc-id="DfTTw05PwiOvRLkK1akc7u3enLb" file-type="wiki" title="AppMagic每周数据采集" type="doc"></cite></li>
+  <li><cite doc-id="Aexwwk9PHifu1qkuHq4ccBywnq7" file-type="wiki" title="任务背景" type="doc"></cite></li>
+  <li><cite doc-id="ECCrwHht3iFX6bkiGv9cXWIPnXd" file-type="wiki" title="数据获取策略简报" type="doc"></cite></li>
+  <li><cite doc-id="BUi6wWaKUiK1Zkk1yOYcrE0Anld" file-type="wiki" title="AppMagic数据" type="doc"></cite></li>
+</ul>
+
+<h2>B. 产品拆解与广告行为案例</h2>
+<p>拆解资料用于提供真实观察样本，其中 Zipper Wallpaper 是自有产品链路分析，其余案例用于对照不同产品的广告触发和商业化组合。图片、录屏、流程图和广告类型表随对应案例使用，不单独上升为通用结论。三篇 20260713 案例仍未完成，只作为样本索引，不据此判断商业化策略。</p>
+<ul>
+  <li><cite doc-id="Xs9swNzvJi8kSUkXeJYcubCZnLg" file-type="wiki" title="竞品拆解" type="doc"></cite></li>
+  <li><cite doc-id="KiXUwKiIgil2oskqU6fcPuJLnDe" file-type="wiki" title="拆解模板" type="doc"></cite>、<cite doc-id="BrghwRd0kimrpikoO5zcfH05nRc" file-type="wiki" title="拆解模板" type="doc"></cite>、<cite doc-id="W3EPwNlXKipnCGkaPYLcZPU2nXT" file-type="wiki" title="拆解模板" type="doc"></cite></li>
+  <li><cite doc-id="ZjZpwkcMUiqqBSkMHL6c4HRUnig" file-type="wiki" title="TV Remote - Universal Control" type="doc"></cite>、<cite doc-id="DSnfw5SISiQjcTkwS3FcZMocnMc" file-type="wiki" title="遥控器产品对比" type="doc"></cite></li>
+  <li><cite doc-id="DRtfwC3wmibAgckzaP1cgiamnrb" file-type="wiki" title="PDF Converter - Compress PDF" type="doc"></cite>、<cite doc-id="BKC7wfIgNiE4zbkAhLRcalc6nWy" file-type="wiki" title="用户操作流程" type="doc"></cite>、<cite doc-id="ZV4ewYAyQi0L9qku1atcp4OYnwh" file-type="wiki" title="广告类型" type="doc"></cite></li>
+  <li><cite doc-id="SMpSwJo9NiBLesk3SPKcb1HinJe" file-type="wiki" title="Easy Homescreen" type="doc"></cite>、<cite doc-id="FqUkweQ4pijVchkkGyVcME3Inlh" file-type="wiki" title="广告类型" type="doc"></cite>、<cite doc-id="BzWOwfImtiu1fMkNSUicGstin4d" file-type="wiki" title="Launcher产品对比" type="doc"></cite></li>
+  <li><cite doc-id="EaXZwafouiyBrok4vsQcgBnLnrg" file-type="wiki" title="PDF Editor - PDF Reader" type="doc"></cite>、<cite doc-id="TUh8wSk57ibFsek4AmpcK7PynWd" file-type="wiki" title="Phone Clean Sentry" type="doc"></cite>、<cite doc-id="EUOUwUWCyiTCOxkMIxfcuiUXnDd" file-type="wiki" title="Home Clean: Makeover ASMR" type="doc"></cite></li>
+  <li><cite doc-id="Wc3jwcVKki62klktKGxcAnEhnye" file-type="wiki" title="Colony Flow!" type="doc"></cite>、<cite doc-id="GYABwExfqiCNjuk39e6cfVoPnJh" file-type="wiki" title="Smart Clean Pro" type="doc"></cite>、<cite doc-id="QRHHwzEbNizCaakIMD8ckWHjnzd" file-type="wiki" title="PDF阅读器 - 查看、编辑" type="doc"></cite></li>
+  <li><cite doc-id="Mr6Zw0sozieRfTkSVkscp3G6nuc" file-type="wiki" title="Royal Smash! : Physics Puzzle" type="doc"></cite>、<cite doc-id="ZzUsw36opiZJ3dkGD03ca5EXnWT" file-type="wiki" title="Silly Smile Live Wallpaper 4K" type="doc"></cite>、<cite doc-id="XDmwwS8ypirUzIkyUMocbDI3nUf" file-type="wiki" title="恢复已删除的消息" type="doc"></cite></li>
+  <li><cite doc-id="Bbs3wYBUsiz04Xk24lvct1KQnef" file-type="wiki" title="Guru Puzzle Game 混变策略" type="doc"></cite></li>
+  <li><cite doc-id="WJKSwAVtBiecIdkYOafcoSuhnnh" file-type="wiki" title="Zipper Wallpaper 优化建议" type="doc"></cite></li>
+</ul>
+
+<h2>C. 配置、验收与数据分析</h2>
+<ul>
+  <li><cite doc-id="Jz3lwRjY0i1wsckwXLQc2sMEnye" file-type="wiki" title="商业化配置 笔记+思路" type="doc"></cite></li>
+  <li><cite doc-id="GM3mwRivziFocUktedIcunornKf" file-type="wiki" title="Max聚合配置" type="doc"></cite></li>
+  <li><cite doc-id="ST2fwyRSxiAnxekdOuxcljahnAd" file-type="wiki" title="Max配置自动化方案" type="doc"></cite>（仅作思路）</li>
+  <li><cite doc-id="LDcbwCBxqiScDEkBV0ecrTpanCh" file-type="wiki" title="Admob申诉" type="doc"></cite></li>
+  <li><cite doc-id="BjMCwgbZpiBgmtkL8l5cuy6Xnbm" file-type="wiki" title="Topn Skill" type="doc"></cite>（构建初期，仅作工具状态记录，不参与观点和决策）</li>
+</ul>
+
+<h2>D. 使用边界</h2>
+<ul>
+  <li>Week 1 及其子文档、SOP 学习文档不参与本文事实和观点形成。</li>
+  <li>参考 SOP 只提供章节组织方式，不提供内容。</li>
+  <li>自动化方案只代表待验证思路，不代表已接入或已产生成果。</li>
+  <li>竞品个案只说明测试时观察到的现象，不直接推广到全部产品。</li>
+  <li>没有真实数据或实验结果的部分明确标为待验证，不写成已有成果。</li>
+</ul>

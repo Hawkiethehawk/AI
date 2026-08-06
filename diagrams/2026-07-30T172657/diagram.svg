@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect x="0" y="0" width="1600" height="900" fill="#FFFFFF"/>
+
+  <!-- Header -->
+  <text x="100" y="78" fill="#182230" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="28" font-weight="700">补充地区组下载与收入偏好</text>
+  <text x="100" y="112" fill="#667085" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16">下载侧与收入侧的 Top5 国家地区份额结构 · 单位：%</text>
+  <line x1="100" y1="142" x2="1500" y2="142" stroke="#E5E7EB" stroke-width="2"/>
+
+  <!-- Centered legend -->
+  <circle cx="700" cy="190" r="7" fill="#2F67E8"/>
+  <text x="714" y="196" fill="#344054" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="600">下载侧</text>
+  <circle cx="850" cy="190" r="7" fill="#F05A00"/>
+  <text x="864" y="196" fill="#344054" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="600">收入侧</text>
+
+  <!-- Axis labels -->
+  <text x="740" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">0%</text>
+  <text x="591" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">10%</text>
+  <text x="443" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">20%</text>
+  <text x="294" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">30%</text>
+  <text x="220" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">35%</text>
+  <text x="860" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">0%</text>
+  <text x="1009" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">10%</text>
+  <text x="1157" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">20%</text>
+  <text x="1306" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">30%</text>
+  <text x="1380" y="244" text-anchor="middle" fill="#98A2B3" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">35%</text>
+
+  <!-- Vertical grid -->
+  <g stroke="#E5E7EB" stroke-width="1.5" stroke-dasharray="4 6">
+    <line x1="220" y1="262" x2="220" y2="708"/>
+    <line x1="294" y1="262" x2="294" y2="708"/>
+    <line x1="443" y1="262" x2="443" y2="708"/>
+    <line x1="591" y1="262" x2="591" y2="708"/>
+    <line x1="740" y1="262" x2="740" y2="708"/>
+    <line x1="860" y1="262" x2="860" y2="708"/>
+    <line x1="1009" y1="262" x2="1009" y2="708"/>
+    <line x1="1157" y1="262" x2="1157" y2="708"/>
+    <line x1="1306" y1="262" x2="1306" y2="708"/>
+    <line x1="1380" y1="262" x2="1380" y2="708"/>
+  </g>
+
+  <!-- Row separators -->
+  <g stroke="#E5E7EB" stroke-width="1">
+    <line x1="180" y1="366" x2="1420" y2="366"/>
+    <line x1="180" y1="486" x2="1420" y2="486"/>
+    <line x1="180" y1="606" x2="1420" y2="606"/>
+  </g>
+
+  <!-- US -->
+  <text x="800" y="322" text-anchor="middle" fill="#182230" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">US</text>
+  <rect x="602" y="290" width="138" height="44" rx="22" fill="#2F67E8"/>
+  <text x="671" y="318" text-anchor="middle" fill="#FFFFFF" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">9.3%</text>
+  <rect x="860" y="290" width="357" height="44" rx="22" fill="#F05A00"/>
+  <text x="1039" y="318" text-anchor="middle" fill="#FFFFFF" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">24.0%</text>
+
+  <!-- IN -->
+  <text x="800" y="442" text-anchor="middle" fill="#182230" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">IN</text>
+  <rect x="238" y="410" width="502" height="44" rx="22" fill="#2F67E8"/>
+  <text x="489" y="438" text-anchor="middle" fill="#FFFFFF" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">33.8%</text>
+  <rect x="860" y="410" width="79" height="44" rx="22" fill="#F05A00"/>
+  <text x="900" y="438" text-anchor="middle" fill="#FFFFFF" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">5.3%</text>
+
+  <!-- Latin America -->
+  <text x="800" y="562" text-anchor="middle" fill="#182230" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">拉美</text>
+  <rect x="406" y="530" width="334" height="44" rx="22" fill="#2F67E8"/>
+  <text x="573" y="558" text-anchor="middle" fill="#FFFFFF" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">22.5%</text>
+  <rect x="860" y="530" width="101" height="44" rx="22" fill="#F05A00"/>
+  <text x="911" y="558" text-anchor="middle" fill="#FFFFFF" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">6.8%</text>
+
+  <!-- Southeast Asia -->
+  <text x="800" y="682" text-anchor="middle" fill="#182230" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">东南亚</text>
+  <rect x="520" y="650" width="220" height="44" rx="22" fill="#2F67E8"/>
+  <text x="630" y="678" text-anchor="middle" fill="#FFFFFF" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">14.8%</text>
+  <rect x="860" y="650" width="321" height="44" rx="22" fill="#F05A00"/>
+  <text x="1021" y="678" text-anchor="middle" fill="#FFFFFF" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">21.6%</text>
+
+  <!-- Compact methodology note: 30px after final row -->
+  <rect x="220" y="724" width="1160" height="62" rx="8" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="1.5"/>
+  <text x="250" y="762" fill="#475467" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="14">IN、拉美、东南亚为可重叠观察组，不与主分层相加；US 为主分层，仅为对照纳入此图。</text>
+</svg>
+
+
+

@@ -186,11 +186,11 @@ body.glossary-open{overflow:hidden}
 .resource-progress-table td{line-height:1.5;overflow-wrap:anywhere}
 .am-progress-table thead th:first-child{width:18%}
 .am-progress-table thead th:nth-child(2){width:82%}
-.ip-progress-table thead th:first-child{width:16%}
-.ip-progress-table thead th:nth-child(2){width:10%}
-.ip-progress-table thead th:nth-child(3){width:74%}
+.ip-progress-table thead th:first-child{width:20%}
+.ip-progress-table thead th:nth-child(2){width:80%}
+
 .resource-progress-table tbody th[scope="row"]{text-align:center}
-.ip-progress-table tbody td:nth-of-type(1):not(.merged-step-cell){text-align:center}
+
 .resource-progress-table tbody td{text-align:justify;text-align-last:left;text-justify:auto}
 .resource-progress-table .resource-stage-row th{padding:11px 13px;background:#15352f;color:#8af0d5;text-align:center;font-size:16px;font-weight:700}
 .resource-progress-table .resource-group-row th{padding:8px 13px;background:#0f2932;color:#b8ced2;text-align:center;font-size:16px;font-weight:650}
@@ -198,17 +198,16 @@ body.glossary-open{overflow:hidden}
 .eternal-progress-table{width:100%;max-width:100%;overflow:hidden}
 .eternal-progress-table table{width:100%;min-width:0;table-layout:fixed;font-size:16px}
 .eternal-progress-table th,.eternal-progress-table td{padding:7px 8px;vertical-align:middle}
-.eternal-progress-table thead th:first-child{width:8%}
+.eternal-progress-table thead th:first-child{width:10%}
 .eternal-progress-table thead th:nth-child(2){width:10%}
-.eternal-progress-table thead th:nth-child(3){width:17%}
-.eternal-progress-table thead th:nth-child(4){width:13%}
-.eternal-progress-table thead th:nth-child(5){width:52%}
+.eternal-progress-table thead th:nth-child(3){width:13%}
+.eternal-progress-table thead th:nth-child(4){width:67%}
 .eternal-progress-table td{line-height:1.55;overflow-wrap:anywhere}
 .eternal-progress-table tbody th[scope="row"],.eternal-progress-table tbody .ep-cell,.eternal-progress-table tbody .tree-cell{text-align:center}
 .eternal-progress-table tbody .action-cell,.eternal-progress-table tbody .note-cell{text-align:justify;text-align-last:left;text-justify:auto}
 .eternal-progress-table tbody th[scope="row"][rowspan],.eternal-progress-table tbody .ep-cell[rowspan]{background:#091821}
 .eternal-progress-table tbody th[scope="row"][rowspan]:hover,.eternal-progress-table tbody .ep-cell[rowspan]:hover{background:#0c212a}
-.resource-progress-table tbody th[scope="row"],.ip-progress-table tbody td:first-of-type:not(.merged-step-cell),.eternal-progress-table tbody th[scope="row"],.eternal-progress-table tbody .ep-cell{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+.resource-progress-table tbody th[scope="row"],.eternal-progress-table tbody th[scope="row"],.eternal-progress-table tbody .ep-cell{white-space:nowrap;overflow-wrap:normal;word-break:normal}
 .guide-progress-table{width:100%;max-width:100%;overflow:hidden}
 .guide-progress-table table{width:100%;min-width:0;table-layout:fixed;font-size:16px}
 .guide-progress-table thead th:first-child{width:25%}
@@ -304,22 +303,22 @@ body.glossary-open{overflow:hidden}
  .resource-progress-table tbody td{width:100%;grid-column:1/-1;border-top:1px solid var(--line);text-align:justify;text-align-last:left;text-justify:auto}
  .resource-progress-table tbody td.merged-step-cell{grid-column:1/-1!important;background:#091821;text-align:left}
  .resource-progress-table tbody td.merged-step-cell:before,.eternal-progress-table tbody td.merged-step-cell:before{display:none}
- .ip-progress-table tbody td:first-of-type:not(.merged-step-cell){grid-column:auto;border-top:0;background:#10232d;text-align:center}
- .resource-progress-table tbody th[scope="row"],.ip-progress-table tbody td:first-of-type:not(.merged-step-cell){white-space:nowrap;overflow-wrap:normal;word-break:normal}
+ 
+ .resource-progress-table tbody th[scope="row"]{white-space:nowrap;overflow-wrap:normal;word-break:normal}
  .resource-progress-table tbody th:before,.resource-progress-table tbody td:before{display:block;margin-bottom:4px;color:#78909a;font-size:16px;font-weight:620;line-height:1.35}
  .am-progress-table tbody th:before{content:"当前AM"}
  .am-progress-table tbody td:nth-of-type(1):before{content:"当前目标或操作"}
 .ip-progress-table tbody th:before{content:"当前IP"}
- .ip-progress-table tbody td:nth-of-type(1):before{content:"当前AM"}
-.ip-progress-table tbody td:nth-of-type(2):before{content:"当前目标或操作"}
- .resource-progress-table tbody th[scope="row"]:before,.ip-progress-table tbody td:first-of-type:not(.merged-step-cell):before{text-align:center}
+ .ip-progress-table tbody td:nth-of-type(1):before{content:"当前目标或操作"}
+
+ .resource-progress-table tbody th[scope="row"]:before{text-align:center}
  .guide-progress-table tbody th[scope="row"]:before{content:"当前进度"}
  .guide-progress-table tbody td:before{content:"当前目标或操作"}
  .reality-progress-table tbody th[scope="row"]:before{content:"当前现实或关键进度"}
  .reality-upgrades-progress-table tbody th[scope="row"]:before{content:"当前条件"}
  .am-progress-table tbody th[scope="row"]{grid-column:1/-1}
  .resource-progress-table tbody .resource-stage-row,.resource-progress-table tbody .resource-group-row{display:grid;width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:0;border-radius:0;background:transparent}
- .ip-progress-table tbody .resource-stage-row,.ip-progress-table tbody .resource-group-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,3fr)}
+ 
  .resource-progress-table tbody .resource-stage-row th,.resource-progress-table tbody .resource-group-row th{display:block;padding:10px 12px;text-align:center}
  .resource-progress-table tbody .resource-stage-row th:before,.resource-progress-table tbody .resource-group-row th:before{display:none}
  .resource-progress-table tbody tr:hover{background:#091821}
@@ -337,12 +336,11 @@ body.glossary-open{overflow:hidden}
  .eternal-progress-table tbody .action-cell,.eternal-progress-table tbody .note-cell{text-align:justify;text-align-last:left;text-justify:auto}
  .eternal-progress-table tbody th:before,.eternal-progress-table tbody td:before{display:block;margin-bottom:4px;color:#78909a;font-size:16px;font-weight:620;line-height:1.35}
  .eternal-progress-table tbody th:before{content:"TT"}
- .eternal-progress-table tbody td:nth-of-type(1):before{content:"EP"}
- .eternal-progress-table tbody td:nth-of-type(2):before{content:"当前目标或操作"}
- .eternal-progress-table tbody td:nth-of-type(3):before{content:"研究树"}
- .eternal-progress-table tbody td:nth-of-type(4):before{content:"其他要求或备注"}
+.eternal-progress-table tbody td:nth-of-type(1):before{content:"EP"}
+.eternal-progress-table tbody td:nth-of-type(2):before{content:"研究树"}
+.eternal-progress-table tbody td:nth-of-type(3):before{content:"当前阶段"}
  .eternal-progress-table tbody th[scope="row"]:before,.eternal-progress-table tbody .ep-cell:before{text-align:center}
- .eternal-progress-table tbody .eternal-stage-row{display:grid;width:100%;grid-template-columns:minmax(0,2fr) minmax(0,3fr);border:0;border-radius:0;background:transparent}
+ .eternal-progress-table tbody .eternal-stage-row{display:block;width:100%;border:0;border-radius:0;background:transparent}
  .eternal-progress-table tbody .eternal-group-row{display:block;width:100%;border:0;border-radius:0;background:transparent}
  .eternal-progress-table tbody .eternal-stage-row th,.eternal-progress-table tbody .eternal-group-row th{display:block;padding:10px 12px;text-align:left}
  .eternal-progress-table tbody .eternal-stage-row th{text-align:center}
@@ -461,3 +459,6 @@ html[data-theme="light"] .glossary-close{color:#536a63}
 html[data-theme="light"] .glossary-close:hover{background:#e7f2ed;color:#087458}
 @media(max-width:1120px){html[data-theme="light"] .mobile-header{background:#fff}html[data-theme="light"] .icon-button{color:#435c54}}
 @media(max-width:840px){html[data-theme="light"] .eternal-progress-table,html[data-theme="light"] .eternal-progress-table table{background:#fff}}
+
+.eternal-progress-table .stage-line{display:block}
+.eternal-progress-table .stage-no{font-weight:650;color:var(--accent);margin-right:4px}
