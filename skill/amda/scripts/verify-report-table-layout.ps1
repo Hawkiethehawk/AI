@@ -27,13 +27,19 @@ $tableContracts = @(
         CenterColumnCount = 4
     },
     [pscustomobject]@{
-        Name = '补充地区组表'
-        Headers = @('观察组', '下载侧全历史', '下载侧最近4周', '收入侧全历史', '收入侧最近4周', '分组角色与国家诊断')
-        Widths = @(120, 105, 125, 105, 125, 240)
-        CenterColumnCount = 5
+        Name = '分品类IAA重点国家表'
+        Headers = @('品类', 'IAA核心分组', '下载侧重点国家', '全历史/最近4周', 'IAA执行重点')
+        Widths = @(110, 103, 230, 123, 254)
+        CenterColumnCount = 3
     },
     [pscustomobject]@{
-        Name = '各品类重点群组表'
+        Name = '组内国家诊断表'
+        Headers = @('分组/观察组', '重点国家', '下载侧全历史', '下载侧最近4周', '收入全/近4周', '观察结论')
+        Widths = @(120, 180, 105, 113, 120, 182)
+        CenterColumnCount = 4
+    },
+    [pscustomobject]@{
+        Name = '执行结论表'
         Headers = @('品类', 'IAA规模层', 'IAP观察层', '收入信号可信度', '执行结论')
         Widths = @(150, 110, 110, 130, 320)
         CenterColumnCount = 4
@@ -160,7 +166,7 @@ $root = $document.DocumentElement
 $tables = @($root.SelectNodes('./table'))
 $expectedStructure = @{
     h1 = 7
-    table = 5
+    table = 6
     callout = 8
     whiteboard = 4
 }
@@ -254,7 +260,14 @@ for ($tableIndex = 0; $tableIndex -lt [Math]::Min($tables.Count, $tableContracts
 
             $expectedAlign = if ($columnHasLineBreak[$columnIndex]) { 'left' } else { 'center' }
             foreach ($paragraph in $paragraphs) {
-                if (-not $paragraph.HasAttribute('align') -or $paragraph.GetAttribute('align') -ne $expectedAlign) {
+                # Feishu omits the explicit left alignment attribute on readback because left is the native default.
+                $alignIsValid = if ($expectedAlign -eq 'left') {
+                    -not $paragraph.HasAttribute('align') -or $paragraph.GetAttribute('align') -eq 'left'
+                }
+                else {
+                    $paragraph.HasAttribute('align') -and $paragraph.GetAttribute('align') -eq 'center'
+                }
+                if (-not $alignIsValid) {
                     Add-CheckError "$cellLabel must be horizontally $expectedAlign because the whole column has$(
                         if ($columnHasLineBreak[$columnIndex]) { '' } else { ' no' }
                     ) line breaks"
