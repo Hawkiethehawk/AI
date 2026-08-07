@@ -6,9 +6,10 @@
 .gitee_token
 *.token
 
-# AppMagic browser profiles and account/session data.
-.appmagic-auth.json
-.appmagic-userdata*/
+# AMDC browser profiles and account/session data.
+.amdc-auth.json
+.amdc-userdata*/
+.playwright-auth/
 
 # Temporary folders and dependencies.
 ai-temp/
@@ -18,8 +19,8 @@ migration-logs/
 # Output folders that are runtime-only. Keep tracked templates/docs elsewhere under output/.
 output/repos/
 output/logs/
-output/folder/AppMagic-*/
-output/Appmagic-*.xlsx
+output/folder/AMDC-*/
+output/AMDC-*.xlsx
 Cache/
 
 # Local skill private environment files.
@@ -27,6 +28,12 @@ env.local.md
 *.local.md
 
 # Common local noise.
+.playwright-cli/
+artifacts/
+diagrams/
+tmp/
+tools/xiaohongshu-mcp/cookies.json
+tools/xiaohongshu-mcp/*.log*
 *.log
 *.tmp
 *.bak
