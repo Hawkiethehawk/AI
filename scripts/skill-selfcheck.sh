@@ -1,73 +1,82 @@
 #!/usr/bin/env bash
-# skill-selfcheck.sh — 让 ~/.claude/skills 下的 skill 与 repo(→gitee) 最新版保持同步。
+# skill-selfcheck.sh — 让 Codex/Claude 运行时 skill 与本地仓库版本保持同步。
 #
-# 真源(single source of truth) = 本 repo 的 skill/ 目录（已推送 gitee）。
-#   ⚠️ 请只修改 repo 里的 skill，不要直接改运行时副本 ~/.claude/skills/*，
+# 真源(single source of truth) = $REPO/skill/。
+#   ⚠️ 请只修改仓库真源，不要直接改 .agents/skills 或 ~/.claude/skills 运行时副本，
 #      否则本脚本会用 repo 版本覆盖你在运行时的改动。
 #
-# 用途：每次调用任意 skill 前自检——先整库 git pull 跟上 gitee（含别处推来的更新），
-#       再把有变化的 skill 同步到运行时目录，并打印一行变更摘要。
+# 用途：把当前工作树中有变化的 skill 同步到运行时目录，并打印一行变更摘要。
+#       本脚本不访问远端；pull 和 push 只能在用户明确授权后单独执行。
 #
 # 可移植：任何 agent harness 都能调用  ->  bash <repo>/scripts/skill-selfcheck.sh
-#   - 在 Claude Code 中由 PreToolUse(matcher=Skill) hook 自动触发；
-#   - 在其它框架中，把这一行挂到该框架的“工具调用前/会话启动”钩子即可。
-#   - repo 路径默认由脚本自身位置推断；也可用环境变量 SKILL_REPO 覆盖。
+# 仅在用户明确授权同步运行时后手动调用，不要挂到自动触发 hook。
 set -u
 
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="${SKILL_REPO:-$(cd "$SELF/.." && pwd)}"
+REPO="$(cd "$SELF/.." && pwd -P)"
 SRC="$REPO/skill"
-DST="$HOME/.claude/skills"
-MANIFEST="$HOME/.claude/.gitee-synced-skills"
+
+[ "$(cd "$(git -C "$REPO" rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null && pwd -P)" = "$REPO" ] || {
+  echo "[skill-selfcheck] 仓库根校验失败: $REPO" >&2
+  exit 1
+}
+case "$(git -C "$REPO" config --get remote.origin.url 2>/dev/null)" in
+  https://gitee.com/Hawkiethehawk/AI.git|git@gitee.com:Hawkiethehawk/AI.git) ;;
+  *) echo "[skill-selfcheck] origin 不是 Hawkiethehawk/AI，拒绝执行" >&2; exit 1 ;;
+esac
 
 [ -d "$SRC" ] || { echo "[skill-selfcheck] 找不到 skill 源目录: $SRC" >&2; exit 0; }
-mkdir -p "$DST"
 
-# 1) 每次都整库同步：让本地 repo 跟上 gitee（容错，网络问题不阻塞 skill 使用）
-timeout 20 git -C "$REPO" pull --rebase --quiet 2>/dev/null || true
+sync_destination() {
+  local dst="$1" manifest="$2" label="$3" changed=""
+  local d name target oldv newv manifest_tmp
 
-# 2) 清理上次由本仓库管理、但已经从 repo 删除的运行时 skill。
-#    没有清单时只初始化，不猜测哪些现有目录属于本仓库，避免误删用户自己的 skill。
-changed=""
-if [ -f "$MANIFEST" ]; then
-  while IFS= read -r name; do
-    case "$name" in
-      ""|.|..|*/*|*\\*) continue ;;
-    esac
-    if [ ! -f "$SRC/$name/SKILL.md" ] && [ -d "$DST/$name" ]; then
-      rm -rf -- "$DST/$name"
-      changed="$changed -$name(已删除)"
-    fi
-  done < "$MANIFEST"
-fi
+  mkdir -p "$dst"
 
-# 3) 逐个 skill：运行时缺失或与 repo 不一致 → 同步整目录到运行时
-for d in "$SRC"/*/; do
-  [ -f "$d/SKILL.md" ] || continue
-  name="$(basename "$d")"
-  t="$DST/$name/SKILL.md"
-  if [ ! -f "$t" ] || ! diff -q "$d/SKILL.md" "$t" >/dev/null 2>&1; then
-    oldv="$(grep -m1 '^version:' "$t" 2>/dev/null | awk '{print $2}')"
-    mkdir -p "$DST/$name"
-    cp -rf "$d." "$DST/$name/" 2>/dev/null
-    newv="$(grep -m1 '^version:' "$d/SKILL.md" 2>/dev/null | awk '{print $2}')"
-    changed="$changed ${name}(${oldv:-缺失}->${newv:-?})"
+  # 没有清单时只初始化，不猜测哪些现有目录属于本仓库。
+  if [ -f "$manifest" ]; then
+    while IFS= read -r name; do
+      case "$name" in
+        ""|.|..|*/*|*\\*) continue ;;
+      esac
+      if [ ! -f "$SRC/$name/SKILL.md" ] && [ -d "$dst/$name" ]; then
+        rm -rf -- "$dst/$name"
+        changed="$changed -$name(已删除)"
+      fi
+    done < "$manifest"
   fi
-done
 
-# 4) 记录当前由本仓库管理的 skill 名称，供下次检测删除使用。
-mkdir -p "$(dirname "$MANIFEST")"
-manifest_tmp="${MANIFEST}.tmp.$$"
-if {
   for d in "$SRC"/*/; do
     [ -f "$d/SKILL.md" ] || continue
-    basename "$d"
+    name="$(basename "$d")"
+    target="$dst/$name"
+    if [ ! -f "$target/SKILL.md" ] || ! diff -qr "$d" "$target" >/dev/null 2>&1; then
+      oldv="$(grep -m1 '^version:' "$target/SKILL.md" 2>/dev/null | awk '{print $2}')"
+      rm -rf -- "$target"
+      mkdir -p "$target"
+      cp -rf "$d." "$target/"
+      newv="$(grep -m1 '^version:' "$d/SKILL.md" 2>/dev/null | awk '{print $2}')"
+      changed="$changed ${name}(${oldv:-缺失}->${newv:-?})"
+    fi
   done
-} | sort > "$manifest_tmp" && mv -f -- "$manifest_tmp" "$MANIFEST"; then
-  :
-else
-  rm -f -- "$manifest_tmp"
-fi
 
-[ -n "$changed" ] && echo "[skill-selfcheck] 已把运行时 skill 更新到最新:$changed"
+  mkdir -p "$(dirname "$manifest")"
+  manifest_tmp="${manifest}.tmp.$$"
+  if {
+    for d in "$SRC"/*/; do
+      [ -f "$d/SKILL.md" ] || continue
+      basename "$d"
+    done
+  } | sort > "$manifest_tmp" && mv -f -- "$manifest_tmp" "$manifest"; then
+    :
+  else
+    rm -f -- "$manifest_tmp"
+  fi
+
+  [ -n "$changed" ] && echo "[skill-selfcheck] $label:$changed"
+}
+
+sync_destination "$REPO/.agents/skills" "$REPO/.agents/.gitee-synced-skills" "项目级 Codex skill 已更新"
+sync_destination "$HOME/.agents/skills" "$HOME/.agents/.gitee-synced-skills" "用户级 Codex skill 已更新"
+sync_destination "$HOME/.claude/skills" "$HOME/.claude/.gitee-synced-skills" "Claude skill 已更新"
 exit 0

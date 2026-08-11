@@ -1,23 +1,47 @@
-# Runtime state and private credentials
-apps/AMDC/.amdc-userdata*/
-apps/AMDC/Cache/
-apps/AMDC/logs/
-apps/AMDC/output/
-apps/AMDC/node_modules/
-apps/AMDC/amdc-config.json
-skills/AMDA/output/
-skills/AMDA/.playwright-auth/
+# Local Codex runtime state, credentials, sessions, logs, caches.
+.codex/
+.agents/
+.bashshim-test/
+.private/
 
-# Local tooling
-.vscode/
-.idea/
+# Gitee / local tokens, never commit.
+.gitee_token
+*.token
+
+# AMDC browser profiles and account/session data.
+.amdc-auth.json
+.amdc-userdata*/
+.playwright-auth/
+
+# Temporary folders and dependencies.
+ai-temp/
 node_modules/
-*.local.json
-*.local.yaml
-*.local.yml
-__pycache__/
-*.py[cod]
+migration-logs/
 
-# OS files
+# Output folders that are runtime-only. Keep tracked templates/docs elsewhere under output/.
+output/repos/
+output/logs/
+output/folder/AMDC-*/
+output/AMDC-*.xlsx
+Cache/
+
+# Local skill private environment files.
+env.local.md
+*.local.md
+
+# Common local noise.
+.playwright-cli/
+artifacts/
+diagrams/
+tmp/
+tools/xiaohongshu-mcp/cookies.json
+tools/xiaohongshu-mcp/*.log*
+*.log
+*.tmp
+*.bak
 Thumbs.db
 desktop.ini
+
+# Python bytecode caches.
+__pycache__/
+*.py[cod]

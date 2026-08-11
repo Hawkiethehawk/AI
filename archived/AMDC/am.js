@@ -21,13 +21,6 @@ const http = require('http');
 const os = require('os');
 const { spawn, execSync } = require('child_process');
 
-class UsageError extends Error {
-  constructor(message) {
-    super(message);
-    this.code = 'USAGE';
-  }
-}
-
 // ── 配置加载 ──
 
 function resolveProjectDir() {
@@ -58,18 +51,6 @@ function loadConfig(projectDir) {
     console.warn('⚠️  配置文件解析失败:', cfgPath);
     return {};
   }
-}
-
-function redactSecrets(value, key = '') {
-  if (Array.isArray(value)) return value.map(item => redactSecrets(item));
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([childKey, childValue]) => [
-      childKey,
-      redactSecrets(childValue, childKey),
-    ]));
-  }
-  if (/(token|password|secret|credential|authorization|api[-_]?key)/i.test(key)) return '********';
-  return value;
 }
 
 function resolveLatestDataDir(projectDir, weekAnchor) {
@@ -180,18 +161,6 @@ function isAMDCProjectDir(dir) {
 function resolveDashboardProjectDir(projectDirArg) {
   if (projectDirArg) return path.resolve(projectDirArg);
   return resolveProjectDir();
-}
-
-function resolveRepositoryRoot(startDir) {
-  try {
-    return execSync('git rev-parse --show-toplevel', {
-      cwd: startDir,
-      encoding: 'utf-8',
-      timeout: 5000,
-    }).trim();
-  } catch {
-    return '';
-  }
 }
 
 function assertDashboardProjectDir(projectDir) {
@@ -653,8 +622,6 @@ async function cmdSchedule(sub) {
     } else {
       console.log('运行: crontab -l | grep -v amdc-weekly | crontab -');
     }
-  } else {
-    throw new UsageError('amdc schedule requires: init or remove');
   }
 }
 
@@ -662,7 +629,7 @@ async function cmdConfigShow() {
   const projectDir = resolveProjectDir();
   const cfg = loadConfig(projectDir);
   console.log('📋 当前配置合并 (env vars > config file > defaults):\n');
-  console.log(JSON.stringify(redactSecrets({
+  console.log(JSON.stringify({
     projectDir,
     accounts: cfg.accounts || '(自动发现)',
     topDepth: process.env.TOP_DEPTH || cfg.topDepth || 100,
@@ -676,7 +643,7 @@ async function cmdConfigShow() {
     skipExcel: cfg.skipExcel || false,
     notifications: cfg.notifications || {},
     schedule: cfg.schedule || {},
-  }), null, 2));
+  }, null, 2));
 }
 
 // ── 帮助 ──
@@ -708,24 +675,23 @@ async function cmdUpdate() {
     }
   }
 
-  const repoRoot = resolveRepositoryRoot(projectDir);
-  if (!repoRoot || !fs.existsSync(path.join(repoRoot, 'package.json'))) {
-    console.error('❌ 无法找到 AMTools 总仓库（当前:', resolveProjectDir(), '）');
-    console.error('   请进入 AMTools 总仓库后重试，或: git clone https://gitee.com/Hawkiethehawk/AI.git');
+  if (!fs.existsSync(path.join(projectDir, '.git'))) {
+    console.error('❌ 无法找到 AMDC 项目目录（当前:', resolveProjectDir(), '）');
+    console.error('   请 cd 到 AMDC 项目目录后重试，或: git clone https://gitee.com/Hawkiethehawk/AMDC.git');
     process.exit(1);
   }
 
-  console.log('🔄 从 AMTools 总仓库拉取最新版本...\n');
+  console.log('🔄 从 gitee 拉取最新版本...\n');
 
   // 0. 暂存本地修改，避免冲突
   let stashed = false;
   try {
-    const status = execSync('git status --porcelain', { cwd: repoRoot, encoding: 'utf-8', timeout: 10000 });
+    const status = execSync('git status --porcelain', { cwd: projectDir, encoding: 'utf-8', timeout: 10000 });
     if (status.trim()) {
       console.log('📋 暂存本地修改...');
       // Include untracked files as well. Otherwise git reports success while
       // creating no stash when the worktree only contains new files.
-      const stashOutput = execSync('git stash push -u -m "amdc update auto stash"', { cwd: repoRoot, encoding: 'utf-8', timeout: 10000 });
+      const stashOutput = execSync('git stash push -u -m "amdc update auto stash"', { cwd: projectDir, encoding: 'utf-8', timeout: 10000 });
       stashed = !/No local changes to save/i.test(stashOutput);
     }
   } catch (e) { /* 非致命 */ }
@@ -733,13 +699,13 @@ async function cmdUpdate() {
   // 1. git pull
   let pullOutput = '';
   try {
-    pullOutput = execSync('git pull --rebase', { cwd: repoRoot, encoding: 'utf-8', timeout: 30000 }).trim();
+    pullOutput = execSync('git pull --rebase', { cwd: projectDir, encoding: 'utf-8', timeout: 30000 }).trim();
     console.log(pullOutput);
   } catch (e) {
     console.error('❌ git pull 失败:', (e.stderr || e.message).replace(/\n/g, '\n   '));
     if (stashed) {
       console.log('📋 恢复本地修改...');
-      try { execSync('git stash pop', { cwd: repoRoot, encoding: 'utf-8', timeout: 10000 }); } catch {}
+      try { execSync('git stash pop', { cwd: projectDir, encoding: 'utf-8', timeout: 10000 }); } catch {}
     }
     console.error('   请检查网络或手动: cd', projectDir, '&& git pull');
     process.exit(1);
@@ -748,7 +714,7 @@ async function cmdUpdate() {
   // 2. 恢复本地修改（可能有冲突，不强制）
   if (stashed) {
     try {
-      execSync('git stash pop', { cwd: repoRoot, encoding: 'utf-8', timeout: 10000 });
+      execSync('git stash pop', { cwd: projectDir, encoding: 'utf-8', timeout: 10000 });
       console.log('📋 本地修改已恢复（如有冲突请手动处理）');
     } catch {
       console.log('⚠️  本地修改恢复失败（可能有冲突），请手动: git stash pop');
@@ -757,19 +723,10 @@ async function cmdUpdate() {
     }
   }
 
-  // 3. Install dependencies only when the pulled revision changed manifests.
-  let changedFiles = '';
-  try {
-    changedFiles = execSync('git diff --name-only HEAD@{1} HEAD', {
-      cwd: repoRoot,
-      encoding: 'utf-8',
-      timeout: 10000,
-    });
-  } catch {}
-  if (/package\.json|package-lock\.json/.test(changedFiles)) {
+  // 3. npm install（仅 package.json 有变更时执行）
+  if (pullOutput.includes('package.json') || pullOutput.includes('package-lock.json')) {
     console.log('📦 package.json 有变更，安装依赖...');
     try {
-      execSync('npm install', { cwd: repoRoot, stdio: 'inherit', timeout: 60000 });
       execSync('npm install', { cwd: projectDir, stdio: 'inherit', timeout: 60000 });
     } catch (e) {
       console.error('⚠️  npm install 失败，请手动执行');
@@ -837,8 +794,8 @@ async function main() {
       await cmdExport();
       break;
     case 'tags':
-      if (args[1] === 'update' && args.length === 2) await cmdTagsUpdate();
-      else throw new UsageError('amdc tags update');
+      if (args[1] === 'update') await cmdTagsUpdate();
+      else console.log('用法: amdc tags update');
       break;
     case 'start':
     case 'dashboard':
@@ -851,12 +808,11 @@ async function main() {
       await cmdRestart();
       break;
     case 'schedule':
-      if (args.length > 2) throw new UsageError('amdc schedule init|remove');
       await cmdSchedule(args[1]);
       break;
     case 'config':
-      if (args[1] === 'show' && (args.length === 2 || (args.length === 3 && args[2] === '--json'))) await cmdConfigShow();
-      else throw new UsageError('amdc config show [--json]');
+      if (args[1] === 'show') await cmdConfigShow();
+      else console.log('用法: amdc config show');
       break;
     case 'update':
       await cmdUpdate();
@@ -869,11 +825,6 @@ async function main() {
 }
 
 main().catch(err => {
-  if (err && err.code === 'USAGE') {
-    console.error(`用法错误: ${err.message}`);
-    process.exitCode = 2;
-    return;
-  }
   console.error('Fatal:', err.message);
   process.exit(1);
 });

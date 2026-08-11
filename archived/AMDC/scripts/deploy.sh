@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # AMDC 一键部署脚本
 # 用法:
-#   curl -fsSL https://gitee.com/Hawkiethehawk/AI/raw/master/apps/AMDC/scripts/deploy.sh | bash
+#   curl -fsSL https://gitee.com/Hawkiethehawk/AMDC/raw/master/scripts/deploy.sh | bash
 #   或: bash scripts/deploy.sh  (在已克隆的仓库内)
 set -euo pipefail
 
@@ -10,7 +10,7 @@ info()  { echo -e "${GREEN}[✓]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[!]${NC} $*"; }
 err()   { echo -e "${RED}[✗]${NC} $*"; }
 
-REPO_URL="https://gitee.com/Hawkiethehawk/AI.git"
+REPO_URL="https://gitee.com/Hawkiethehawk/AMDC.git"
 INSTALL_DIR="${AMDC_INSTALL_DIR:-$PWD}"
 
 echo "============================================"
@@ -19,25 +19,31 @@ echo "  安装目录: $INSTALL_DIR"
 echo "============================================"
 echo ""
 
-# ── 1. 克隆总仓库 ──
-REPO_ROOT="$INSTALL_DIR"
-if [ -f "$INSTALL_DIR/apps/AMDC/am.js" ]; then
-  info "AMTools 总仓库已存在，跳过克隆"
-else
-  if [ -d "$INSTALL_DIR" ] && [ -n "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
-    REPO_ROOT="$INSTALL_DIR/AMTools"
+# ── 1. 克隆 ──
+if [ -f "$INSTALL_DIR/am.js" ]; then
+  info "仓库已存在，跳过克隆"
+elif [ -d "$INSTALL_DIR/.git" ]; then
+  info "检测到 git 仓库"
+  # 确保是 AMDC 仓库
+  REMOTE=$(git -C "$INSTALL_DIR" remote get-url origin 2>/dev/null || echo "")
+  if echo "$REMOTE" | grep -qi amdc; then
+    info "确认 AMDC 仓库"
+  else
+    warn "当前目录非 AMDC 仓库，克隆到子目录..."
+    git clone "$REPO_URL" "$INSTALL_DIR/AMDC"
+    INSTALL_DIR="$INSTALL_DIR/AMDC"
   fi
-  info "克隆 AMTools 总仓库..."
-  git clone "$REPO_URL" "$REPO_ROOT"
+else
+  info "克隆仓库到当前目录..."
+  # 如果当前目录非空或为根目录，克隆到子目录
+  if [ "$INSTALL_DIR" = "/" ] || [ -n "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
+    INSTALL_DIR="$INSTALL_DIR/AMDC"
+    info "将安装到: $INSTALL_DIR"
+  fi
+  git clone "$REPO_URL" "$INSTALL_DIR"
 fi
 
-PROJECT_DIR="$REPO_ROOT/apps/AMDC"
-if [ ! -f "$PROJECT_DIR/am.js" ]; then
-  err "AMDC 项目入口不存在: $PROJECT_DIR"
-  exit 1
-fi
-
-cd "$PROJECT_DIR"
+cd "$INSTALL_DIR"
 
 # ── 2. 系统依赖 ──
 info "检查 Chromium 系统依赖..."
@@ -64,7 +70,6 @@ fi
 
 # ── 3. Node 依赖 ──
 info "安装 Node 依赖..."
-npm --prefix "$REPO_ROOT" install
 npm install
 info "MiSans 本地字体已随项目就绪"
 
@@ -90,8 +95,7 @@ info "部署完成！"
 echo "============================================"
 echo ""
 echo "  amdc 路径 : $(which amdc 2>/dev/null || echo '需要新开终端')"
-echo "  总仓库   : $REPO_ROOT"
-echo "  AMDC目录 : $PROJECT_DIR"
+echo "  项目目录 : $INSTALL_DIR"
 echo "  Dashboard: amdc dashboard  (Windows 8787 / WSL 8788)"
 echo ""
 echo "  下一步 — 登录账号（逐个执行）:"

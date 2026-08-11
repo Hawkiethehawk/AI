@@ -10,7 +10,6 @@ import io
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -34,8 +33,6 @@ CATEGORY_COLORS = {
     'PDF阅读器': ('#80CBC4', '#004D40'),
 }
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-
 
 def fail(message):
     print(json.dumps({'ok': False, 'error': message}, ensure_ascii=True))
@@ -50,11 +47,7 @@ def cli(args, *, input_data=None, allow_failure=False):
     env = os.environ.copy()
     env['LARKSUITE_CLI_NO_UPDATE_NOTIFIER'] = '1'
     env['LARKSUITE_CLI_NO_SKILLS_NOTIFIER'] = '1'
-    configured_bin = os.environ.get('LARK_CLI_BIN')
-    local_bin = REPO_ROOT / 'node_modules' / '.bin' / ('lark-cli.cmd' if os.name == 'nt' else 'lark-cli')
-    cli_bin = configured_bin or (str(local_bin) if local_bin.exists() else None) or shutil.which('lark-cli.cmd' if os.name == 'nt' else 'lark-cli')
-    if not cli_bin:
-        raise RuntimeError('lark-cli is not installed. Run npm install from the AMTools root.')
+    cli_bin = os.environ.get('LARK_CLI_BIN') or ('lark-cli.cmd' if os.name == 'nt' else 'lark-cli')
     result = subprocess.run(
         [cli_bin, 'sheets', *args], input=input_data, text=True,
         capture_output=True, encoding='utf-8', errors='replace', env=env,

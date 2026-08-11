@@ -1,13 +1,13 @@
 # AMDC 一键部署脚本 (Windows PowerShell)
 # 用法:
-#   irm https://gitee.com/Hawkiethehawk/AI/raw/master/apps/AMDC/scripts/deploy.ps1 | iex
+#   irm https://gitee.com/Hawkiethehawk/AMDC/raw/master/scripts/deploy.ps1 | iex
 #   或: powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1  (在已克隆的仓库内)
 param(
     [string]$InstallDir = $PWD.Path
 )
 
 $ErrorActionPreference = "Stop"
-$RepoUrl = "https://gitee.com/Hawkiethehawk/AI.git"
+$RepoUrl = "https://gitee.com/Hawkiethehawk/AMDC.git"
 
 function Register-AMDCShellIntegration {
     param(
@@ -78,34 +78,36 @@ Write-Host "  安装目录: $InstallDir" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
-# ── 1. 克隆总仓库 ──
-$RepoRoot = $InstallDir
-if (Test-Path "$InstallDir\apps\AMDC\am.js") {
-    Write-Host "[✓] AMTools 总仓库已存在，跳过克隆" -ForegroundColor Green
+# ── 1. 克隆 ──
+if (Test-Path "$InstallDir\am.js") {
+    Write-Host "[✓] 仓库已存在，跳过克隆" -ForegroundColor Green
+} elseif (Test-Path "$InstallDir\.git") {
+    Write-Host "[✓] 检测到 git 仓库" -ForegroundColor Green
+    $remote = git -C $InstallDir remote get-url origin 2>$null
+    if ($remote -match 'amdc') {
+        Write-Host "[✓] 确认 AMDC 仓库" -ForegroundColor Green
+    } else {
+        Write-Host "[!] 当前目录非 AMDC 仓库，克隆到子目录..." -ForegroundColor Yellow
+        $InstallDir = Join-Path $InstallDir "AMDC"
+        git clone $RepoUrl $InstallDir
+    }
 } else {
-    if (Test-Path $InstallDir) {
-        $entries = @(Get-ChildItem -LiteralPath $InstallDir -Force -ErrorAction SilentlyContinue)
-        if ($entries.Count -gt 0) {
-            $RepoRoot = Join-Path $InstallDir "AMTools"
-        }
+    Write-Host "[✓] 克隆仓库到当前目录..." -ForegroundColor Green
+    # 如果 InstallDir 是盘符根目录或已存在非空目录，克隆到子目录 AMDC
+    if ($InstallDir -match '^[A-Z]:\\$' -or (Test-Path $InstallDir)) {
+        $InstallDir = Join-Path $InstallDir "AMDC"
+        Write-Host "  将安装到: $InstallDir" -ForegroundColor Yellow
     } else {
         New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
     }
-    Write-Host "[✓] 克隆 AMTools 总仓库..." -ForegroundColor Green
-    git clone $RepoUrl $RepoRoot
+    git clone $RepoUrl $InstallDir
 }
 
-$ProjectDir = Join-Path $RepoRoot "apps\AMDC"
-if (-not (Test-Path "$ProjectDir\am.js")) {
-    throw "AMDC 项目入口不存在: $ProjectDir"
-}
-
-Set-Location $ProjectDir
-$ProjectDir = (Get-Location).Path
+Set-Location $InstallDir
+$InstallDir = (Get-Location).Path
 
 # ── 2. Node 依赖 ──
 Write-Host "[✓] 安装 Node 依赖..." -ForegroundColor Green
-npm --prefix $RepoRoot install
 npm install
 Write-Host "[✓] MiSans 本地字体已随项目就绪" -ForegroundColor Green
 
@@ -124,7 +126,7 @@ npm link
 
 # ── 5. 默认项目目录与 PowerShell 包装 ──
 Write-Host "[✓] 配置 amdc 默认项目目录..." -ForegroundColor Green
-Register-AMDCShellIntegration -ProjectDir $ProjectDir
+Register-AMDCShellIntegration -ProjectDir $InstallDir
 
 # ── 6. 验证 ──
 Write-Host ""
@@ -132,8 +134,7 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "[✓] 部署完成！" -ForegroundColor Green
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  总仓库   : $RepoRoot"
-Write-Host "  AMDC目录 : $ProjectDir"
+Write-Host "  项目目录 : $InstallDir"
 Write-Host "  默认目录 : 新开的 PowerShell 会自动定位到上述项目目录"
 Write-Host "  Dashboard: amdc dashboard  (Windows 8787 / WSL 8788)"
 Write-Host ""
