@@ -25,13 +25,13 @@
 ### Linux / WSL
 
 ```bash
-curl -fsSL https://gitee.com/Hawkiethehawk/AMDC/raw/master/scripts/deploy.sh | bash
+curl -fsSL https://gitee.com/Hawkiethehawk/AI/raw/master/apps/AMDC/scripts/deploy.sh | bash
 ```
 
 ### Windows PowerShell
 
 ```powershell
-irm https://gitee.com/Hawkiethehawk/AMDC/raw/master/scripts/deploy.ps1 | iex
+irm https://gitee.com/Hawkiethehawk/AI/raw/master/apps/AMDC/scripts/deploy.ps1 | iex
 ```
 
 默认安装到当前目录。可通过 `AMDC_INSTALL_DIR` 环境变量自定义。

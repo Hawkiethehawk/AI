@@ -23,6 +23,21 @@ npm run amdc:test:feishu-order
 pwsh -NoProfile -File .\orchestrator\run-pipeline.ps1 -ManifestPath .\tests\fixtures\collection-manifest.example.json -DryRun
 ```
 
+## 统一 CLI
+
+总仓库入口为 `amtools.js`。在 `F:\AMTools` 执行：
+
+```powershell
+node .\amtools.js doctor
+node .\amtools.js version
+node .\amtools.js amdc status
+node .\amtools.js amda analyze --raw <raw-json> --output <analysis-json>
+node .\amtools.js pipeline validate .\tests\fixtures\collection-manifest.example.json
+node .\amtools.js pipeline dry-run .\tests\fixtures\collection-manifest.example.json
+```
+
+`amtools amdc ...` 会强制绑定 `apps\AMDC`，不受宿主机旧 `AMDC_PROJECT_DIR` 污染。`amtools doctor --json` 和 `amtools version --json` 提供机器可读输出；`amdc config show` 默认脱敏显示 token、password 和 secret。
+
 总仓库入口会显式把 `AMDC_PROJECT_DIR` 绑定到 `apps\\AMDC`，避免宿主机已有的旧项目环境变量污染测试和命令；直接进入 `apps\\AMDC` 运行原 CLI 时，仍可使用原有环境变量覆盖规则。
 
 ## 当前迁移状态

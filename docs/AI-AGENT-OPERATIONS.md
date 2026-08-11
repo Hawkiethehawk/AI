@@ -53,6 +53,9 @@ AMDC 与 AMDA 通过 `CollectionManifest` 或不可变数据快照交接，不�
 在 `F:\AMTools` 执行：
 
 ```powershell
+npm run cli:test
+node .\amtools.js doctor
+node .\amtools.js version
 npm run contracts:test
 npm run amdc:syntax
 npm run amdc:test:contract
@@ -62,6 +65,8 @@ pwsh -NoProfile -File .\orchestrator\run-pipeline.ps1 -ManifestPath .\tests\fixt
 
 这些命令不应启动真实采集，也不应写入飞书。
 
+Agent 优先使用 `node .\amtools.js amdc <command>`、`node .\amtools.js amda <command>` 和 `node .\amtools.js pipeline <command>`。总入口会强制绑定迁移后的模块目录，并返回稳定的成功、参数错误和环境检查退出码。不要把任意 npm script 名称当作公共 CLI 接口。
+
 AMDC 调试命令必须显式绑定总仓库项目目录：
 
 ```powershell
@@ -69,7 +74,7 @@ $env:AMDC_PROJECT_DIR = 'F:\AMTools\apps\AMDC'
 node .\orchestrator\run-amdc-command.js syntax
 ```
 
-不要让宿主机已有的 `AMDC_PROJECT_DIR` 把命令带回 `F:\AMDC`。
+不要让宿主机已有的 `AMDC_PROJECT_DIR` 把命令带回已删除的旧目录；必须显式设置为 `F:\AMTools\apps\AMDC`。
 
 ## 6. 手动 AMDC 流程
 
@@ -115,7 +120,7 @@ schtasks.exe /create /tn "AMDC Account Sync" /xml "F:\AMTools\apps\AMDC\schedule
 schtasks.exe /create /tn "AMDC Weekly" /xml "F:\AMTools\apps\AMDC\schedules\weekly-run.xml" /f
 ```
 
-注册后重新查询任务动作，确认不再出现 `F:\AMDC`。当前仓库已完成模板和私密状态迁移，但系统注册项需要管理员命令完成覆盖。
+注册后重新查询任务动作，确认 `-ProjectDir` 和 `WorkingDirectory` 均为 `F:\AMTools\apps\AMDC`。总仓库和系统注册项已完成迁移；后续修改任务模板后仍需重新注册并复核。
 
 定时入口会检查端口 `8787` 的看板归属。端口被其它 AMDC 项目占用时，不得强行覆盖，应先记录进程和 `projectDir`。
 
@@ -168,7 +173,7 @@ node .\tests\validate-manifest.js .\tests\fixtures\collection-manifest.example.j
 
 ## 11. 禁止操作
 
-- 不删除 `F:\AMDC` 或 `F:\AMDA` 原项目。
+- 不删除 `F:\AMTools\apps\AMDC` 或 `F:\AMTools\skills\AMDA` 总仓库中的有效项目。
 - 不删除账号登录态、`amdc-config.json`、令牌和未确认的运行产物。
 - 不把 AMDC 与 AMDA 的业务代码复制到 orchestrator。
 - 不通过修改日志、状态 JSON 或缓存文件伪造成功。

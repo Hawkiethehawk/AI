@@ -10,7 +10,7 @@
 - 版本发布前同步更新 `package.json`、`package-lock.json` 和 `CHANGELOG.md`。
 - `CHANGELOG.md` 必须记录版本号、发布日期和实际变更，并写明本次发布的验证结果。
 - 版本发布提交完成后创建同版本的 `vX.Y.Z` Git 标签，再将提交和标签推送到远程仓库。
-- 每次更新 Gitee 版本后，必须把同一版本号同步到 [AMDC README](https://gitee.com/Hawkiethehawk/AMDC) 和 [AMDC 飞书项目介绍](https://vimedia.feishu.cn/wiki/DfTTw05PwiOvRLkK1akc7u3enLb)，并回读两处内容确认版本一致。
+- 每次更新 Gitee 版本后，必须把同一版本号同步到 [AMDC README](https://gitee.com/Hawkiethehawk/AI/tree/master/apps/AMDC) 和 [AMDC 飞书项目介绍](https://vimedia.feishu.cn/wiki/DfTTw05PwiOvRLkK1akc7u3enLb)，并回读两处内容确认版本一致。
 - 如果待发布内容包含应用代码、项目配置、依赖或运行逻辑变更，必须先向用户列出功能变更、影响范围和验证结果，获得用户明确确认后才能纳入版本、CHANGELOG、提交、标签和推送；未获确认时只能处理纯文档同步，不能发布功能改动。
 
 ## 页面控件

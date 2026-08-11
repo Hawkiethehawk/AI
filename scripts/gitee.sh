@@ -54,7 +54,8 @@ case "$cmd" in
     msg="${1:-update}"
     if git -C "$REPO" diff --cached --quiet; then
       add_targets=()
-      for path in skill scripts project archived .gitignore; do
+      for path in apps docs orchestrator packages scripts skill skills tests tools project archived \
+        AGENTS.md README.md LICENSE package.json package-lock.json amtools.js .gitignore; do
         [ -e "$REPO/$path" ] && add_targets+=("$path")
       done
       git -C "$REPO" add -A -- "${add_targets[@]}"   # 默认同步 skill/脚本/project 真源/archived，不误传根 output/ 等未跟踪目录
