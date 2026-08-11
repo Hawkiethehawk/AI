@@ -11,6 +11,7 @@ skills/AMDA/.playwright-auth/
 # Local tooling
 .vscode/
 .idea/
+node_modules/
 *.local.json
 *.local.yaml
 *.local.yml
