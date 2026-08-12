@@ -29,7 +29,7 @@ esac
 
 sync_destination() {
   local dst="$1" manifest="$2" label="$3" changed=""
-  local d name target oldv newv manifest_tmp
+  local d name target oldv newv old_label new_label manifest_tmp
 
   mkdir -p "$dst"
 
@@ -50,13 +50,21 @@ sync_destination() {
     [ -f "$d/SKILL.md" ] || continue
     name="$(basename "$d")"
     target="$dst/$name"
-    if [ ! -f "$target/SKILL.md" ] || ! diff -qr "$d" "$target" >/dev/null 2>&1; then
-      oldv="$(grep -m1 '^version:' "$target/SKILL.md" 2>/dev/null | awk '{print $2}')"
+    if [ ! -f "$target/SKILL.md" ] || ! diff -qr --exclude='__pycache__' --exclude='*.pyc' --exclude='*.pyo' "$d" "$target" >/dev/null 2>&1; then
+      if [ -f "$target/SKILL.md" ]; then
+        oldv="$(grep -m1 -E '^[[:space:]]*version:' "$target/SKILL.md" 2>/dev/null | awk '{print $2}')"
+        old_label="${oldv:-未声明}"
+      else
+        old_label="缺失"
+      fi
       rm -rf -- "$target"
       mkdir -p "$target"
       cp -rf "$d." "$target/"
-      newv="$(grep -m1 '^version:' "$d/SKILL.md" 2>/dev/null | awk '{print $2}')"
-      changed="$changed ${name}(${oldv:-缺失}->${newv:-?})"
+      find "$target" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
+      find "$target" -depth -type d -name '__pycache__' -empty -delete
+      newv="$(grep -m1 -E '^[[:space:]]*version:' "$d/SKILL.md" 2>/dev/null | awk '{print $2}')"
+      new_label="${newv:-未声明}"
+      changed="$changed ${name}(${old_label}->${new_label})"
     fi
   done
 
@@ -76,7 +84,19 @@ sync_destination() {
   [ -n "$changed" ] && echo "[skill-selfcheck] $label:$changed"
 }
 
-sync_destination "$REPO/.agents/skills" "$REPO/.agents/.gitee-synced-skills" "项目级 Codex skill 已更新"
-sync_destination "$HOME/.agents/skills" "$HOME/.agents/.gitee-synced-skills" "用户级 Codex skill 已更新"
-sync_destination "$HOME/.claude/skills" "$HOME/.claude/.gitee-synced-skills" "Claude skill 已更新"
+migrate_manifest() {
+  local old_manifest="$1" new_manifest="$2"
+  if [ ! -f "$new_manifest" ] && [ -f "$old_manifest" ]; then
+    mkdir -p "$(dirname "$new_manifest")"
+    cp -f -- "$old_manifest" "$new_manifest"
+  fi
+}
+
+migrate_manifest "$REPO/.agents/.gitee-synced-skills" "$REPO/.agents/.ai-managed-skills"
+migrate_manifest "$HOME/.agents/.gitee-synced-skills" "$HOME/.agents/.ai-managed-skills"
+migrate_manifest "$HOME/.claude/.gitee-synced-skills" "$HOME/.claude/.ai-managed-skills"
+
+sync_destination "$REPO/.agents/skills" "$REPO/.agents/.ai-managed-skills" "项目级 Codex skill 已更新"
+sync_destination "$HOME/.agents/skills" "$HOME/.agents/.ai-managed-skills" "用户级 Codex skill 已更新"
+sync_destination "$HOME/.claude/skills" "$HOME/.claude/.ai-managed-skills" "Claude skill 已更新"
 exit 0

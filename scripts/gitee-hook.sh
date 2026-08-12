@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gitee-hook.sh — UserPromptSubmit hook：用户提到 gitee/码云 时，强制要求走 gitee-sync skill。
+# gitee-hook.sh — UserPromptSubmit hook：版本与发布请求统一路由到 version-manager skill。
 # 由 ~/.claude/settings.json 的 UserPromptSubmit hook 调用，读取 stdin JSON 的 prompt 字段。
 input="$(cat)"
 hit="$(printf '%s' "$input" | python -c "import sys,json
@@ -8,9 +8,10 @@ try:
 except Exception:
     sys.exit(0)
 p=(d.get('prompt') or '').lower()
-print('1' if ('gitee' in p or '码云' in p) else '')" 2>/dev/null)"
+terms=('gitee','码云','版本更新','版本号','发布版本','推送代码','推送仓库','git提交','提交代码','changelog','release','git tag','打标签','git push','git pull')
+print('1' if any(term in p for term in terms) else '')" 2>/dev/null)"
 
 if [ "$hit" = "1" ]; then
-  echo "[gitee 强制流程] 本次涉及 gitee/码云：请调用 gitee-sync skill 处理，不要绕过它手写零散的 git/curl。它会①先自检仓库内所有 skill 是否有更新并同步，②用已保存的 token 执行 push/pull/查询。若尚未配置 token，先引导用户运行 gitee.sh setup <token>（仅需一次）。"
+  echo "[版本管理强制流程] 本次涉及版本、提交或发布：请调用 version-manager skill。版本规则以该 Skill 为唯一来源；不要从 AGENTS.md 推断，也不要把版本修改、提交、标签和推送合并执行。远端写入仍需用户明确授权。"
 fi
 exit 0

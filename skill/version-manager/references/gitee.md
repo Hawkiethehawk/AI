@@ -1,0 +1,44 @@
+# Gitee 适配
+
+## AI 仓库入口
+
+AI 仓库的 Gitee API、运行时 Skill 同步和历史重写保护继续使用 `E:\LLM-Sandbox\Codex\scripts\gitee.sh`。脚本固定校验仓库根和 `Hawkiethehawk/AI` 远端，不得用于 AMTools、Monety 或 ADGuide。
+
+Windows 优先使用 Git for Windows 的 `bash.exe`：
+
+```powershell
+$gitBash = @(
+  "$env:ProgramFiles\Git\bin\bash.exe",
+  "${env:ProgramFiles(x86)}\Git\bin\bash.exe",
+  "$env:LOCALAPPDATA\Programs\Git\bin\bash.exe"
+) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if (-not $gitBash) { throw '未找到 Git for Windows bash.exe。' }
+& $gitBash 'scripts/gitee.sh' 'status'
+```
+
+没有 Git Bash 时可使用 WSL，但必须先转换 Windows 路径。Unix 环境使用 `bash scripts/gitee.sh <command>`。
+
+## 命令职责
+
+- `status`：本地只读状态，不访问网络。
+- `check`：将 AI 仓库 Skill 真源同步到运行时，不访问远端。
+- `pull`：显式执行 `git pull --rebase`，需要用户授权。
+- `commit <msg> <path>...`：只暂存明确路径并提交，不推送。
+- `publish [<component>-vX.Y.Z]`：暂存区为空时刷新远端引用并校验快进关系，再推送 `master`；可同时推送一个已存在且指向 HEAD 的组件标签。未暂存的用户改动会保留并明确报告，不纳入发布。
+- `setup`、`api`、`info`：配置或使用 Gitee API token。
+- `history-push`：仅处理已有的受保护历史重写场景。
+
+旧的组合式 `push` 命令已停用，避免隐式暂存、提交、拉取和推送。
+
+## Token
+
+- Token 仅通过本机交互终端的 `gitee.sh setup` 隐藏读取，保存在 `~/.claude/.gitee_token`。
+- 不得要求用户在对话中发送 token，也不得放进命令参数、环境变量、远端 URL、日志或提交。
+- Windows 上用 `icacls` 核验 token 文件只对当前用户可读写，不依赖 `chmod 600` 提供 NTFS 隔离。
+- Git pull/push 继续使用系统 Git 凭证，不由脚本修改。
+
+## 发布保护
+
+- AI 仓库普通发布使用 `commit` 与 `publish` 两个独立阶段。`publish` 不自动 rebase 或 stash；远端含新提交时停止并要求单独处理。
+- 推送前检查 `.githooks`、提交身份、远端分支和标签指向。
+- 历史重写必须使用执行前读取的完整远端 OID 和 `--force-with-lease`；禁止普通强推。

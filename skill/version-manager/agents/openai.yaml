@@ -1,0 +1,4 @@
+interface:
+  display_name: "版本管理"
+  short_description: "统一管理项目版本号、变更记录、提交、标签与远端发布流程"
+  default_prompt: "使用 $version-manager 检查当前项目并制定安全的版本发布流程。"

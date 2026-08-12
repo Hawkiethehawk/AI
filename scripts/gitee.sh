@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gitee.sh — 仓库 Hawkiethehawk/AI 的连接 & 同步助手（配套 gitee-sync skill，本地真源使用 E:\LLM-Sandbox\Codex）
+# gitee.sh — 仓库 Hawkiethehawk/AI 的 Gitee 适配器（配套 version-manager skill）
 # 一次性 setup token -> 保存到 ~/.claude/.gitee_token（供 REST API 使用）。
 # git push/pull 沿用系统已配的凭证（已免密），本脚本不改动它。
 set -u
@@ -27,7 +27,14 @@ validate_repo(){
 
 read_token(){ [ -f "$TOKEN_FILE" ] && tr -d ' \r\n' < "$TOKEN_FILE"; }
 need_token(){ local t; t="$(read_token)"; [ -n "$t" ] || { echo "未配置 token，请在本地交互式终端运行: gitee.sh setup" >&2; return 1; }; printf '%s' "$t"; }
-versions(){ for d in "$REPO"/skill/*/; do [ -f "$d/SKILL.md" ] && printf '  %-26s %s\n' "$(basename "$d")" "$(grep -m1 '^version:' "$d/SKILL.md" | awk '{print $2}')"; done; }
+versions(){
+  local d version
+  for d in "$REPO"/skill/*/; do
+    [ -f "$d/SKILL.md" ] || continue
+    version="$(grep -m1 -E '^[[:space:]]*version:' "$d/SKILL.md" | awk '{print $2}')"
+    printf '  %-26s %s\n' "$(basename "$d")" "${version:-未声明}"
+  done
+}
 api_curl(){
   local token="$1"
   shift
@@ -63,23 +70,66 @@ case "$cmd" in
   pull)
     git -C "$REPO" pull --rebase origin "$BRANCH"
     ;;
+  commit)
+    [ $# -ge 2 ] || { echo "用法: gitee.sh commit <message> <path>..." >&2; exit 1; }
+    msg="$1"; shift
+    [ -n "$msg" ] || { echo "提交信息不能为空。" >&2; exit 1; }
+    [ -z "$(git -C "$REPO" diff --cached --name-only)" ] || {
+      echo "暂存区已有内容，拒绝隐式混入提交。请先处理现有 staged 文件。" >&2
+      exit 1
+    }
+    add_targets=()
+    for path in "$@"; do
+      case "$path" in
+        :*|/*|[A-Za-z]:*|../*|*/../*|*/..|..)
+          echo "提交路径必须是仓库内的相对路径: $path" >&2
+          exit 1
+          ;;
+      esac
+      add_targets+=(":(literal)$path")
+    done
+    git -C "$REPO" add -A -- "${add_targets[@]}" || exit 1
+    if git -C "$REPO" diff --cached --quiet; then
+      echo "无改动可提交。" >&2
+      exit 1
+    fi
+    echo "== 待提交文件 =="
+    git -C "$REPO" diff --cached --name-status
+    git -C "$REPO" commit -m "$msg"
+    ;;
+  publish)
+    [ $# -le 1 ] || { echo "用法: gitee.sh publish [<component>-vX.Y.Z]" >&2; exit 1; }
+    tag="${1:-}"
+    [ -z "$(git -C "$REPO" diff --cached --name-only)" ] || { echo "暂存区不为空，拒绝发布。" >&2; exit 1; }
+    if [ -n "$(git -C "$REPO" status --porcelain)" ]; then
+      echo "== 保留但不纳入发布的工作区改动 =="
+      git -C "$REPO" status --short
+    fi
+    [ "$(git -C "$REPO" branch --show-current)" = "$BRANCH" ] || {
+      echo "当前分支不是 $BRANCH，拒绝发布。" >&2
+      exit 1
+    }
+    if [ -n "$tag" ] && ! printf '%s\n' "$tag" | grep -Eq '^[a-z0-9][a-z0-9-]*-v[0-9]+\.[0-9]+\.[0-9]+$'; then
+      echo "组件标签必须使用 <component>-vX.Y.Z 格式。" >&2
+      exit 1
+    fi
+    git -C "$REPO" fetch origin "$BRANCH" || exit 1
+    git -C "$REPO" merge-base --is-ancestor "origin/$BRANCH" HEAD || {
+      echo "远端 $BRANCH 含本地尚未整合的提交，拒绝发布。请单独处理 rebase。" >&2
+      exit 1
+    }
+    if [ -n "$tag" ]; then
+      tag_oid="$(git -C "$REPO" rev-list -n 1 "$tag" 2>/dev/null)" || { echo "本地标签不存在: $tag" >&2; exit 1; }
+      head_oid="$(git -C "$REPO" rev-parse HEAD)"
+      [ "$tag_oid" = "$head_oid" ] || { echo "标签 $tag 不指向同步后的 HEAD，拒绝发布。" >&2; exit 1; }
+      git -C "$REPO" push --atomic origin "refs/heads/$BRANCH:refs/heads/$BRANCH" "refs/tags/$tag:refs/tags/$tag"
+    else
+      git -C "$REPO" push origin "refs/heads/$BRANCH:refs/heads/$BRANCH"
+    fi
+    ;;
   push)
-    msg="${1:-update}"
-    if git -C "$REPO" diff --cached --quiet; then
-      add_targets=()
-      for path in skill scripts project archived .gitignore; do
-        [ -e "$REPO/$path" ] && add_targets+=("$path")
-      done
-      [ "${#add_targets[@]}" -gt 0 ] && git -C "$REPO" add -A -- "${add_targets[@]}"
-    else
-      echo "(检测到已暂存文件，仅提交当前 staged 变更)"
-    fi
-    if git -C "$REPO" diff --cached --quiet; then
-      echo "(无改动可提交)"
-    else
-      git -C "$REPO" commit -m "$msg" || exit 1
-    fi
-    git -C "$REPO" pull --rebase origin "$BRANCH" && git -C "$REPO" push origin "$BRANCH"
+    echo "push 组合命令已停用。请分别使用 commit 和 publish，以便独立确认提交与远端发布。" >&2
+    exit 2
     ;;
   history-push)
     expected_branch="${1:-}"; expected_tag="${2:-}"
@@ -99,8 +149,10 @@ case "$cmd" in
       git -C "$REPO" show-ref --verify --quiet "$ref" || { echo "缺少待发布引用: $ref" >&2; exit 1; }
     done
     if git -C "$REPO" log "$BRANCH" refs/tags/v1.1.1 refs/tags/v1.1.2 \
-      --format='%an <%ae>%n%cn <%ce>' | grep -Eiq 'chenyu892323060|chenyu892323060@(gmail\.com|users\.noreply\.gitee\.com)'; then
-      echo "待发布历史仍包含旧身份，拒绝推送。" >&2
+      --format='%an <%ae>%n%cn <%ce>' | grep -Ev \
+      '^(Hawkiethehawk <hawkiethehawk@(gmail\.com|163\.com|users\.noreply\.gitee\.com)>|Codex <codex@local>|Gitee <noreply@gitee\.com>)$' \
+      >/dev/null; then
+      echo "待发布历史包含未获允许的身份，拒绝推送。" >&2
       exit 1
     fi
     git -C "$REPO" push --atomic origin \
@@ -150,12 +202,16 @@ except Exception as e:
     ;;
   help|*)
     cat <<EOF
-gitee.sh — 公开仓库 $OWNER/$NAME 助手
+gitee.sh — 公开仓库 $OWNER/$NAME 的 Gitee 适配器
   setup           在本地终端隐藏读取并保存 Gitee Personal Access Token
   check           将本地仓库内所有 skill 同步到运行时（不访问远端）
   status          工作区状态 + 各 skill 版本 + 与本地缓存远端引用的领先/落后
   pull            git pull --rebase
-  push [msg]      add + commit + rebase + push
+  commit <msg> <path>...
+                  仅暂存明确路径并创建本地提交，不访问远端
+  publish [<component>-vX.Y.Z]
+                  工作区干净时 rebase 并推送 master，可原子推送一个组件 HEAD 标签
+  push            已停用；提交与发布必须分阶段执行
   history-push <expected-master-oid> <expected-v1.1.1-oid>
                   校验身份与远端租约后，原子更新重写的 master 和版本标签
   api <path>      调 gitee REST API（带 token），如：api /repos/$OWNER/$NAME/commits

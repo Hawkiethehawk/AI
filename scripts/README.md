@@ -1,21 +1,21 @@
 # scripts/skill-selfcheck.sh — skill 自检同步
 
-让运行时加载的 skill（`~/.claude/skills/*`）始终等于本 repo（→gitee）的最新版。
+让运行时加载的 skill（`~/.claude/skills/*`）与当前本地仓库真源保持一致。
 解决的问题：repo 与运行时是两份独立副本，历史上各自演化、会脱节（曾出现运行时是
 v1.2.1 而 repo 还是 v1.1.0、或反过来 repo 是残稿而运行时是完整版）。
 
 ## 真源（重要）
 
-**唯一真源 = 本 repo 的 `skill/` 目录**（已推送 gitee）。
-- ✅ 要改 skill，只改 repo 里的 `skill/<name>/`，提交并 `git push`。
-- ❌ 不要直接改运行时副本 `~/.claude/skills/*`——下次自检会用 repo 版本覆盖它。
+**唯一真源 = 本 repo 的 `skill/` 目录**。
+- 要改 skill，只改 repo 里的 `skill/<name>/`；提交和推送由 `version-manager` 分阶段处理。
+- 不要直接改运行时副本 `~/.claude/skills/*`，下次自检会用 repo 版本覆盖它。
 
 ## 它做什么
 
-1. 每小时最多一次 `git pull` 让本地 repo 跟上 gitee（容错，网络问题不阻塞）。
-2. 逐个 skill 比对：运行时缺失或与 repo 不一致 → 把 repo 版整目录同步过去；清理上次由本 repo 管理、但已从 repo 删除的运行时 skill。
-3. 用 `~/.claude/.gitee-synced-skills` 记录仓库曾管理过的 skill。首次运行只建立清单，不猜测并删除已有的本地 skill。
-4. 有变更时打印一行摘要，例如 `[skill-selfcheck] 已把运行时 skill 更新到最新: example-skill(1.1.0->1.2.1)`。
+1. 逐个 skill 比对：运行时缺失或与 repo 不一致时，把 repo 版整目录同步过去；清理上次由本 repo 管理、但已从 repo 删除的运行时 skill。
+2. 只读取当前本地工作树，不访问远端，不执行 `git pull`。
+3. 用 `~/.claude/.ai-managed-skills` 记录仓库曾管理过的 skill。首次运行只建立清单，不猜测并删除已有的本地 skill；旧 `.gitee-synced-skills` 清单会自动迁移。
+4. 有变更时打印一行摘要，例如 `[skill-selfcheck] Claude skill 已更新: example-skill(1.1.0->1.2.1)`。
 
 幂等：无变更时静默、零副作用。
 

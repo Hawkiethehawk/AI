@@ -11,7 +11,7 @@
 
 `archived/AMDC` 和 `archived/AMDA` 只保存迁移前源码，禁止安装依赖、运行、修改、开发、部署或同步为运行时 Skill。需要恢复旧实现时，先获得用户确认，再把选定改动移植到活跃的 `F:\AMTools`；不得从归档目录直接运行，也不得创建长期维护的第三份分叉。
 
-`E:\LLM-Sandbox\Codex` 与 `F:\AMTools` 是两个独立 Git 仓库。不得把 `F:\AMTools` 纳入 AI 仓库，也不得使用 AI 仓库的 `gitee-sync` 操作 AMTools 远端。
+`E:\LLM-Sandbox\Codex` 与 `F:\AMTools` 是两个独立 Git 仓库。不得把 `F:\AMTools` 纳入 AI 仓库，也不得使用 AI 仓库的脚本操作 AMTools 远端。
 
 涉及 Monety 项目时，默认使用 `F:\Monety` 作为工作目录。
 涉及 ADGuide 项目时，默认使用 `F:\ADGuide` 作为工作目录。
@@ -46,8 +46,7 @@
 ## 代码修改确认
 
 - 每次修改代码之前，必须先给出具体的修改方案（改动内容、影响范围、验证方式），等待用户确认后再实施。
-- gitee 推送只能由对话主动触发，不得自动推送；未得到用户明确要求时，只修改本地并等待指示。
-- 仅涉及 AD Guide 项目时，“推”指同时完成两件事：推送 gitee 仓库 + 部署到线上云服务器 ad.hawkie.cloud；只完成其中一项不算“推”。用户说“推”时两者都要执行。其他项目不适用此定义。
+- 版本检查、版本号、CHANGELOG、提交、标签、拉取和推送统一调用 `version-manager` Skill；版本更新规则只在该 Skill 中维护，不在 `AGENTS.md` 重复定义。
 
 ## 文档产出规则
 
