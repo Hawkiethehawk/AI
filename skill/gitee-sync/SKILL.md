@@ -1,7 +1,7 @@
 ---
 name: gitee-sync
 description: 连接并操作公开 Gitee 仓库 Hawkiethehawk/AI（码云），并根据宿主系统选择可用的 Git Bash、WSL 或 Unix shell。当涉及该仓库的 push/pull、skill 同步、状态或远程信息时使用。首次在本地交互式终端运行 `gitee.sh setup`，隐藏读取并保存 Gitee Personal Access Token。Trigger 词：gitee、码云、推送/拉取 AI 仓库、同步 skill、看 AI 仓库状态、发布到远程。
-version: 1.1.1
+version: 1.1.2
 author: Built for the Hawkiethehawk/AI repo
 license: MIT
 metadata:
@@ -56,7 +56,7 @@ metadata:
 
 1. `status` 可以直接执行，只读取工作树和本地缓存的远端引用，不访问网络。`info` 会读取 Gitee API，但不修改本地或远端状态。
 2. `check` 会把仓库内的 skill 写入三个运行时目录。只有用户明确要求同步运行时或已授权发布 skill 时才执行；它不拉取远端，也不修改 Git 工作树。Windows PowerShell 使用 `& $gitBash 'scripts/gitee.sh' 'check'`，Git Bash 使用 `./scripts/gitee.sh check`，Unix 使用 `bash scripts/gitee.sh check`。
-3. 执行 `setup`、`pull`、`push` 或 `create-private` 前，必须取得用户对目标和动作的明确授权。
+3. 执行 `setup`、`pull`、`push`、`history-push` 或 `create-private` 前，必须取得用户对目标和动作的明确授权。
 
 ## 一次性配置 token
 
@@ -76,6 +76,7 @@ Windows 上 `chmod 600` 不提供 NTFS 访问控制。首次 setup 后用 `icacl
 | `gitee.sh status` | 工作区状态 + 各 skill 版本 + 与本地缓存远端引用的领先/落后；不访问网络 |
 | `gitee.sh pull` | 拉取最新（rebase） |
 | `gitee.sh push "msg"` | add + commit + rebase + push |
+| `gitee.sh history-push <expected-master-oid> <expected-v1.1.1-oid>` | 身份与租约校验通过后，原子更新重写的 `master`、`v1.1.1` 和 `v1.1.2` |
 | `gitee.sh api <path>` | 调 Gitee REST API（带 token），如 `api /repos/Hawkiethehawk/AI/commits` |
 | `gitee.sh info` | 仓库基本信息摘要 |
 | `gitee.sh setup` | 在本地交互式终端隐藏读取并一次性保存 token |
@@ -84,6 +85,7 @@ Windows 上 `chmod 600` 不提供 NTFS 访问控制。首次 setup 后用 `icacl
 
 - token 存仓库外 `~/.claude/.gitee_token`，并在 `.gitignore` 兜底（`.gitee_token` / `*.token`），**绝不提交、不上传 gitee、不打印到对话**。Windows 上 `chmod 600` 近似无效，安全实际由用户私有目录 `~/.claude` 的 NTFS ACL 保证。
 - git push/pull 沿用系统已配置的凭证（已免密），本 skill 不改动它。
+- 仓库使用 `.githooks/pre-commit` 和 `.githooks/pre-push` 阻止旧身份进入新提交或待推送历史；本地 `core.hooksPath` 必须保持为 `.githooks`。
 
 ## 强制调用（已配 hook）
 
@@ -102,5 +104,6 @@ Windows 上 `chmod 600` 不提供 NTFS 访问控制。首次 setup 后用 `icacl
 - [ ] token 仅 setup 一次、保存在仓库外、未出现在对话/命令历史/提交里
 - [ ] Windows 令牌文件已用 `icacls` 核验 NTFS 权限，未依赖无效的 `chmod 600`
 - [ ] push 走 `gitee.sh push`（含 rebase），不直接 `git push` 绕过
+- [ ] 历史重写发布走 `gitee.sh history-push`，并使用执行前读取的完整远端 OID 作为 `--force-with-lease`
 - [ ] pull/push 已取得用户明确授权，且目标是 `Hawkiethehawk/AI`，不是独立的 AMTools 仓库
 - [ ] 涉及 gitee 的请求确实由本 skill 处理（hook 已提示）

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -u
+
+zero_oid=0000000000000000000000000000000000000000
+
+while read -r local_ref local_oid remote_ref remote_oid; do
+  [ "$local_oid" = "$zero_oid" ] && continue
+  if [ "$remote_oid" = "$zero_oid" ]; then
+    revision="$local_oid"
+  else
+    revision="$remote_oid..$local_oid"
+  fi
+  if git log "$revision" --format='%an <%ae>%n%cn <%ce>' | \
+    grep -Eiq 'chenyu892323060|chenyu892323060@(gmail\.com|users\.noreply\.gitee\.com)'; then
+    echo "拒绝推送：$local_ref 包含已禁用的旧提交身份。" >&2
+    exit 1
+  fi
+done
