@@ -1,0 +1,52 @@
+{
+  "profiles": [
+    {
+      "id": "ai",
+      "origins": [
+        "https://gitee.com/Hawkiethehawk/AI.git",
+        "git@gitee.com:Hawkiethehawk/AI.git"
+      ],
+      "version_mode": "skill-container",
+      "skill_projects": ["skill/*"],
+      "version_sources": ["SKILL.md"],
+      "component_sources": ["skill/*/SKILL.md"],
+      "tag_format": "{project_name}-v{version}"
+    },
+    {
+      "id": "amtools",
+      "origins": [
+        "https://gitee.com/Hawkiethehawk/AMTools.git",
+        "git@gitee.com:Hawkiethehawk/AMTools.git"
+      ],
+      "version_mode": "composite",
+      "skill_projects": [],
+      "version_sources": ["package.json", "package-lock.json"],
+      "component_sources": [],
+      "tag_format": "v{version}"
+    },
+    {
+      "id": "monety",
+      "origins": [
+        "https://gitee.com/Hawkiethehawk/Monety.git",
+        "git@gitee.com:Hawkiethehawk/Monety.git"
+      ],
+      "version_mode": "skill-container",
+      "skill_projects": ["monety"],
+      "version_sources": ["SKILL.md"],
+      "component_sources": ["**/SKILL.md"],
+      "tag_format": "{project_name}-v{version}"
+    },
+    {
+      "id": "adguide",
+      "origins": [
+        "https://gitee.com/Hawkiethehawk/AD-Guide.git",
+        "git@gitee.com:Hawkiethehawk/AD-Guide.git"
+      ],
+      "version_mode": "none",
+      "skill_projects": [],
+      "version_sources": [],
+      "component_sources": [],
+      "tag_format": null
+    }
+  ]
+}

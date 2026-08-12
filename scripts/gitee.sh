@@ -10,8 +10,6 @@ REPO="$(cd "$SELF/.." && pwd -P)"
 TOKEN_FILE="$HOME/.claude/.gitee_token"
 OWNER="Hawkiethehawk"; NAME="AI"; BRANCH="master"
 API="https://gitee.com/api/v5"
-EXPECTED_NAME="Hawkiethehawk"
-EXPECTED_EMAIL="hawkiethehawk@gmail.com"
 
 validate_repo(){
   local top origin
@@ -131,37 +129,6 @@ case "$cmd" in
     echo "push 组合命令已停用。请分别使用 commit 和 publish，以便独立确认提交与远端发布。" >&2
     exit 2
     ;;
-  history-push)
-    expected_branch="${1:-}"; expected_tag="${2:-}"
-    [ $# -eq 2 ] || { echo "用法: gitee.sh history-push <expected-master-oid> <expected-v1.1.1-oid>" >&2; exit 1; }
-    case "$expected_branch$expected_tag" in
-      *[!0-9a-f]*|'') echo "预期对象 ID 必须是完整的小写十六进制 Git OID。" >&2; exit 1 ;;
-    esac
-    [ "${#expected_branch}" -eq 40 ] && [ "${#expected_tag}" -eq 40 ] || {
-      echo "预期对象 ID 必须是完整的 40 位 Git OID。" >&2; exit 1;
-    }
-    [ -z "$(git -C "$REPO" status --porcelain)" ] || { echo "工作区不干净，拒绝历史推送。" >&2; exit 1; }
-    [ "$(git -C "$REPO" config --local user.name)" = "$EXPECTED_NAME" ] && \
-      [ "$(git -C "$REPO" config --local user.email)" = "$EXPECTED_EMAIL" ] || {
-        echo "仓库提交身份不是 $EXPECTED_NAME <$EXPECTED_EMAIL>，拒绝历史推送。" >&2; exit 1;
-      }
-    for ref in "refs/heads/$BRANCH" refs/tags/v1.1.1 refs/tags/v1.1.2; do
-      git -C "$REPO" show-ref --verify --quiet "$ref" || { echo "缺少待发布引用: $ref" >&2; exit 1; }
-    done
-    if git -C "$REPO" log "$BRANCH" refs/tags/v1.1.1 refs/tags/v1.1.2 \
-      --format='%an <%ae>%n%cn <%ce>' | grep -Ev \
-      '^(Hawkiethehawk <hawkiethehawk@(gmail\.com|163\.com|users\.noreply\.gitee\.com)>|Codex <codex@local>|Gitee <noreply@gitee\.com>)$' \
-      >/dev/null; then
-      echo "待发布历史包含未获允许的身份，拒绝推送。" >&2
-      exit 1
-    fi
-    git -C "$REPO" push --atomic origin \
-      --force-with-lease="refs/heads/$BRANCH:$expected_branch" \
-      --force-with-lease="refs/tags/v1.1.1:$expected_tag" \
-      "refs/heads/$BRANCH:refs/heads/$BRANCH" \
-      refs/tags/v1.1.1:refs/tags/v1.1.1 \
-      refs/tags/v1.1.2:refs/tags/v1.1.2
-    ;;
   api)
     path="${1:-/user}"; t="$(need_token)" || exit 1
     resp="$(api_curl "$t" -s -m 15 -w '\n%{http_code}' "$API${path}")"
@@ -210,10 +177,9 @@ gitee.sh — 公开仓库 $OWNER/$NAME 的 Gitee 适配器
   commit <msg> <path>...
                   仅暂存明确路径并创建本地提交，不访问远端
   publish [<component>-vX.Y.Z]
-                  工作区干净时 rebase 并推送 master，可原子推送一个组件 HEAD 标签
+                  暂存区为空时 fetch 并校验快进关系，再推送 master；可原子推送一个组件 HEAD 标签
+                  未暂存的工作区改动会保留并报告，不纳入发布；不会自动 rebase 或 stash
   push            已停用；提交与发布必须分阶段执行
-  history-push <expected-master-oid> <expected-v1.1.1-oid>
-                  校验身份与远端租约后，原子更新重写的 master 和版本标签
   api <path>      调 gitee REST API（带 token），如：api /repos/$OWNER/$NAME/commits
   info            仓库基本信息摘要
   create-private <name> [description]  创建一个初始化的私有仓库

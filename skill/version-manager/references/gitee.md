@@ -26,7 +26,6 @@ if (-not $gitBash) { throw '未找到 Git for Windows bash.exe。' }
 - `commit <msg> <path>...`：只暂存明确路径并提交，不推送。
 - `publish [<component>-vX.Y.Z]`：暂存区为空时刷新远端引用并校验快进关系，再推送 `master`；可同时推送一个已存在且指向 HEAD 的组件标签。未暂存的用户改动会保留并明确报告，不纳入发布。
 - `setup`、`api`、`info`：配置或使用 Gitee API token。
-- `history-push`：仅处理已有的受保护历史重写场景。
 
 旧的组合式 `push` 命令已停用，避免隐式暂存、提交、拉取和推送。
 
@@ -41,4 +40,4 @@ if (-not $gitBash) { throw '未找到 Git for Windows bash.exe。' }
 
 - AI 仓库普通发布使用 `commit` 与 `publish` 两个独立阶段。`publish` 不自动 rebase 或 stash；远端含新提交时停止并要求单独处理。
 - 推送前检查 `.githooks`、提交身份、远端分支和标签指向。
-- 历史重写必须使用执行前读取的完整远端 OID 和 `--force-with-lease`；禁止普通强推。
+- `gitee.sh` 不提供历史重写入口。确需重写时必须单独制定方案，使用执行前读取的完整远端 OID 和 `--force-with-lease`，并再次获得明确授权；禁止普通强推。
