@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 
-VERSION_RE = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
+VERSION_RE = re.compile(r"^\d+\.\d+$")
 SKIP_PARTS = {".git", ".agents", ".claude", "archived", "node_modules", "output", "cache", "__pycache__"}
 PROFILE_PATH = Path(__file__).resolve().parent.parent / "references" / "project-profiles.json"
 
@@ -37,11 +37,11 @@ def package_version(path: Path) -> list[dict[str, str]]:
     except (OSError, json.JSONDecodeError) as exc:
         return [{"file": str(path), "error": str(exc)}]
     version = data.get("version")
-    if isinstance(version, str):
+    if isinstance(version, str) and VERSION_RE.fullmatch(version):
         results.append({"file": str(path), "version": version})
     root_package = data.get("packages", {}).get("") if isinstance(data.get("packages"), dict) else None
     root_version = root_package.get("version") if isinstance(root_package, dict) else None
-    if isinstance(root_version, str) and root_version != version:
+    if isinstance(root_version, str) and VERSION_RE.fullmatch(root_version) and root_version != version:
         results.append({"file": f"{path}#packages['']", "version": root_version})
     return results
 

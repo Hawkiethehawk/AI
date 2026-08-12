@@ -20,7 +20,7 @@
       ],
       "version_mode": "composite",
       "skill_projects": [],
-      "version_sources": ["package.json", "package-lock.json"],
+      "version_sources": ["VERSION"],
       "component_sources": [],
       "tag_format": "v{version}"
     },

@@ -1,10 +1,10 @@
 ---
 name: output-file-router
 description: When Claude writes output files, route them to the correct subfolder under output/ by file extension. Trigger on any Write/Edit tool call producing a file under output/ — ensures .md goes to markdown/, .txt to text/, .opml to opml/, etc. No user-facing interaction; purely a routing rule.
-version: 1.0.1
-author: configured targetthehawk
 license: MIT
 metadata:
+  version: 1.0
+  author: configured targetthehawk
   hermes:
     tags: [output, file-routing, convention, automation]
     related_skills: []
