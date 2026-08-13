@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 
-VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+VERSION_RE = re.compile(r"^\d+\.\d+$")
 SKIP_PARTS = {".git", ".agents", ".claude", "archived", "node_modules", "output", "cache", "__pycache__"}
 PROFILE_PATH = Path(__file__).resolve().parent.parent / "references" / "project-profiles.json"
 

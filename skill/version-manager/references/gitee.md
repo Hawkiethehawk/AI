@@ -24,7 +24,7 @@ if (-not $gitBash) { throw '未找到 Git for Windows bash.exe。' }
 - `check`：将 AI 仓库 Skill 真源同步到运行时，不访问远端。
 - `pull`：显式执行 `git pull --rebase`，需要用户授权。
 - `commit <msg> <path>...`：只暂存明确路径并提交，不推送。
-- `publish [<component>-vX.Y.Z]`：暂存区为空时刷新远端引用并校验快进关系，再推送 `master`；可同时推送一个已存在且指向 HEAD 的组件标签。未暂存的用户改动会保留并明确报告，不纳入发布。
+- `publish [<component>-vX.Y]`：暂存区为空时刷新远端引用并校验快进关系，再推送 `master`；可同时推送一个已存在且指向 HEAD 的组件标签。未暂存的用户改动会保留并明确报告，不纳入发布。
 - `setup`、`api`、`info`：配置或使用 Gitee API token。
 
 旧的组合式 `push` 命令已停用，避免隐式暂存、提交、拉取和推送。
