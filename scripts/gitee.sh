@@ -96,7 +96,7 @@ case "$cmd" in
     git -C "$REPO" commit -m "$msg"
     ;;
   publish)
-    [ $# -le 1 ] || { echo "用法: gitee.sh publish [<component>-vX.Y]" >&2; exit 1; }
+    [ $# -le 1 ] || { echo "用法: gitee.sh publish [<component>-vX.Y.Z]" >&2; exit 1; }
     tag="${1:-}"
     [ -z "$(git -C "$REPO" diff --cached --name-only)" ] || { echo "暂存区不为空，拒绝发布。" >&2; exit 1; }
     if [ -n "$(git -C "$REPO" status --porcelain)" ]; then
@@ -107,8 +107,8 @@ case "$cmd" in
       echo "当前分支不是 $BRANCH，拒绝发布。" >&2
       exit 1
     }
-    if [ -n "$tag" ] && ! printf '%s\n' "$tag" | grep -Eq '^[a-z0-9][a-z0-9-]*-v[0-9]+\.[0-9]+$'; then
-      echo "组件标签必须使用 <component>-vX.Y 格式。" >&2
+    if [ -n "$tag" ] && ! printf '%s\n' "$tag" | grep -Eq '^[a-z0-9][a-z0-9-]*-v[0-9]+\.[0-9]+\.[0-9]+$'; then
+      echo "组件标签必须使用 <component>-vX.Y.Z 格式。" >&2
       exit 1
     fi
     git -C "$REPO" fetch origin "$BRANCH" || exit 1
@@ -176,7 +176,7 @@ gitee.sh — 公开仓库 $OWNER/$NAME 的 Gitee 适配器
   pull            git pull --rebase
   commit <msg> <path>...
                   仅暂存明确路径并创建本地提交，不访问远端
-  publish [<component>-vX.Y]
+  publish [<component>-vX.Y.Z]
                   暂存区为空时 fetch 并校验快进关系，再推送 master；可原子推送一个组件 HEAD 标签
                   未暂存的工作区改动会保留并报告，不纳入发布；不会自动 rebase 或 stash
   push            已停用；提交与发布必须分阶段执行
