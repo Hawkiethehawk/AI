@@ -10,7 +10,9 @@
       "skill_projects": ["skill/*"],
       "version_sources": ["SKILL.md"],
       "component_sources": ["skill/*/SKILL.md"],
-      "tag_format": "{project_name}-v{version}"
+      "tag_format": "{project_name}-v{version}",
+      "changelog_path": "CHANGELOG.md",
+      "maintenance_tag_format": "patch-{timestamp}"
     },
     {
       "id": "amtools",
@@ -22,7 +24,9 @@
       "skill_projects": [],
       "version_sources": ["VERSION"],
       "component_sources": [],
-      "tag_format": "v{version}"
+      "tag_format": "v{version}",
+      "changelog_path": "CHANGELOG.md",
+      "maintenance_tag_format": "patch-{timestamp}"
     },
     {
       "id": "monety",
@@ -34,7 +38,9 @@
       "skill_projects": ["monety"],
       "version_sources": ["SKILL.md"],
       "component_sources": ["**/SKILL.md"],
-      "tag_format": "{project_name}-v{version}"
+      "tag_format": "{project_name}-v{version}",
+      "changelog_path": "CHANGELOG.md",
+      "maintenance_tag_format": "patch-{timestamp}"
     },
     {
       "id": "adguide",
@@ -46,7 +52,9 @@
       "skill_projects": [],
       "version_sources": [],
       "component_sources": [],
-      "tag_format": null
+      "tag_format": null,
+      "changelog_path": "CHANGELOG.md",
+      "maintenance_tag_format": "patch-{timestamp}"
     }
   ]
 }

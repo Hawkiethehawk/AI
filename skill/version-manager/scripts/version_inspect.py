@@ -182,12 +182,16 @@ def main() -> int:
         component_versions = configured_versions(root, component_sources, "skill") if project == root else []
         raw_tag_format = profile.get("tag_format")
         tag_format = str(raw_tag_format) if raw_tag_format and is_version_object else None
+        changelog_path = str(profile.get("changelog_path") or "")
+        maintenance_tag_format = str(profile.get("maintenance_tag_format") or "")
     else:
         mode = "unconfigured"
         object_type = "none"
         project_versions = []
         component_versions = []
         tag_format = None
+        changelog_path = ""
+        maintenance_tag_format = ""
 
     versions = project_versions
     project_values = sorted({item["version"] for item in project_versions if "version" in item})
@@ -203,6 +207,8 @@ def main() -> int:
         "origin": origin,
         "head": git(root, "rev-parse", "HEAD"),
         "tag_format": tag_format,
+        "changelog_path": changelog_path,
+        "maintenance_tag_format": maintenance_tag_format,
         "latest_tag": latest_tag(root, matching_tag),
         "status": git(root, "status", "--short").splitlines(),
         "project_versions": project_versions,
@@ -225,6 +231,8 @@ def main() -> int:
         print(f"origin: {data['origin'] or '(none)'}")
         print(f"head: {data['head']}")
         print(f"tag format: {data['tag_format'] or '(none)'}")
+        print(f"changelog: {data['changelog_path'] or '(unconfigured)'}")
+        print(f"maintenance tag format: {data['maintenance_tag_format'] or '(unconfigured)'}")
         print(f"latest matching tag: {data['latest_tag'] or '(none)'}")
         print("project versions:")
         if project_versions:

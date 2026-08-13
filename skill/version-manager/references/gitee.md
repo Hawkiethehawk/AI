@@ -24,7 +24,7 @@ if (-not $gitBash) { throw '未找到 Git for Windows bash.exe。' }
 - `check`：将 AI 仓库 Skill 真源同步到运行时，不访问远端。
 - `pull`：显式执行 `git pull --rebase`，需要用户授权。
 - `commit <msg> <path>...`：只暂存明确路径并提交，不推送。
-- `publish [<component>-vX.Y]`：暂存区为空时刷新远端引用并校验快进关系，再推送 `master`；可同时推送一个已存在且指向 HEAD 的组件标签。未暂存的用户改动会保留并明确报告，不纳入发布。
+- `publish <tag>`：暂存区为空时刷新远端引用并校验快进关系，再推送 `master` 和一个已存在且指向 HEAD 的新标签。标签参数必填：功能发布传 `<component>-vX.Y`，Patch 或普通维护传 CHANGELOG 中预先记录的 `patch-YYYYMMDD-HHMMSS`。未暂存的用户改动会保留并明确报告，不纳入发布。
 - `setup`、`api`、`info`：配置或使用 Gitee API token。
 
 旧的组合式 `push` 命令已停用，避免隐式暂存、提交、拉取和推送。
@@ -39,5 +39,6 @@ if (-not $gitBash) { throw '未找到 Git for Windows bash.exe。' }
 ## 发布保护
 
 - AI 仓库普通发布使用 `commit` 与 `publish` 两个独立阶段。`publish` 不自动 rebase 或 stash；远端含新提交时停止并要求单独处理。
-- 推送前检查 `.githooks`、提交身份、远端分支和标签指向。
+- 每次提交准备推送前必须更新 AI 仓库根 `CHANGELOG.md`；Skill 目录内不得创建 CHANGELOG。
+- 推送前检查 `.githooks`、提交身份、远端分支、根 CHANGELOG 是否包含待推送内容，以及新标签是否指向 HEAD。缺少 CHANGELOG 或标签时禁止推送。
 - `gitee.sh` 不提供历史重写入口。确需重写时必须单独制定方案，使用执行前读取的完整远端 OID 和 `--force-with-lease`，并再次获得明确授权；禁止普通强推。

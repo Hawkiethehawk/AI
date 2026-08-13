@@ -96,8 +96,8 @@ case "$cmd" in
     git -C "$REPO" commit -m "$msg"
     ;;
   publish)
-    [ $# -le 1 ] || { echo "用法: gitee.sh publish [<component>-vX.Y]" >&2; exit 1; }
-    tag="${1:-}"
+    [ $# -eq 1 ] || { echo "用法: gitee.sh publish <component-vX.Y|patch-YYYYMMDD-HHMMSS>" >&2; exit 1; }
+    tag="$1"
     [ -z "$(git -C "$REPO" diff --cached --name-only)" ] || { echo "暂存区不为空，拒绝发布。" >&2; exit 1; }
     if [ -n "$(git -C "$REPO" status --porcelain)" ]; then
       echo "== 保留但不纳入发布的工作区改动 =="
@@ -107,23 +107,27 @@ case "$cmd" in
       echo "当前分支不是 $BRANCH，拒绝发布。" >&2
       exit 1
     }
-    if [ -n "$tag" ] && ! printf '%s\n' "$tag" | grep -Eq '^[a-z0-9][a-z0-9-]*-v[0-9]+\.[0-9]+$'; then
-      echo "组件标签必须使用 <component>-vX.Y 格式。" >&2
+    head_oid="$(git -C "$REPO" rev-parse HEAD)"
+    if ! printf '%s\n' "$tag" | grep -Eq '(^[a-z0-9][a-z0-9-]*-v[0-9]+\.[0-9]+$)|(^patch-[0-9]{8}-[0-9]{6}$)'; then
+      echo "标签必须使用 <component>-vX.Y 或 patch-YYYYMMDD-HHMMSS 格式。" >&2
       exit 1
     fi
+    [ -f "$REPO/CHANGELOG.md" ] || { echo "仓库根缺少 CHANGELOG.md，拒绝发布。" >&2; exit 1; }
     git -C "$REPO" fetch origin "$BRANCH" || exit 1
     git -C "$REPO" merge-base --is-ancestor "origin/$BRANCH" HEAD || {
       echo "远端 $BRANCH 含本地尚未整合的提交，拒绝发布。请单独处理 rebase。" >&2
       exit 1
     }
-    if [ -n "$tag" ]; then
-      tag_oid="$(git -C "$REPO" rev-list -n 1 "$tag" 2>/dev/null)" || { echo "本地标签不存在: $tag" >&2; exit 1; }
-      head_oid="$(git -C "$REPO" rev-parse HEAD)"
-      [ "$tag_oid" = "$head_oid" ] || { echo "标签 $tag 不指向同步后的 HEAD，拒绝发布。" >&2; exit 1; }
-      git -C "$REPO" push --atomic origin "refs/heads/$BRANCH:refs/heads/$BRANCH" "refs/tags/$tag:refs/tags/$tag"
-    else
-      git -C "$REPO" push origin "refs/heads/$BRANCH:refs/heads/$BRANCH"
-    fi
+    git -C "$REPO" diff --quiet "origin/$BRANCH..HEAD" -- CHANGELOG.md || changelog_changed=1
+    [ "${changelog_changed:-0}" = 1 ] || { echo "待推送提交未更新根 CHANGELOG.md，拒绝发布。" >&2; exit 1; }
+    case "$tag" in patch-*)
+      git -C "$REPO" show HEAD:CHANGELOG.md | grep -Fq "$tag" || { echo "根 CHANGELOG.md 未记录维护标签 $tag，拒绝发布。" >&2; exit 1; }
+    esac
+    git -C "$REPO" show-ref --verify --quiet "refs/tags/$tag" || { echo "本地标签不存在: $tag" >&2; exit 1; }
+    tag_oid="$(git -C "$REPO" rev-list -n 1 "$tag")"
+    [ "$tag_oid" = "$head_oid" ] || { echo "标签 $tag 不指向同步后的 HEAD，拒绝发布。" >&2; exit 1; }
+    git -C "$REPO" ls-remote --exit-code origin "refs/tags/$tag" >/dev/null 2>&1 && { echo "远端标签已存在，拒绝移动或复用: $tag" >&2; exit 1; }
+    git -C "$REPO" push --atomic origin "refs/heads/$BRANCH:refs/heads/$BRANCH" "refs/tags/$tag:refs/tags/$tag"
     ;;
   push)
     echo "push 组合命令已停用。请分别使用 commit 和 publish，以便独立确认提交与远端发布。" >&2
@@ -176,8 +180,8 @@ gitee.sh — 公开仓库 $OWNER/$NAME 的 Gitee 适配器
   pull            git pull --rebase
   commit <msg> <path>...
                   仅暂存明确路径并创建本地提交，不访问远端
-  publish [<component>-vX.Y]
-                  暂存区为空时 fetch 并校验快进关系，再推送 master；可原子推送一个组件 HEAD 标签
+  publish <component-vX.Y|patch-YYYYMMDD-HHMMSS>
+                  校验根 CHANGELOG 与新 HEAD 标签后，原子推送 master 和标签
                   未暂存的工作区改动会保留并报告，不纳入发布；不会自动 rebase 或 stash
   push            已停用；提交与发布必须分阶段执行
   api <path>      调 gitee REST API（带 token），如：api /repos/$OWNER/$NAME/commits
