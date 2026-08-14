@@ -1,54 +1,54 @@
 # wake-hawkie
 
-通过 Cudy TR3000 原厂固件提供的 Wake-on-LAN 功能，唤醒预先配置的目标电脑。
+Generic skill and local command for waking one preconfigured computer through Node Xiaobao.
 
-## 工作链路
+The network path is:
 
-```text
-Hermes 主机 -> ZeroTier -> TR3000 Web 管理界面 -> Wake-on-LAN
-```
+`caller -> local wake-hawkie command -> Node Xiaobao web API -> router relay -> LAN Wake-on-LAN -> configured target`
 
-当前版本只包含通用脚本和占位符，不包含路由器地址、密码、令牌、目标 MAC 地址或其他目标设备配置。
+The retired Cudy TR3000 LuCI transport is no longer used. The repository contains no Node Xiaobao credentials, cookies, activation links, real device IDs, or target MAC addresses.
 
-## 配置
+## Configuration
 
-在 Hermes 主机上创建配置文件：
+On the host that runs the command, create a mode-`0600` file at:
 
 ```text
-$HOME/.config/wake-hawkie/router.env
+~/.config/wake-hawkie/node-xiaobao.env
 ```
 
-将文件权限设为仅当前用户可读，并填入以下内容：
+with:
 
 ```bash
-ROUTER_URL=http://ROUTER_ZEROTIER_IP
-ROUTER_PASSWORD=your-router-admin-password
 TARGET_MAC=AA:BB:CC:DD:EE:FF
+NODE_XIAOBAO_UID=your_uid
+NODE_XIAOBAO_OWCODE=your_owcode
+NODE_XIAOBAO_PEERID=your_relay_peerid
 ```
 
-配置项说明：
+Treat the three `NODE_XIAOBAO_*` identifiers as credentials. Keep them outside the repository and never print them in command output or logs.
 
-- `ROUTER_URL`：路由器的 ZeroTier 地址。
-- `ROUTER_PASSWORD`：路由器管理密码。
-- `TARGET_MAC`：预先配置的目标电脑网卡 MAC 地址。
-
-不要将配置文件、真实配置值、密码、令牌或私钥提交到仓库，也不要将它们写入 README 或其他公开文件。
-
-## 使用
-
-从 Hermes 技能目录运行脚本：
+Optional settings:
 
 ```bash
-bash "$HOME/.hermes/skills/wake-hawkie/scripts/wake-hawkie"
+NODE_XIAOBAO_API_URL=https://jdis.iepose.com/jdis/wakeup
+NODE_XIAOBAO_PRODUCT=2581
 ```
 
-该技能只用于预先配置的目标电脑，不接受从聊天或命令行临时指定的其他目标。
+## Local API call
 
-脚本执行成功表示路由器已接受 Wake-on-LAN 请求，不代表目标电脑一定已经完成启动。
+The bundled command posts the same JSON request used by the Node Xiaobao web console:
 
-## 安全要求
+```text
+POST https://jdis.iepose.com/jdis/wakeup
+Content-Type: application/json
+```
 
-- 配置文件应放在仓库外，并设置为仅当前用户可读。
-- 新提交只保留占位符，不记录真实地址、设备标识或认证信息。
-- 脚本仅应在目标所有者明确要求时运行。
-如果旧提交曾包含真实配置，修改当前文件不会清除 Git 历史中的内容；需要单独重写历史后再推送。
+Run it from the skill directory:
+
+```bash
+scripts/wake-hawkie
+```
+
+The command exits `0` only when the API returns `rtn: 0` and no nonzero `errcode`. This confirms that the service accepted the wake request; it does not prove that the target operating system has finished booting.
+
+The endpoint is the web console's current JSON API and may change if Node Xiaobao changes its console implementation.

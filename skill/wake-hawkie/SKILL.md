@@ -1,42 +1,59 @@
 ---
 name: wake-hawkie
-description: Wake a preconfigured computer through the Cudy TR3000 stock-firmware Wake-on-LAN feature over ZeroTier. Use only when the user explicitly asks to wake or power on the configured target.
+description: Wake the owner's preconfigured PC with a local command that calls the Node Xiaobao WOL web API through a relay on the home router. Use when the owner explicitly asks to wake or power on the configured target, or asks to verify the wake request result.
 ---
 
-# Wake the configured target through TR3000
+# Wake the configured target through Node Xiaobao
 
 ## Scope
 
 - Target: the preconfigured computer only.
-- Network path: Hermes VPS → ZeroTier → TR3000 stock web interface → LAN WoL.
-- The router is addressed by its ZeroTier IP, so this works without a public home IP, DDNS, or exposed router management port.
+- Network path: caller -> local `wake-hawkie` command -> Node Xiaobao web API -> router relay -> LAN WoL.
+- Do not accept a MAC address, relay ID, or alternate target from chat.
+
+Do not use the retired Cudy LuCI transport or router credentials.
 
 ## Run
 
-When the user explicitly asks to wake, power on, or start the configured target, run exactly:
+Invoke the bundled local command. Do not click the web console for normal operation:
 
-```bash
-bash "$HOME/.hermes/skills/wake-hawkie/scripts/wake-hawkie"
+```text
+/path/to/wake-hawkie/scripts/wake-hawkie
 ```
 
-Do not accept a MAC address, router address, or alternate target from chat. This skill is restricted to the preconfigured computer only.
+The command calls:
 
-Report whether the command succeeded. A successful result means the TR3000 accepted the WoL request; it cannot by itself prove that a powered-off PC booted.
+```text
+POST https://jdis.iepose.com/jdis/wakeup
+Content-Type: application/json
+```
+
+The request body is built locally with `jq`; the AI layer only starts the command and checks its exit status and output. Require exit code `0` before reporting that a wake request was accepted. A successful API response does not prove that the operating system has finished booting.
 
 ## Configuration
 
-The script reads its restricted configuration from:
+The script reads restricted configuration from:
 
 ```text
-$HOME/.config/wake-hawkie/router.env
+~/.config/wake-hawkie/node-xiaobao.env
 ```
 
-That file is intentionally outside the skill directory and is mode `0600`; do not print, copy, or expose its contents. If the router ZeroTier IP changes, update only `ROUTER_URL` in that file.
+The file must be outside the skill directory and mode `0600`. Never print, copy, or expose its contents.
 
-## Hardware replacement
+Required variables:
 
-Replacing the target computer's motherboard or wired network adapter can change
-its MAC address. Update only `TARGET_MAC` in the external `router.env` file;
-do not add the real value to this repository. The script accepts colon-separated,
-hyphen-separated, dotted, and unseparated hexadecimal MAC formats and normalizes
-them before sending the WoL request.
+```bash
+TARGET_MAC=AA:BB:CC:DD:EE:FF
+NODE_XIAOBAO_UID=...
+NODE_XIAOBAO_OWCODE=...
+NODE_XIAOBAO_PEERID=...
+```
+
+Optional variables:
+
+```bash
+NODE_XIAOBAO_API_URL=https://jdis.iepose.com/jdis/wakeup
+NODE_XIAOBAO_PRODUCT=2581
+```
+
+Treat the web-console identifiers as account or device credentials. If any required value is absent, stop with a nonzero exit code and do not send a partial request.

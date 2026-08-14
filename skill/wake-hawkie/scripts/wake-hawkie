@@ -1,58 +1,67 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly CONFIG="$HOME/.config/wake-hawkie/router.env"
+readonly CONFIG="${WAKE_HAWKIE_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/wake-hawkie/node-xiaobao.env}"
 [[ -r "$CONFIG" ]] || { echo "Missing $CONFIG" >&2; exit 1; }
+
+CONFIG_MODE="$(stat -c '%a' "$CONFIG" 2>/dev/null || stat -f '%Lp' "$CONFIG" 2>/dev/null || true)"
+if [[ "$CONFIG_MODE" != "600" ]]; then
+  echo "Refusing to read $CONFIG: permissions must be 0600" >&2
+  exit 1
+fi
+
 # shellcheck disable=SC1090
 source "$CONFIG"
 
-: "${ROUTER_URL:?Missing ROUTER_URL}"
-: "${ROUTER_PASSWORD:?Missing ROUTER_PASSWORD}"
 : "${TARGET_MAC:?Missing TARGET_MAC}"
+: "${NODE_XIAOBAO_UID:?Missing NODE_XIAOBAO_UID}"
+: "${NODE_XIAOBAO_OWCODE:?Missing NODE_XIAOBAO_OWCODE}"
+: "${NODE_XIAOBAO_PEERID:?Missing NODE_XIAOBAO_PEERID}"
 
-normalize_mac() {
-  local compact=${1//:/}
-  compact=${compact//-/}
-  compact=${compact//./}
-  [[ "$compact" =~ ^[[:xdigit:]]{12}$ ]] || {
-    echo "TARGET_MAC must contain exactly 12 hexadecimal digits" >&2
-    exit 1
-  }
-  printf '%s:%s:%s:%s:%s:%s' \
-    "${compact:0:2}" "${compact:2:2}" "${compact:4:2}" \
-    "${compact:6:2}" "${compact:8:2}" "${compact:10:2}" | tr '[:lower:]' '[:upper:]'
+readonly API_URL="${NODE_XIAOBAO_API_URL:-https://jdis.iepose.com/jdis/wakeup}"
+readonly PRODUCT="${NODE_XIAOBAO_PRODUCT:-2581}"
+
+command -v curl >/dev/null 2>&1 || { echo "Missing dependency: curl" >&2; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "Missing dependency: jq" >&2; exit 1; }
+
+if [[ ! "$PRODUCT" =~ ^[0-9]+$ ]]; then
+  echo "NODE_XIAOBAO_PRODUCT must be an integer" >&2
+  exit 1
+fi
+
+MACSTR="$(printf '%s' "$TARGET_MAC" | tr -d '[:space:]:.-' | tr '[:upper:]' '[:lower:]')"
+if [[ ! "$MACSTR" =~ ^[0-9a-f]{12}$ ]]; then
+  echo "TARGET_MAC must contain exactly 12 hexadecimal digits" >&2
+  exit 1
+fi
+
+PAYLOAD="$(jq -cn \
+  --arg uid "$NODE_XIAOBAO_UID" \
+  --arg owcode "$NODE_XIAOBAO_OWCODE" \
+  --arg peerid "$NODE_XIAOBAO_PEERID" \
+  --arg macstr "$MACSTR" \
+  --argjson product "$PRODUCT" \
+  '{uid:$uid,owcode:$owcode,peerid:$peerid,macstr:$macstr,product:$product}')"
+
+RESPONSE="$(curl -fsS --retry 2 --connect-timeout 10 --max-time 30 \
+  -H 'Content-Type: application/json' \
+  -X POST "$API_URL" \
+  --data-raw "$PAYLOAD")" || {
+  echo "Node Xiaobao API request failed" >&2
+  exit 1
 }
 
-# Accept the formats commonly copied from Windows and Linux network tools.
-TARGET_MAC=$(normalize_mac "$TARGET_MAC")
+if ! jq -e . >/dev/null 2>&1 <<<"$RESPONSE"; then
+  echo "Node Xiaobao API returned invalid JSON" >&2
+  exit 1
+fi
 
-umask 077
-cookie_jar=$(mktemp)
-login_page=$(mktemp)
-wol_page=$(mktemp)
-trap 'rm -f "$cookie_jar" "$login_page" "$wol_page"' EXIT
+RTN="$(jq -r 'if has("rtn") then .rtn else "__missing__" end' <<<"$RESPONSE")"
+ERRCODE="$(jq -r 'if has("errcode") and .errcode != null then .errcode else 0 end' <<<"$RESPONSE")"
+if [[ "$RTN" != "0" || "$ERRCODE" != "0" ]]; then
+  MESSAGE="$(jq -r 'if (.msg? // "") == "" then "unknown error" else .msg end' <<<"$RESPONSE" | tr '\r\n' '  ' | cut -c1-200)"
+  echo "Node Xiaobao rejected wake request (rtn=$RTN errcode=$ERRCODE): $MESSAGE" >&2
+  exit 1
+fi
 
-# Cudy intentionally returns the login form with HTTP 403 before authentication.
-curl -sS -c "$cookie_jar" "$ROUTER_URL/cgi-bin/luci" -o "$login_page"
-csrf=$(sed -n 's/.*name="_csrf"[^>]*value="\([^"]*\)".*/\1/p' "$login_page" | head -1)
-salt=$(sed -n 's/.*name="salt"[^>]*value="\([^"]*\)".*/\1/p' "$login_page" | head -1)
-[[ -n "$csrf" && -n "$salt" ]] || { echo "Router login page was not recognised" >&2; exit 1; }
-
-login_token=$(curl -fsS -b "$cookie_jar" -c "$cookie_jar" -X POST "$ROUTER_URL/cgi-bin/luci/admin/get_token")
-hash1=$(printf %s "$ROUTER_PASSWORD$salt" | sha256sum | awk '{print $1}')
-password_hash=$(printf %s "$hash1$login_token" | sha256sum | awk '{print $1}')
-
-login_status=$(curl -sS -b "$cookie_jar" -c "$cookie_jar" -o /dev/null -w '%{http_code}' -X POST "$ROUTER_URL/cgi-bin/luci/" \
-  --data-urlencode "_csrf=$csrf" --data-urlencode "token=$login_token" --data-urlencode "salt=$salt" \
-  --data-urlencode 'zonename=Asia/Shanghai' --data-urlencode "timeclock=$(date +%s)" \
-  --data-urlencode 'luci_language=zh_cn' --data-urlencode 'luci_username=admin' --data-urlencode "luci_password=$password_hash")
-[[ "$login_status" == "302" ]] || { echo "Router login failed (HTTP $login_status)" >&2; exit 1; }
-
-curl -fsS -b "$cookie_jar" "$ROUTER_URL/cgi-bin/luci/admin/network/wol" -o "$wol_page"
-wake_token=$(sed -n "s/.*const token = '\([^']*\)'.*/\1/p" "$wol_page" | head -1)
-[[ -n "$wake_token" ]] || { echo "Wake-on-LAN entry was not found" >&2; exit 1; }
-
-wake_status=$(curl -sS -b "$cookie_jar" -o /dev/null -w '%{http_code}' -X POST "$ROUTER_URL/cgi-bin/luci/admin/network/wol/wake" \
-  --data-urlencode "token=$wake_token" --data-urlencode "macaddr=$TARGET_MAC")
-[[ "$wake_status" == "200" ]] || { echo "Wake request failed (HTTP $wake_status)" >&2; exit 1; }
-echo "Wake request sent to the configured target ($TARGET_MAC)."
+echo "Node Xiaobao accepted the WOL request for the configured target."
