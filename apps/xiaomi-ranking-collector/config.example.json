@@ -1,0 +1,22 @@
+{
+  "adb_path": "",
+  "getapps_package": "",
+  "regions": ["巴西", "印度尼西亚", "俄罗斯", "西班牙"],
+  "initial_region_code": "BR",
+  "region_search": {
+    "巴西": "baxi",
+    "印度尼西亚": "yindunixiya",
+    "俄罗斯": "eluosi",
+    "西班牙": "xibanya"
+  },
+  "game_tab": "游戏",
+  "categories": ["休闲游戏", "益智", "纸牌游戏"],
+  "top_n": 20,
+  "scroll_pause_seconds": 1.2,
+  "network_wait_seconds": 5,
+  "max_scrolls_per_category": 30,
+  "settings_labels": {
+    "additional_settings": ["Additional settings", "More settings", "更多设置", "Más ajustes", "Paramètres supplémentaires"],
+    "region": ["Region", "地区", "Región", "Région", "Регион"]
+  }
+}

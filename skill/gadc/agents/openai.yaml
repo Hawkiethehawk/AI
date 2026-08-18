@@ -1,0 +1,4 @@
+interface:
+  display_name: "GADC"
+  short_description: "Collect Xiaomi GetApps regional category rankings"
+  default_prompt: "Use $gadc to collect GetApps game-category rankings across specified regions."

@@ -1,0 +1,5 @@
+.tools/
+data/
+__pycache__/
+tests/__pycache__/
+config.json

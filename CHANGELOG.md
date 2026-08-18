@@ -19,6 +19,21 @@ Maintenance tag: `patch-20260815-054744`
 - A live Node Xiaobao WOL request was accepted with exit code `0`.
 - Repository credential scan and diff-format checks passed.
 
+## Maintenance 2026-08-18
+
+### Changed
+
+- Add the Xiaomi GetApps regional ranking collector under `apps/xiaomi-ranking-collector`.
+- Add the `gadc` Skill under `skill/gadc` with device setup, collection workflow, metadata fallback, link validation, and export guidance.
+- Normalize collector update dates to `yyyy/mm/dd`.
+
+### Validation
+
+- `python -m unittest discover -s tests -v` passed with 12 tests.
+- GADC Skill structure validation passed with `quick_validate.py`.
+
+Maintenance tag: `patch-20260818-170145`.
+
 ## version-manager 1.2 - 2026-08-13
 
 ### Changed
