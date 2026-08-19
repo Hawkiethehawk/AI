@@ -3,15 +3,6 @@
 默认用中文回答。
 
 默认工作路径使用 `E:\LLM-Sandbox\Codex`。
-涉及 AMTools、AMDC 或 AMDA 的开发、验证、运行和重启时，使用独立仓库 `F:\AMTools`：
-
-- AMDC 工作目录为 `F:\AMTools\apps\AMDC`。
-- AMDA 工作目录为 `F:\AMTools\skills\AMDA`。AMDA 图表分析的本地产物只允许写入 `F:\AMTools\skills\AMDA\output\charts`，禁止写入仓库根目录、`output/`、`artifacts/`、`diagrams/`、`tmp/` 等其他位置。
-- `F:\AMTools\AGENTS.md` 负责 AMTools 仓库内部规则；在该仓库执行 Git 操作时，以 `F:\AMTools` 为仓库根目录。
-
-`archived/AMDC` 和 `archived/AMDA` 只保存迁移前源码，禁止安装依赖、运行、修改、开发、部署或同步为运行时 Skill。需要恢复旧实现时，先获得用户确认，再把选定改动移植到活跃的 `F:\AMTools`；不得从归档目录直接运行，也不得创建长期维护的第三份分叉。
-
-`E:\LLM-Sandbox\Codex` 与 `F:\AMTools` 是两个独立 Git 仓库。不得把 `F:\AMTools` 纳入 AI 仓库，也不得使用 AI 仓库的脚本操作 AMTools 远端。
 
 涉及 Monety 项目时，默认使用 `F:\Monety` 作为工作目录。
 涉及 ADGuide 项目时，默认使用 `F:\ADGuide` 作为工作目录。
@@ -53,8 +44,6 @@
 ### 1. 写作前确认
 
 - 开始写作或重构前，必须先提交文章大纲和材料清单，等待用户确认。
-- AMDC固定结构的市场分析更新不适用上述大纲确认步骤：先基于最新且已授权的数据生成具体观点内容，只有准备替换正式文档时才向用户请求确认。
-- 开始AMDC市场分析前，必须先向用户确认本次分析截止日期以及纳入或排除的周度工作表；即使用户已在请求中给出日期，也要先用一句话回显确认，确认前不得开始日期范围分析。
 - 大纲应列明标题层级、章节顺序和各部分重点。
 - 材料清单应说明每份材料的用途、支持的事实或观点，以及是否仅作结构参考。
 - 未经确认，不得开始正文写作或修改成稿。

@@ -3,8 +3,8 @@ set -u
 
 for ident_var in GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT; do
   ident="$(git var "$ident_var")" || exit 1
-  if printf '%s\n' "$ident" | grep -Eiq 'chenyu892323060|chenyu892323060@(gmail\.com|users\.noreply\.gitee\.com)'; then
-    echo "拒绝提交：$ident_var 使用了已禁用的旧身份。" >&2
+  if ! printf '%s\n' "$ident" | grep -Fq 'Hawkiethehawk <hawkiethehawk@gmail.com>'; then
+    echo "拒绝提交：$ident_var 不是本仓库允许的身份。" >&2
     echo "本仓库只允许 Hawkiethehawk <hawkiethehawk@gmail.com>。" >&2
     exit 1
   fi
