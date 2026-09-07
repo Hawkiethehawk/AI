@@ -67,3 +67,6 @@ output/pdf/策略.pdf
 # Local Playwright browser artifacts and generated deliverables.
 output/playwright/tunemymusic/
 outputs/
+
+# Independent local project repository.
+apps/music-atlas/
