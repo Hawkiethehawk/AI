@@ -19,7 +19,7 @@ GADC 用一台小米手机采集 GetApps 的游戏分类榜单。手机切换地
 
 ## 怎么运行
 
-在 `apps/xiaomi-ranking-collector` 目录执行：
+在 `F:\ADB\gadc` 目录执行：
 
 ```powershell
 python collector.py diagnose

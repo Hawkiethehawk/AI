@@ -45,3 +45,25 @@ desktop.ini
 # Python bytecode caches.
 __pycache__/
 *.py[cod]
+
+# Android / Gradle local toolchains and build caches.
+.gradle/
+tools/android-sdk-*/
+tools/gradle-*-dist/
+
+# ADB Notification Lab local configuration, external reference clones, and captures.
+apps/adb-notification-lab/config.json
+apps/adb-notification-lab/config.local.json
+apps/adb-notification-lab/config.smoke.json
+apps/adb-notification-lab/data/
+apps/adb-notification-lab/third_party/ListenPushMsg/
+apps/adb-notification-lab/third_party/NotifyHistory/
+apps/adb-notification-lab/third_party/RemoteViewsReader/
+data/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*/
+output/adb-notification-lab/
+output/nocap-*.png
+output/pdf/策略.pdf
+
+# Local Playwright browser artifacts and generated deliverables.
+output/playwright/tunemymusic/
+outputs/
