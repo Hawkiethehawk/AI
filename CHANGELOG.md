@@ -1,5 +1,19 @@
 # Changelog
 
+## Local workspace history publication - 2026-09-08
+
+Maintenance tag: `patch-20260908-144511`
+
+### Changed
+
+- Publish the three previously local commits on top of the GitHub migration baseline.
+- Publish workspace cleanup, legacy GADC copy retirement, and the tracked `HAWKIE.png` asset with its local atlas ignore rule.
+
+### Validation
+
+- Git merge from the protected local history completed without conflicts.
+- GitHub migration shell, JSON, and repository checks remain available on the merged baseline.
+
 ## GitHub migration maintenance - 2026-09-08
 
 Maintenance tag: `patch-20260908-142326`

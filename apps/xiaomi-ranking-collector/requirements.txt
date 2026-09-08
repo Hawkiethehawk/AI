@@ -1,3 +1,0 @@
-# The collector uses Python standard library only.
-# Keeping this file makes it straightforward to add OCR/Appium later if the
-# target GetApps build does not expose ranking cards through UIAutomator.
