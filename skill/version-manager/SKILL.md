@@ -1,6 +1,6 @@
 ---
 name: version-manager
-description: 统一管理本机 Git 项目的版本检查、变更分类、版本号决策、CHANGELOG、提交、标签、拉取和远端发布。涉及版本更新、版本号、发布、release、CHANGELOG、tag、提交、推送、Gitee、码云、AI 仓库、AMTools、AMDC、Monety 或 ADGuide 的 Git 版本流程时使用；版本规则以本 Skill 为唯一来源，不从 AGENTS.md 推断。
+description: 统一管理本机 Git 项目的版本检查、变更分类、版本号决策、CHANGELOG、提交、标签、拉取和远端发布。涉及版本更新、版本号、发布、release、CHANGELOG、tag、提交、推送、GitHub、AI 仓库、AMTools、AMDC、Monety 或 ADGuide 的 Git 版本流程时使用；版本规则以本 Skill 为唯一来源，不从 AGENTS.md 推断。
 metadata:
   version: 1.2
 ---
@@ -89,7 +89,7 @@ metadata:
 ### 6. 远端发布
 
 - 推送前重新确认工作区、分支、远端、领先/落后关系和标签指向。需要网络刷新时，先取得 pull/fetch 授权。
-- Gitee 认证、AI 仓库适配和特殊发布入口见 [references/gitee.md](references/gitee.md)。
+- GitHub 认证、AI 仓库适配和特殊发布入口见 [references/github.md](references/github.md)。
 - 普通发布先同步目标分支，再原子推送明确分支和本次新标签；远端不支持原子推送时依次推送并逐项回读。禁止无租约强推。
 - 推送前校验待推送提交范围包含本次 CHANGELOG 更新，且新标签指向 HEAD。任一条件不满足时禁止推送。
 - 推送后读取远端引用核验提交和标签。涉及部署或外部文档同步时，按项目配置执行并回读验证。

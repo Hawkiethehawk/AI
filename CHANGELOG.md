@@ -1,5 +1,22 @@
 # Changelog
 
+## GitHub migration maintenance - 2026-09-08
+
+Maintenance tag: `patch-20260908-142326`
+
+### Changed
+
+- Replace the AI repository release adapter, hook, and version profiles with GitHub-based operation.
+- Keep deprecated entrypoints as compatibility wrappers that route to GitHub; retain historical Gitee records only.
+- Synchronize the updated version-manager skill to the local Codex and Claude runtime copies.
+
+### Validation
+
+- Bash syntax validation passed for the GitHub adapter, compatibility wrappers, release hook, and skill self-check.
+- `git diff --check`, version-profile JSON parsing, `github.sh status`, and `github.sh info` passed.
+
+## wake-hawkie maintenance - 2026-08-15
+
 ## wake-hawkie maintenance - 2026-08-15
 
 Maintenance tag: `patch-20260815-054744`

@@ -21,8 +21,8 @@ SRC="$REPO/skill"
   exit 1
 }
 case "$(git -C "$REPO" config --get remote.origin.url 2>/dev/null)" in
-  https://gitee.com/Hawkiethehawk/AI.git|git@gitee.com:Hawkiethehawk/AI.git) ;;
-  *) echo "[skill-selfcheck] origin 不是 Hawkiethehawk/AI，拒绝执行" >&2; exit 1 ;;
+  https://github.com/Hawkiethehawk/AI.git|git@github.com:Hawkiethehawk/AI.git) ;;
+  *) echo "[skill-selfcheck] origin 不是 GitHub 的 Hawkiethehawk/AI，拒绝执行" >&2; exit 1 ;;
 esac
 
 [ -d "$SRC" ] || { echo "[skill-selfcheck] 找不到 skill 源目录: $SRC" >&2; exit 0; }

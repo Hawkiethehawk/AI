@@ -47,4 +47,4 @@
 - 当前没有独立版本文件或项目级版本规则。发布前报告这一事实，不自行创建版本体系。
 - ADGuide 及其子目录均不是本 Skill 的版本对象；代码发布不修改版本号或创建版本标签，但必须写入仓库根 CHANGELOG。
 - ADGuide 每次推送都更新根目录 `CHANGELOG.md` 并创建 `patch-YYYYMMDD-HHMMSS` 维护标签；该标签不是版本标签。
-- 用户在 ADGuide 语境中说“推”，表示同时推送 Gitee 并部署到 `ad.hawkie.cloud`；只完成其中一项不算完成。推送和部署前分别检查授权与验证条件。
+- 用户在 ADGuide 语境中说“推”，表示同时推送 GitHub 并部署到 `ad.hawkie.cloud`；只完成其中一项不算完成。推送和部署前分别检查授权与验证条件。

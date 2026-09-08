@@ -4,7 +4,8 @@
 .bashshim-test/
 .private/
 
-# Gitee / local tokens, never commit.
+# Git provider tokens, never commit.
+.github_token
 .gitee_token
 *.token
 
