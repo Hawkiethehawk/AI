@@ -1,5 +1,20 @@
 # Changelog
 
+## Gitee compatibility layer retirement - 2026-09-28
+
+Maintenance tag: `patch-20260928-163506`
+
+### Changed
+
+- Remove the deprecated `scripts/gitee.sh` and `scripts/gitee-hook.sh` compatibility wrappers; the GitHub entrypoints remain the only supported path.
+- Drop the legacy `.gitee-synced-skills` manifest migration from `scripts/skill-selfcheck.sh`.
+- Publish the pending `AGENTS.md` rule updates: retire the MS Rewards upstream section, add Google Play metadata verification, default to local-only scope until a remote is specified, and add the web deployment readback rules.
+
+### Validation
+
+- Bash syntax validation passed for the GitHub adapter, the release hook, and the skill self-check.
+- `git diff --check` passed before commit.
+
 ## Local workspace history publication - 2026-09-08
 
 Maintenance tag: `patch-20260908-144511`

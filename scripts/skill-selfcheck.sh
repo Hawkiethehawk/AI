@@ -84,18 +84,6 @@ sync_destination() {
   [ -n "$changed" ] && echo "[skill-selfcheck] $label:$changed"
 }
 
-migrate_manifest() {
-  local old_manifest="$1" new_manifest="$2"
-  if [ ! -f "$new_manifest" ] && [ -f "$old_manifest" ]; then
-    mkdir -p "$(dirname "$new_manifest")"
-    cp -f -- "$old_manifest" "$new_manifest"
-  fi
-}
-
-migrate_manifest "$REPO/.agents/.gitee-synced-skills" "$REPO/.agents/.ai-managed-skills"
-migrate_manifest "$HOME/.agents/.gitee-synced-skills" "$HOME/.agents/.ai-managed-skills"
-migrate_manifest "$HOME/.claude/.gitee-synced-skills" "$HOME/.claude/.ai-managed-skills"
-
 sync_destination "$REPO/.agents/skills" "$REPO/.agents/.ai-managed-skills" "项目级 Codex skill 已更新"
 sync_destination "$HOME/.agents/skills" "$HOME/.agents/.ai-managed-skills" "用户级 Codex skill 已更新"
 sync_destination "$HOME/.claude/skills" "$HOME/.claude/.ai-managed-skills" "Claude skill 已更新"
