@@ -1,5 +1,19 @@
 # Changelog
 
+## push-material-library 0.3 - 2026-09-30
+
+### Changed
+
+- Add the `push-material-library` Skill under `skill/push-material-library`: material matrix (5 app categories x 9 trigger scenes x 5 languages), contentId allocation, rich-text and 906 image rules, NotifyScenesConfig JSON assembly, and a five-layer duplicate-check design.
+- Publish with placeholders for internal identifiers (Feishu base/wiki/doc tokens, table id, space id, automation id, user id); the public copy contains no internal links.
+
+### Validation
+
+- All five `scripts/*.py` pass `python -m py_compile`.
+- Full-pattern sweep for internal identifiers and internal domains reports zero leftovers.
+- Skill frontmatter version normalized to two-part `0.3`.
+- `git diff --check` passed.
+
 ## Gitee compatibility layer retirement - 2026-09-28
 
 Maintenance tag: `patch-20260928-163506`

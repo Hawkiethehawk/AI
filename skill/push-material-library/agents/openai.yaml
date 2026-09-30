@@ -1,0 +1,4 @@
+interface:
+  display_name: "推送物料库"
+  short_description: "建立应用推送物料库：多语言文案、906 图片、contentId 与 NotifyScenesConfig"
+  default_prompt: "使用 $push-material-library 建立或扩充推送物料库，产出可直接上线的 NotifyScenesConfig JSON。"
