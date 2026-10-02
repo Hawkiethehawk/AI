@@ -3,8 +3,8 @@
 ## 1. 基础约定
 
 - 默认用中文回答。
-- 默认工作路径使用 `E:\LLM-Sandbox\Codex`。
-- 涉及 Logo 的内容统一默认使用 `E:\LLM-Sandbox\Codex\HAWKIE.png`。
+- 默认工作路径使用 `E:\LLM-Sandbox\Hermes\AI`。
+- 涉及 Logo 的内容统一默认使用 `E:\LLM-Sandbox\Hermes\AI\HAWKIE.png`。
 - 涉及以下项目时，默认使用对应工作目录：
   - Monety：`F:\Monety`。
   - ADGuide：`F:\ADGuide`。

@@ -1,5 +1,18 @@
 # Changelog
 
+## Workspace path maintenance - 2026-10-02
+
+Maintenance tag: `patch-20261002-141233`
+
+### Changed
+
+- Point the default workspace path and the logo path in `AGENTS.md` at the new AI clone location `E:\LLM-Sandbox\Hermes\AI`; the previous `E:\LLM-Sandbox\Codex` directory no longer exists.
+
+### Validation
+
+- Confirmed `E:\LLM-Sandbox\Codex` is absent; `AGENTS.md`, `HAWKIE.png`, and `scripts/github.sh` are present in the new clone root.
+- `git diff --check` passed.
+
 ## push-material-library 0.3 - 2026-09-30
 
 ### Changed
