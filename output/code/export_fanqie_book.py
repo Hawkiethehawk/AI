@@ -8,7 +8,8 @@ import httpx
 
 BASE_URL = "http://127.0.0.1:8900"
 BOOK_ID = "7241590549344422923"
-OUTPUT_PATH = Path(r"E:\LLM-Sandbox\Codex\output\text\高武：从杀鸡开始横推星空 - 叶灵渡.txt")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+OUTPUT_PATH = REPO_ROOT / "output" / "text" / "高武：从杀鸡开始横推星空 - 叶灵渡.txt"
 PARTIAL_PATH = OUTPUT_PATH.with_suffix(".txt.part")
 
 

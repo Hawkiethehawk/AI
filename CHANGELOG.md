@@ -1,5 +1,20 @@
 # Changelog
 
+## Rules title and output path cleanup - 2026-10-03
+
+Maintenance tag: `patch-20261003-151701`
+
+### Changed
+
+- `AGENTS.md`: rename the document title from `# Codex Workspace Rules` to `# 工作区通用规则`; the file is shared by every agent harness, not one workspace.
+- `output/code/export_fanqie_book.py`, `output/code/download_38ksw_novel.py`: resolve their output locations from the repository root (`Path(__file__).resolve().parents[2]`) instead of the retired `E:\LLM-Sandbox\Codex` path.
+
+### Validation
+
+- `python -m py_compile` passed for both modified scripts.
+- Sweep for `E:\LLM-Sandbox\Codex` in the changed files reports zero references.
+- `git diff --check` passed.
+
 ## Workspace path de-hardcoding - 2026-10-03
 
 Maintenance tag: `patch-20261003-145244`

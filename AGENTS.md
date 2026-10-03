@@ -1,4 +1,4 @@
-# Codex Workspace Rules
+# 工作区通用规则
 
 ## 1. 基础约定
 

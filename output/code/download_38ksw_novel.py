@@ -13,7 +13,8 @@ from bs4 import BeautifulSoup
 
 
 BOOK_URL = "https://www.38ksw.com/95139303/407932535.html"
-OUTPUT_DIR = Path(r"E:\LLM-Sandbox\Codex\output\folder\高中还没毕业你怎么就成宗师了")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+OUTPUT_DIR = REPO_ROOT / "output" / "folder" / "高中还没毕业你怎么就成宗师了"
 DELAY_SECONDS = 0.05
 MAX_RETRIES = 4
 
