@@ -4,7 +4,7 @@
 
 ## AI
 
-- 仓库：`E:\LLM-Sandbox\Codex`
+- 仓库：本仓库克隆根目录（不写死路径，用 `git rev-parse --show-toplevel` 解析）
 - 远端：`Hawkiethehawk/AI`
 - 默认分支：`master`
 - AI 只是承载多个 Skill 的仓库，不设置仓库版本，也不创建仓库级 `vX.Y` 标签。

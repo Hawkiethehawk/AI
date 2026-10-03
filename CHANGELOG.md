@@ -1,5 +1,19 @@
 # Changelog
 
+## Workspace path de-hardcoding - 2026-10-03
+
+Maintenance tag: `patch-20261003-145244`
+
+### Changed
+
+- `AGENTS.md`: rewrite the sync-target list as an actual-location rule with an existence check, dropping four dead paths (`.codex`, `.codex-claw`, and the two `E:\LLM-Sandbox\Codex` entries).
+- `skill/version-manager/SKILL.md`, `references/github.md`, `references/project-profiles.md`: replace the hardcoded `E:\LLM-Sandbox\Codex` locations with repo-relative references resolved through `git rev-parse --show-toplevel`, so the rules no longer depend on a single agent workspace.
+
+### Validation
+
+- Full sweep for `E:\LLM-Sandbox\Codex` in `AGENTS.md` and `skill/version-manager/` reports zero remaining references.
+- `git diff --check` passed.
+
 ## Workspace path maintenance - 2026-10-02
 
 Maintenance tag: `patch-20261002-141233`

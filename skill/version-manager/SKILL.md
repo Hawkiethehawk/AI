@@ -11,7 +11,7 @@ metadata:
 
 ## 固定边界
 
-- `E:\LLM-Sandbox\Codex`、`F:\AMTools`、`F:\Monety`、`F:\ADGuide` 是独立仓库。始终用 `git rev-parse --show-toplevel` 确认根目录。
+- 每个项目仓库彼此独立，不跨仓库操作；仓库根一律用 `git rev-parse --show-toplevel` 确认，本地克隆位置以实际为准。已知仓库由 [project-profiles.md](project-profiles.md) 与 `project-profiles.json` 的远端地址识别，不在本规则里写死路径。
 - 只处理用户指定的仓库和文件。不得跨仓库暂存、提交、打标签或推送。
 - `archived/` 只作历史材料，不作为运行、发布或版本判断来源。
 - 保留用户已有的未提交改动。暂存时列出明确路径，不使用覆盖整个仓库的隐式 `git add -A`。

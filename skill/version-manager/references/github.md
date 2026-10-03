@@ -2,7 +2,7 @@
 
 ## AI 仓库入口
 
-AI 仓库的 GitHub API、运行时 Skill 同步和历史重写保护使用 `E:\LLM-Sandbox\Codex\scripts\github.sh`。脚本固定校验仓库根和 `Hawkiethehawk/AI` GitHub 远端，不得用于 AMTools、Monety 或 ADGuide。
+AI 仓库的 GitHub API、运行时 Skill 同步和历史重写保护使用**本仓库克隆内的** `scripts/github.sh`（路径按 `git rev-parse --show-toplevel` 解析，任何 agent harness 均可调用）。脚本固定校验仓库根和 `Hawkiethehawk/AI` GitHub 远端，不得用于 AMTools、Monety 或 ADGuide。
 
 Windows 优先使用 Git for Windows 的 `bash.exe`：
 

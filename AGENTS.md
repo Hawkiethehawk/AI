@@ -59,15 +59,10 @@
 
 ## 3. AGENTS 同步规范
 
-- 修改跨工作区的通用规则时，必须同步更新以下文件：
-  - `C:\Users\cy\.codex\AGENTS.md`
-  - `C:\Users\cy\.codex-claw\repo\AGENTS.md`
-  - `C:\Users\cy\.lark-channel-workspaces\claude\default\AGENTS.md`
-  - `C:\Users\cy\.lark-channel-workspaces\claude\default\.opencode\AGENTS.md`
-  - `E:\LLM-Sandbox\Codex\AGENTS.md`
-  - `E:\LLM-Sandbox\Codex\.codex\AGENTS.md`
-  - `F:\ADB\AGENTS.md`
-  - `F:\AMTools\AGENTS.md`
+- 修改跨工作区的通用规则时，同步对象按实际位置解析，不在本节写死单一路径：
+  - 运行时规则文件：各 agent 运行时配置目录下的 `AGENTS.md`（本机当前存在：`C:\Users\cy\.lark-channel-workspaces\claude\default\AGENTS.md` 及其 `.opencode\AGENTS.md`）。
+  - 工作区规则文件：各工作区根目录的 `AGENTS.md`（本机当前存在：本仓库克隆根、`F:\ADB\AGENTS.md`、`F:\AMTools\AGENTS.md`）。
+- 同步前对每个候选目标做存在性检查：不存在就跳过，并从本节清单中移除，不做名义同步。
 - 以下位置中的 `AGENTS.md` 不属于同步目标：
   - 插件缓存。
   - 临时目录。
