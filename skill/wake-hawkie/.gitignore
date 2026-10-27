@@ -1,6 +1,7 @@
 router.env
 node-xiaobao.env
 node-xiaobao-login.env
+*.env
 env.local.md
 *.cookie
 *.log

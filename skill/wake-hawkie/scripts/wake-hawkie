@@ -20,9 +20,11 @@ source "$CONFIG"
 
 readonly API_URL="${NODE_XIAOBAO_API_URL:-https://jdis.iepose.com/jdis/wakeup}"
 readonly PRODUCT="${NODE_XIAOBAO_PRODUCT:-2581}"
+readonly LOGIN_BASE="${NODE_XIAOBAO_LOGIN_BASE:-https://yc.iepose.com}"
 
 command -v curl >/dev/null 2>&1 || { echo "Missing dependency: curl" >&2; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "Missing dependency: jq" >&2; exit 1; }
+command -v md5sum >/dev/null 2>&1 || { echo "Missing dependency: md5sum" >&2; exit 1; }
 
 if [[ ! "$PRODUCT" =~ ^[0-9]+$ ]]; then
   echo "NODE_XIAOBAO_PRODUCT must be an integer" >&2
@@ -35,33 +37,122 @@ if [[ ! "$MACSTR" =~ ^[0-9a-f]{12}$ ]]; then
   exit 1
 fi
 
-PAYLOAD="$(jq -cn \
-  --arg uid "$NODE_XIAOBAO_UID" \
-  --arg owcode "$NODE_XIAOBAO_OWCODE" \
-  --arg peerid "$NODE_XIAOBAO_PEERID" \
-  --arg macstr "$MACSTR" \
-  --argjson product "$PRODUCT" \
-  '{uid:$uid,owcode:$owcode,peerid:$peerid,macstr:$macstr,product:$product}')"
+WAKE_RTN="__none__"
+WAKE_ERRCODE=0
+WAKE_MSG=""
 
-RESPONSE="$(curl -fsS --retry 2 --connect-timeout 10 --max-time 30 \
-  -H 'Content-Type: application/json' \
-  -X POST "$API_URL" \
-  --data-raw "$PAYLOAD")" || {
-  echo "Node Xiaobao API request failed" >&2
-  exit 1
+request_wake() {
+  local payload response rtn errcode msg
+
+  payload="$(jq -cn \
+    --arg uid "$NODE_XIAOBAO_UID" \
+    --arg owcode "$NODE_XIAOBAO_OWCODE" \
+    --arg peerid "$NODE_XIAOBAO_PEERID" \
+    --arg macstr "$MACSTR" \
+    --argjson product "$PRODUCT" \
+    '{uid:$uid,owcode:$owcode,peerid:$peerid,macstr:$macstr,product:$product}')"
+
+  if ! response="$(curl -fsS --retry 2 --connect-timeout 10 --max-time 30 \
+    -H 'Content-Type: application/json' \
+    -X POST "$API_URL" \
+    --data-raw "$payload")"; then
+    WAKE_RTN="__request_failed__"
+    echo "Node Xiaobao API request failed" >&2
+    return 1
+  fi
+
+  if ! jq -e . >/dev/null 2>&1 <<<"$response"; then
+    WAKE_RTN="__invalid_json__"
+    echo "Node Xiaobao API returned invalid JSON" >&2
+    return 1
+  fi
+
+  rtn="$(jq -r 'if has("rtn") then .rtn else "__missing__" end' <<<"$response")"
+  errcode="$(jq -r 'if has("errcode") and .errcode != null then .errcode else 0 end' <<<"$response")"
+  msg="$(jq -r 'if (.msg? // "") == "" then "unknown error" else .msg end' <<<"$response" | tr '\r\n' '  ' | cut -c1-200)"
+
+  WAKE_RTN="$rtn"
+  WAKE_ERRCODE="$errcode"
+  WAKE_MSG="$msg"
+
+  [[ "$rtn" == "0" && "$errcode" == "0" ]]
 }
 
-if ! jq -e . >/dev/null 2>&1 <<<"$RESPONSE"; then
-  echo "Node Xiaobao API returned invalid JSON" >&2
-  exit 1
+refresh_token() {
+  local phone="${NODE_XIAOBAO_PHONE:-}" pwd="${NODE_XIAOBAO_PWD:-}"
+  if [[ -z "$phone" || -z "$pwd" ]]; then
+    echo "Login token expired and no NODE_XIAOBAO_PHONE/NODE_XIAOBAO_PWD configured" >&2
+    return 1
+  fi
+
+  local pre key pwdhash login_resp newcode tmp
+  if ! pre="$(curl -fsS --connect-timeout 10 --max-time 30 \
+      -H 'Content-Type: application/json' -X POST \
+      "$LOGIN_BASE/phonepwd/v2/prelogin" \
+      --data-raw "$(jq -cn --arg phone "$phone" '{phone:$phone}')")"; then
+    echo "Node Xiaobao login precheck failed" >&2
+    return 1
+  fi
+
+  key="$(jq -r '.data.key // empty' <<<"$pre" 2>/dev/null || true)"
+  if [[ -z "$key" ]]; then
+    echo "Node Xiaobao login precheck returned no key" >&2
+    return 1
+  fi
+
+  pwdhash="$(printf '%s' "$pwd" | md5sum | cut -d' ' -f1)"
+  pwdhash="$(printf '%s' "$key$pwdhash" | md5sum | cut -d' ' -f1)"
+
+  if ! login_resp="$(curl -fsS --connect-timeout 10 --max-time 30 \
+      -H 'Content-Type: application/json' -X POST \
+      "$LOGIN_BASE/phonepwd/v2/login" \
+      --data-raw "$(jq -cn --arg phone "$phone" --arg pwd "$pwdhash" '{phone:$phone,pwd:$pwd,expire:2}')")"; then
+    echo "Node Xiaobao login request failed" >&2
+    return 1
+  fi
+
+  if [[ "$(jq -r '.rtn // "__missing__"' <<<"$login_resp")" != "0" ]]; then
+    echo "Node Xiaobao login rejected: $(jq -r '.msg // "unknown error"' <<<"$login_resp" | tr '\r\n' '  ' | cut -c1-200)" >&2
+    return 1
+  fi
+
+  newcode="$(jq -r '.data.owcode // empty' <<<"$login_resp")"
+  if [[ -z "$newcode" ]]; then
+    echo "Node Xiaobao login returned no owcode" >&2
+    return 1
+  fi
+
+  NODE_XIAOBAO_OWCODE="$newcode"
+
+  tmp="$(mktemp "${CONFIG}.XXXXXX")"
+  awk -v code="$newcode" '
+    BEGIN { done = 0 }
+    /^NODE_XIAOBAO_OWCODE=/ { print "NODE_XIAOBAO_OWCODE=" code; done = 1; next }
+    { print }
+    END { if (!done) print "NODE_XIAOBAO_OWCODE=" code }
+  ' "$CONFIG" > "$tmp"
+  chmod 600 "$tmp"
+  mv "$tmp" "$CONFIG"
+
+  echo "Node Xiaobao login token refreshed." >&2
+}
+
+if [[ "${1:-}" == "--refresh" ]]; then
+  if refresh_token; then exit 0; else exit 1; fi
 fi
 
-RTN="$(jq -r 'if has("rtn") then .rtn else "__missing__" end' <<<"$RESPONSE")"
-ERRCODE="$(jq -r 'if has("errcode") and .errcode != null then .errcode else 0 end' <<<"$RESPONSE")"
-if [[ "$RTN" != "0" || "$ERRCODE" != "0" ]]; then
-  MESSAGE="$(jq -r 'if (.msg? // "") == "" then "unknown error" else .msg end' <<<"$RESPONSE" | tr '\r\n' '  ' | cut -c1-200)"
-  echo "Node Xiaobao rejected wake request (rtn=$RTN errcode=$ERRCODE): $MESSAGE" >&2
-  exit 1
+if request_wake; then
+  echo "Node Xiaobao accepted the WOL request for Hawkie."
+  exit 0
 fi
 
-echo "Node Xiaobao accepted the WOL request for the configured target."
+if [[ "$WAKE_RTN" == "10109" ]]; then
+  echo "Node Xiaobao login token expired (rtn=10109 E_LOGIN), trying account login..." >&2
+  if refresh_token && request_wake; then
+    echo "Node Xiaobao accepted the WOL request for Hawkie."
+    exit 0
+  fi
+fi
+
+echo "Node Xiaobao rejected wake request (rtn=$WAKE_RTN errcode=$WAKE_ERRCODE): $WAKE_MSG" >&2
+exit 1

@@ -1,54 +1,23 @@
 # wake-hawkie
 
-Generic skill and local command for waking one preconfigured computer through Node Xiaobao.
+用于在用户明确请求时唤醒或验证 Hawkie PC。
 
-The network path is:
-
-`caller -> local wake-hawkie command -> Node Xiaobao web API -> router relay -> LAN Wake-on-LAN -> configured target`
-
-The retired Cudy TR3000 LuCI transport is no longer used. The repository contains no Node Xiaobao credentials, cookies, activation links, real device IDs, or target MAC addresses.
-
-## Configuration
-
-On the host that runs the command, create a mode-`0600` file at:
-
-```text
-~/.config/wake-hawkie/node-xiaobao.env
-```
-
-with:
+## 使用
 
 ```bash
-TARGET_MAC=AA:BB:CC:DD:EE:FF
-NODE_XIAOBAO_UID=your_uid
-NODE_XIAOBAO_OWCODE=your_owcode
-NODE_XIAOBAO_PEERID=your_relay_peerid
+~/.pi/agent/skills/wake-hawkie/scripts/wake-hawkie
 ```
 
-Treat the three `NODE_XIAOBAO_*` identifiers as credentials. Keep them outside the repository and never print them in command output or logs.
+脚本从 `~/.config/wake-hawkie/node-xiaobao.env` 读取本地配置，也支持通过 `WAKE_HAWKIE_CONFIG` 指定配置文件。配置包含设备标识、账号密码和登录令牌，必须保持 `0600` 权限，不要打印或提交。
 
-Optional settings:
+## 登录态
+
+`owcode` 是节点小宝控制台的会话令牌，接口返回 `rtn=10109`（E_LOGIN）即表示令牌失效。脚本会自动使用配置中的 `NODE_XIAOBAO_PHONE` / `NODE_XIAOBAO_PWD` 重新登录，把新的 `owcode` 写回配置文件，然后重试一次。
+
+强制刷新令牌：
 
 ```bash
-NODE_XIAOBAO_API_URL=https://jdis.iepose.com/jdis/wakeup
-NODE_XIAOBAO_PRODUCT=2581
+~/.pi/agent/skills/wake-hawkie/scripts/wake-hawkie --refresh
 ```
 
-## Local API call
-
-The bundled command posts the same JSON request used by the Node Xiaobao web console:
-
-```text
-POST https://jdis.iepose.com/jdis/wakeup
-Content-Type: application/json
-```
-
-Run it from the skill directory:
-
-```bash
-scripts/wake-hawkie
-```
-
-The command exits `0` only when the API returns `rtn: 0` and no nonzero `errcode`. This confirms that the service accepted the wake request; it does not prove that the target operating system has finished booting.
-
-The endpoint is the web console's current JSON API and may change if Node Xiaobao changes its console implementation.
+只依据脚本退出状态和返回结果报告执行情况；不要使用旧的路由器或虚拟组网方案替代当前流程。

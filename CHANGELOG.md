@@ -1,5 +1,20 @@
 # Changelog
 
+## wake-hawkie 0.1 - 2026-10-27
+
+### Changed
+
+- `skill/wake-hawkie/scripts/wake-hawkie`: detect `rtn=10109` (`E_LOGIN`) and automatically sign in with the credentials from the mode-`0600` local config, persist the refreshed `owcode`, then retry the wake request once; add `--refresh` for forced token renewal.
+- `skill/wake-hawkie/SKILL.md`, `skill/wake-hawkie/README.md`: document the login-token lifecycle and automatic refresh behavior.
+- `skill/wake-hawkie/.gitignore`: ignore `node-xiaobao.env`, `node-xiaobao-login.env`, `*.env`, and `env.local.md`.
+
+### Validation
+
+- `bash -n` passed on the bundled command.
+- Live Node Xiaobao wake request accepted with `rtn=0` and exit code `0`; the token-refresh path was exercised end to end.
+- Credential sweep of tracked files found no account identifiers, passwords, or tokens.
+- `git diff --check` passed.
+
 ## Rules title and output path cleanup - 2026-10-03
 
 Maintenance tag: `patch-20261003-151701`

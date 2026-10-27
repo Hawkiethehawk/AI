@@ -1,59 +1,45 @@
 ---
 name: wake-hawkie
-description: Wake the owner's preconfigured PC with a local command that calls the Node Xiaobao WOL web API through a relay on the home router. Use when the owner explicitly asks to wake or power on the configured target, or asks to verify the wake request result.
+description: 当用户明确要求唤醒或验证 Hawkie PC 时，通过本地 wake-hawkie 命令调用已配置的网络唤醒服务。不要在普通闲聊或未获请求时调用。
+metadata:
+  version: 0.1
 ---
 
-# Wake the configured target through Node Xiaobao
+# 唤醒 Hawkie
 
-## Scope
+## 适用范围
 
-- Target: the preconfigured computer only.
-- Network path: caller -> local `wake-hawkie` command -> Node Xiaobao web API -> router relay -> LAN WoL.
-- Do not accept a MAC address, relay ID, or alternate target from chat.
+- 目标仅限 Hawkie PC。
+- 只在用户明确要求唤醒、开机或验证唤醒结果时使用。
+- 不要替用户操作网页控制台，也不要猜测或改写设备配置。
 
-Do not use the retired Cudy LuCI transport or router credentials.
+## 执行
 
-## Run
-
-Invoke the bundled local command. Do not click the web console for normal operation:
-
-```text
-/path/to/wake-hawkie/scripts/wake-hawkie
-```
-
-The command calls:
-
-```text
-POST https://jdis.iepose.com/jdis/wakeup
-Content-Type: application/json
-```
-
-The request body is built locally with `jq`; the AI layer only starts the command and checks its exit status and output. Require exit code `0` before reporting that a wake request was accepted. A successful API response does not prove that the operating system has finished booting.
-
-## Configuration
-
-The script reads restricted configuration from:
-
-```text
-~/.config/wake-hawkie/node-xiaobao.env
-```
-
-The file must be outside the skill directory and mode `0600`. Never print, copy, or expose its contents.
-
-Required variables:
+调用 skill 自带的本地命令：
 
 ```bash
-TARGET_MAC=AA:BB:CC:DD:EE:FF
-NODE_XIAOBAO_UID=...
-NODE_XIAOBAO_OWCODE=...
-NODE_XIAOBAO_PEERID=...
+~/.pi/agent/skills/wake-hawkie/scripts/wake-hawkie
 ```
 
-Optional variables:
+命令的退出状态和输出是唯一的执行依据。执行后向用户报告成功或失败；失败时保留原始错误中的必要信息，但隐藏凭据和敏感值。
 
-```bash
-NODE_XIAOBAO_API_URL=https://jdis.iepose.com/jdis/wakeup
-NODE_XIAOBAO_PRODUCT=2581
-```
+## 配置与安全
 
-Treat the web-console identifiers as account or device credentials. If any required value is absent, stop with a nonzero exit code and do not send a partial request.
+- 默认配置文件：`~/.config/wake-hawkie/node-xiaobao.env`。
+- 可以通过 `WAKE_HAWKIE_CONFIG` 指定其他配置文件。
+- 配置文件包含设备标识、账号密码和 `owcode` 登录令牌，只由脚本读取，权限必须为 `0600`。
+- 不要打印配置内容、复制其中的值到回复，或把配置提交到 Git。
+
+## 登录态维护
+
+- `owcode` 是网页控制台的会话令牌，有效期约 30 天，也可能因重新登录被提前失效。
+- 接口返回 `rtn=10109`（E_LOGIN）时，脚本会自动用配置中的账号密码重新登录、刷新 `owcode` 并写回配置文件，然后重试一次。
+- 如需强制刷新令牌，运行 `wake-hawkie --refresh`。
+
+## 故障处理
+
+- 先检查脚本退出状态、网络连通性和配置文件权限。
+- `10109` 表示登录态失效；自动刷新失败时检查配置中的手机号和密码。
+- `errcode=311` / `offline` 表示该 peer 无法访问目标 MAC 所在网络，不是登录问题。
+- 不要回退到已废弃的路由器、虚拟组网或网页控制台方案。
+- 未确认设备实际状态前，不要声称 Hawkie 已经开机。
