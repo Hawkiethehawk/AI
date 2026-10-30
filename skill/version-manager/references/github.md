@@ -24,7 +24,7 @@ if (-not $gitBash) { throw '未找到 Git for Windows bash.exe。' }
 - `check`：将 AI 仓库 Skill 真源同步到运行时，不访问远端。
 - `pull`：显式执行 `git pull --rebase`，需要用户授权。
 - `commit <msg> <path>...`：只暂存明确路径并提交，不推送。
-- `publish <tag>`：暂存区为空时刷新远端引用并校验快进关系，再推送 `master` 和一个已存在且指向 HEAD 的新标签。标签参数必填：功能发布传 `<component>-vX.Y`，Patch 或普通维护传 CHANGELOG 中预先记录的 `patch-YYYYMMDD-HHMMSS`。未暂存的用户改动会保留并明确报告，不纳入发布。
+- `publish <tag>`：暂存区为空时刷新远端引用并校验快进关系，再推送 `master` 和一个已存在且指向 HEAD 的新标签。标签参数必填：功能、破坏性和 Patch 发布传 `<component>-vX.Y.Z`（Patch 递增修订号），非版本对象的普通维护传 CHANGELOG 中预先记录的 `patch-YYYYMMDD-HHMMSS`。未暂存的用户改动会保留并明确报告，不纳入发布。
 - `setup`、`api`、`info`：配置或使用 GitHub API token。
 
 旧的组合式 `push` 命令已停用，避免隐式暂存、提交、拉取和推送。

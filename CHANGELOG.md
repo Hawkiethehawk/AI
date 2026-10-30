@@ -1,5 +1,20 @@
 # Changelog
 
+## version-manager 1.3.0 - 2026-10-30
+
+### Changed
+
+- `skill/version-manager/SKILL.md`: 版本体系由两级 `主版本.次版本` 改为三级 `主版本.次版本.修订号`。Patch／缺陷修复递增修订号并照常发布（更新版本源、写 CHANGELOG 版本条目、打同版本标签）；功能更新递增次版本并把修订号归零；破坏性变更递增主版本并归零后两段。版本标签统一 `vX.Y.Z`，`patch-YYYYMMDD-HHMMSS` 维护标签只用于非版本对象。
+- `skill/version-manager/references/project-profiles.md`、`references/github.md`: AI / AMTools / Monety 的标签与 Patch 规则同步为三级（`<skill-name>-vX.Y.Z`、`vX.Y.Z`）；`publish` 的标签参数改为 `<component>-vX.Y.Z`。
+- `skill/version-manager/scripts/version_inspect.py`: `VERSION_RE` 收紧为 `^\d+\.\d+\.\d+$`，两级写法不再静默忽略而是明确报 `two-part version is no longer valid; migrate to X.Y.Z`；输出增加 `version format`。
+
+### Validation
+
+- `version_inspect.py --repo F:\AMTools` 读出 `1.0.1`（对应已推送标签 `v1.0.1`）；`--repo F:\Monety --project monety` 读出 `1.2.0`（对应已推送标签 `monety-v1.2.0`）。
+- 解析自测：`1.2.3` 通过、`1.2` 返回迁移错误、非版本内容忽略；本 Skill 自身 `SKILL.md` 读出 `1.3.0`。
+- `version_inspect.py` 语法解析通过，文本与 `--json` 输出正常，`version format` 行存在。
+- 关联仓库迁移：AMTools `VERSION` `1.0` → `1.0.1`、README 同步，已推送 `v1.0.1`；Monety `monety/SKILL.md` `1.2` → `1.2.0`，已推送 `monety-v1.2.0`；ScrDrop `VERSION` `0.2` → `0.2.0`（本地非 Git 仓库，未推送）。
+
 ## wake-hawkie 0.1 - 2026-10-27
 
 ### Changed

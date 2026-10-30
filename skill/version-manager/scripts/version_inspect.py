@@ -11,9 +11,19 @@ import sys
 from pathlib import Path
 
 
-VERSION_RE = re.compile(r"^\d+\.\d+$")
+VERSION_FORMAT = "X.Y.Z (主版本.次版本.修订号)"
+VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+LEGACY_VERSION_RE = re.compile(r"^\d+\.\d+$")
+LEGACY_HINT = "two-part version is no longer valid; migrate to X.Y.Z"
 SKIP_PARTS = {".git", ".agents", ".claude", "archived", "node_modules", "output", "cache", "__pycache__"}
 PROFILE_PATH = Path(__file__).resolve().parent.parent / "references" / "project-profiles.json"
+
+
+def legacy_error(path: Path, value: str) -> list[dict[str, str]]:
+    """两个版本段的老写法：明确报错，提示补零迁移，而不是静默当作没有版本。"""
+    if LEGACY_VERSION_RE.fullmatch(value):
+        return [{"file": str(path), "error": LEGACY_HINT}]
+    return []
 
 
 def git(repo: Path, *args: str, check: bool = True) -> str:
@@ -39,10 +49,15 @@ def package_version(path: Path) -> list[dict[str, str]]:
     version = data.get("version")
     if isinstance(version, str) and VERSION_RE.fullmatch(version):
         results.append({"file": str(path), "version": version})
+    elif isinstance(version, str) and version:
+        results.extend(legacy_error(path, version))
     root_package = data.get("packages", {}).get("") if isinstance(data.get("packages"), dict) else None
     root_version = root_package.get("version") if isinstance(root_package, dict) else None
     if isinstance(root_version, str) and VERSION_RE.fullmatch(root_version) and root_version != version:
         results.append({"file": f"{path}#packages['']", "version": root_version})
+    elif isinstance(root_version, str) and root_version and root_version != version:
+        results.extend({"file": f"{path}#packages['']", "error": item["error"]}
+                       for item in legacy_error(path, root_version))
     return results
 
 
@@ -51,7 +66,9 @@ def text_version(path: Path) -> list[dict[str, str]]:
         value = path.read_text(encoding="utf-8-sig").strip()
     except OSError as exc:
         return [{"file": str(path), "error": str(exc)}]
-    return [{"file": str(path), "version": value}] if VERSION_RE.fullmatch(value) else []
+    if VERSION_RE.fullmatch(value):
+        return [{"file": str(path), "version": value}]
+    return legacy_error(path, value)
 
 
 def skill_version(path: Path) -> list[dict[str, str]]:
@@ -69,7 +86,7 @@ def skill_version(path: Path) -> list[dict[str, str]]:
             value = stripped.split(":", 1)[1].strip().strip("'\"")
             if VERSION_RE.fullmatch(value):
                 return [{"file": str(path), "kind": "skill", "version": value}]
-            break
+            return [dict(item, kind="skill") for item in legacy_error(path, value)]
     return []
 
 
@@ -202,6 +219,7 @@ def main() -> int:
         "project": str(project),
         "profile": profile.get("id") if profile else None,
         "version_mode": mode,
+        "version_format": VERSION_FORMAT,
         "version_object": object_type,
         "branch": git(root, "branch", "--show-current"),
         "origin": origin,
@@ -226,6 +244,7 @@ def main() -> int:
         print(f"project: {data['project']}")
         print(f"profile: {data['profile'] or '(unconfigured)'}")
         print(f"version mode: {data['version_mode']}")
+        print(f"version format: {data['version_format']}")
         print(f"version object: {data['version_object']}")
         print(f"branch: {data['branch']}")
         print(f"origin: {data['origin'] or '(none)'}")
