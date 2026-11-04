@@ -1,5 +1,23 @@
 # Changelog
 
+## aiTak 906 Playwright 网页适配交付 - 2026-11-04
+
+Maintenance tag: `patch-20261104-085838`
+
+### Changed
+
+- 新增 `scripts/aitak-906-playwright.mjs`：使用飞书登录后的同一浏览器页面执行 906 参数填写、完整六图上传、显式单张提交、任务回收与下载，并调用 PushLab 原有裁切器。
+- 新增 `scripts/aitak-906-playwright.test.mjs`：覆盖四尺寸契约、六图完整性、原子防重提、离线网页操作、命名会话通信和裁切集成。
+- 新增使用说明及 `docs/aitak-906-playwright-delivery-20261104.md`，记录交付范围、运行步骤、异常处理和未完成的在线验收。公开示例使用计划与参考包路径占位符。
+- 普通脚本交付不设置版本号；PushLab 正式代码、素材、登录态和本机运行产物不纳入本次发布。
+
+### Validation
+
+- 2026-11-04 设置 `PUSHLAB_TEST_ROOT` 后执行 `node --test scripts/aitak-906-playwright.test.mjs`：5 passed、0 failed、0 skipped。浏览器部分全部为离线 fixture，真实业务请求 0；合成图经原裁切器产出四个精确尺寸。
+- 主脚本及测试脚本的 `node --check` 均通过。
+- 重新读取 2026-11-03 真实网页预检记录：四尺寸 Flare 图生图参数、完整提示词及六图回读通过，检查前后任务数均为 0；本次未重新进行线上生成。
+- 真实生图、额度扣费、线上结果下载、成品视觉质量和独立 CLI 完整线上会话仍未验证，不将离线结果记为线上验收通过。
+
 ## version-manager 1.3.0 - 2026-10-30
 
 ### Changed
